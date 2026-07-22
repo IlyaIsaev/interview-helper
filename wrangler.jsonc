@@ -12,6 +12,14 @@
     "enabled": true,
   },
   "upload_source_maps": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "interview-helper",
+      "database_id": "9a3eddbf-514d-46ba-9267-349540ee5400",
+      "migrations_dir": "drizzle",
+    },
+  ],
   /**
    * Smart Placement
    * https://developers.cloudflare.com/workers/configuration/smart-placement/#smart-placement
