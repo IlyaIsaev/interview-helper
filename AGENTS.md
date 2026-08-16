@@ -26,6 +26,7 @@ src/
   shared/config/       ← path constants
 worker/                ← Hono API (not an FSD layer)
   auth.ts              ← Better Auth Hono app
+  questions.ts         ← questions Hono app
   db/                  ← Drizzle schema + D1 client
 e2e/                   ← Playwright end-to-end tests
 ```
@@ -73,6 +74,7 @@ The API is a [Hono](https://hono.dev) Cloudflare Worker in `worker/`.
 - Only `/api/*` hits the Worker (`run_worker_first`). Everything else is the SPA.
 - Bindings come from `wrangler types` (`Env`). Do not hand-write binding interfaces.
 - Use `wrangler.jsonc`. Enable `nodejs_compat`. Do not store production secrets in config. Local secrets go in `.dev.vars`.
+- Dedicated Hono apps: `auth` at `/api/auth`, `questions` at `/api/questions`. Mount more specific apps before `/api`.
 
 ## Auth
 
@@ -90,6 +92,7 @@ Authentication is [Better Auth](https://better-auth.com) with email and password
 Persistence is [Drizzle](https://orm.drizzle.team) on Cloudflare D1.
 
 - Schema: `worker/db/schema.ts`. Client: `createDatabase(env.DB)` from `worker/db/client.ts`.
+- `question` has a unique `id`, `question`, and `answer`.
 - Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`.
 - Local `database_id` is a placeholder. Create a real D1 database before remote deploy (`wrangler d1 create interview-helper`).
 
