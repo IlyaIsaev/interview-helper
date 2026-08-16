@@ -32,5 +32,6 @@
       "@/shared/*": ["./src/shared/*"]
     }
   },
-  "include": ["src"]
+  "include": ["src"],
+  "references": [{ "path": "./tsconfig.worker.json" }]
 }

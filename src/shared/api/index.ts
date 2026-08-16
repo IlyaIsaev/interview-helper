@@ -1,1 +1,1 @@
-export { requestJson } from './request'
+export { api } from './client'

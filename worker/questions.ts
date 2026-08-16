@@ -1,3 +1,4 @@
+import { vValidator } from '@hono/valibot-validator'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
 import * as v from 'valibot'
@@ -18,21 +19,9 @@ const questionFieldsSchema = v.object({
   ),
 })
 
-const parseQuestionFields = (body: unknown) => {
-  const parsedQuestion = v.safeParse(questionFieldsSchema, body)
-
-  if (!parsedQuestion.success) {
-    return {
-      questionFields: null,
-      message: parsedQuestion.issues[0]?.message ?? 'Invalid question',
-    }
-  }
-
-  return {
-    questionFields: parsedQuestion.output,
-    message: null,
-  }
-}
+const questionIdSchema = v.object({
+  id: v.pipe(v.string(), v.minLength(1)),
+})
 
 const loadQuestion = async (
   database: ReturnType<typeof createDatabase>,
@@ -48,81 +37,72 @@ const loadQuestion = async (
 }
 
 export const questions = new Hono<{ Bindings: Env }>()
+  .get('/', async (context) => {
+    const database = createDatabase(context.env.DB)
+    const questionRows = await database.select().from(question)
 
-questions.get('/', async (context) => {
-  const database = createDatabase(context.env.DB)
-  const questionRows = await database.select().from(question)
+    return context.json({ questions: questionRows }, 200)
+  })
+  .get('/:id', vValidator('param', questionIdSchema), async (context) => {
+    const { id } = context.req.valid('param')
+    const database = createDatabase(context.env.DB)
+    const foundQuestion = await loadQuestion(database, id)
 
-  return context.json({ questions: questionRows })
-})
+    if (!foundQuestion) {
+      return context.json({ message: 'Question not found' }, 404)
+    }
 
-questions.get('/:id', async (context) => {
-  const database = createDatabase(context.env.DB)
-  const foundQuestion = await loadQuestion(database, context.req.param('id'))
+    return context.json(foundQuestion, 200)
+  })
+  .post('/', vValidator('json', questionFieldsSchema), async (context) => {
+    const questionFields = context.req.valid('json')
+    const database = createDatabase(context.env.DB)
+    const [createdQuestion] = await database
+      .insert(question)
+      .values({
+        id: crypto.randomUUID(),
+        question: questionFields.question,
+        answer: questionFields.answer,
+      })
+      .returning()
 
-  if (!foundQuestion) {
-    return context.json({ message: 'Question not found' }, 404)
-  }
+    return context.json(createdQuestion, 201)
+  })
+  .put(
+    '/:id',
+    vValidator('param', questionIdSchema),
+    vValidator('json', questionFieldsSchema),
+    async (context) => {
+      const { id } = context.req.valid('param')
+      const questionFields = context.req.valid('json')
+      const database = createDatabase(context.env.DB)
+      const [updatedQuestion] = await database
+        .update(question)
+        .set({
+          question: questionFields.question,
+          answer: questionFields.answer,
+        })
+        .where(eq(question.id, id))
+        .returning()
 
-  return context.json(foundQuestion)
-})
+      if (!updatedQuestion) {
+        return context.json({ message: 'Question not found' }, 404)
+      }
 
-questions.post('/', async (context) => {
-  const body = await context.req.json().catch(() => null)
-  const { questionFields, message } = parseQuestionFields(body)
+      return context.json(updatedQuestion, 200)
+    },
+  )
+  .delete('/:id', vValidator('param', questionIdSchema), async (context) => {
+    const { id } = context.req.valid('param')
+    const database = createDatabase(context.env.DB)
+    const [deletedQuestion] = await database
+      .delete(question)
+      .where(eq(question.id, id))
+      .returning()
 
-  if (!questionFields) {
-    return context.json({ message }, 400)
-  }
+    if (!deletedQuestion) {
+      return context.json({ message: 'Question not found' }, 404)
+    }
 
-  const database = createDatabase(context.env.DB)
-  const [createdQuestion] = await database
-    .insert(question)
-    .values({
-      id: crypto.randomUUID(),
-      question: questionFields.question,
-      answer: questionFields.answer,
-    })
-    .returning()
-
-  return context.json(createdQuestion, 201)
-})
-
-questions.put('/:id', async (context) => {
-  const body = await context.req.json().catch(() => null)
-  const { questionFields, message } = parseQuestionFields(body)
-
-  if (!questionFields) {
-    return context.json({ message }, 400)
-  }
-
-  const database = createDatabase(context.env.DB)
-  const [updatedQuestion] = await database
-    .update(question)
-    .set({
-      question: questionFields.question,
-      answer: questionFields.answer,
-    })
-    .where(eq(question.id, context.req.param('id')))
-    .returning()
-
-  if (!updatedQuestion) {
-    return context.json({ message: 'Question not found' }, 404)
-  }
-
-  return context.json(updatedQuestion)
-})
-
-questions.delete('/:id', async (context) => {
-  const database = createDatabase(context.env.DB)
-  const [deletedQuestion] = await database
-    .delete(question)
-    .where(eq(question.id, context.req.param('id')))
-    .returning()
-
-  if (!deletedQuestion) {
-    return context.json({ message: 'Question not found' }, 404)
-  }
-
-  return context.body(null, 204)
-})
+    return context.body(null, 204)
+  })

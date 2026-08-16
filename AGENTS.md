@@ -16,9 +16,10 @@ Current layout:
 ```text
 src/
   app/                 ← entrypoint, Reatom logger/theme, routes, composition
-  pages/home/          ← signed-in status or sign-in/up links
-  pages/sign-in/       ← email/password sign-in
+  pages/home/          ← signed-in shell (guests redirect to /sign-in)
+  pages/sign-in/       ← prefilled demo login + cookie consent
   pages/sign-up/       ← email/password sign-up
+  features/cookie-consent/ ← accept/decline cookies, banner
   shared/auth/         ← Better Auth client + session
   shared/api/          ← wrap-aware JSON request helper
   shared/ui/           ← SMUI / shadcn primitives
@@ -26,12 +27,13 @@ src/
   shared/config/       ← path constants
 worker/                ← Hono API (not an FSD layer)
   auth.ts              ← Better Auth Hono app
+  demo-user.ts         ← generate demo credentials, create on sign-in, delete
   questions.ts         ← questions Hono app
   db/                  ← Drizzle schema + D1 client
 e2e/                   ← Playwright end-to-end tests
 ```
 
-Do not create empty `features/`, `entities/`, or `widgets/` folders. Import pages through `@/pages/<slice>` (the slice `index.ts`). Do not import `worker/` from `src/`.
+Do not create empty `features/`, `entities/`, or `widgets/` folders. Import pages through `@/pages/<slice>` (the slice `index.ts`). Do not import `worker/` from `src/` at runtime. A type-only `AppType` import for Hono RPC is allowed (see Backend).
 
 ## Reatom
 
@@ -40,7 +42,7 @@ This project uses [Reatom v1001](https://v1001.reatom.dev) for:
 - **State** — `atom`, `computed`, `action`, `effect` from `@reatom/core`
 - **Routing** — `reatomRoute` / `urlAtom` (do not add React Router)
 - **Forms** — `reatomForm` / `reatomField` for state, Valibot schemas via `schema` (Standard Schema), shadcn `Form` / `FormField` / `FormItem` / `FormLabel` / `FormControl` / `FormMessage` from `@/shared/ui` for markup. Do not add React Hook Form or Zod.
-- **Backend** — `computed` + `withAsyncData` for queries, `action` + `withAsync` for mutations, `requestJson` from `@/shared/api` (do not add TanStack Query)
+- **Backend** — `computed` + `withAsyncData` for queries, `action` + `withAsync` for mutations, Hono RPC `api` from `@/shared/api` (do not add TanStack Query)
 
 Official docs: https://v1001.reatom.dev  
 Local skills: `.agents/skills/reatom/SKILL.md`, `.agents/skills/reatom-async/SKILL.md`
@@ -71,10 +73,14 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 
 The API is a [Hono](https://hono.dev) Cloudflare Worker in `worker/`.
 
+- Official docs for LLMs: https://hono.dev/llms.txt
+- Validate request bodies and params with Valibot via `@hono/valibot-validator` (`vValidator`). Do not add Zod.
+- Frontend API calls use Hono RPC (`hc<AppType>` from `@/shared/api`). Better Auth stays on `authClient`.
+- `import type { AppType } from '../../../worker'` in `@/shared/api` is the only allowed `src/` → `worker/` import (types only, no runtime). Chain Hono handlers (`.get().post()` / `.route()`) so `AppType` infers.
 - Only `/api/*` hits the Worker (`run_worker_first`). Everything else is the SPA.
 - Bindings come from `wrangler types` (`Env`). Do not hand-write binding interfaces.
 - Use `wrangler.jsonc`. Enable `nodejs_compat`. Do not store production secrets in config. Local secrets go in `.dev.vars`.
-- Dedicated Hono apps: `auth` at `/api/auth`, `questions` at `/api/questions`. Mount more specific apps before `/api`.
+- Dedicated Hono apps: `auth` at `/api/auth`, `demo-user` at `/api/demo-user`, `questions` at `/api/questions`. Mount more specific apps before `/api`.
 
 ## Auth
 
@@ -84,6 +90,7 @@ Authentication is [Better Auth](https://better-auth.com) with email and password
 - Handler: dedicated Hono `auth` app in `worker/auth.ts`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`.
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
 - Sign-in/up forms use `reatomForm`. After success, `session.retry()` and `urlAtom.go(homePath)`.
+- Guests opening `/` are redirected to `/sign-in`. Sign-in prefills from the `createdDemoUser` cookie, or from `GET /api/demo-user` (`demo-user-{8 hex}@demo.com` + generated password) if none exists. Do not create a user until Sign in (`POST /api/demo-user`). After create, store `{ email, password }` in `createdDemoUser`. Cookie consent is only on `/sign-in`: Accept sets the `cookieConsent=true` cookie and hides the banner (including after reload); Decline redirects to `https://www.google.com` (do not delete the user). After Sign in, go home. Sign-out returns to `/sign-in` with the same demo credentials.
 - Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
 - Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.
 

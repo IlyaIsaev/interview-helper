@@ -13,5 +13,7 @@ test('home page mounts a session-aware shell', () => {
     createRoot(container).render(<HomePage />)
   })
 
-  expect(container.textContent?.toLowerCase()).toMatch(/loading session|sign in/)
+  expect(container.textContent?.toLowerCase()).toMatch(
+    /loading session|signed in/,
+  )
 })
