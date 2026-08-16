@@ -1,0 +1,51 @@
+import { reatomForm, urlAtom, wrap } from '@reatom/core'
+import * as v from 'valibot'
+
+import { authClient, session } from '@/shared/auth'
+import { homePath } from '@/shared/config'
+
+const signUpSchema = v.object({
+  name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
+  email: v.pipe(
+    v.string(),
+    v.nonEmpty('Enter an email'),
+    v.email('Enter a valid email'),
+  ),
+  password: v.pipe(
+    v.string(),
+    v.nonEmpty('Enter a password'),
+    v.minLength(8, 'Use at least 8 characters'),
+  ),
+})
+
+export const signUpForm = reatomForm(
+  {
+    name: '',
+    email: '',
+    password: '',
+  },
+  {
+    name: 'signUpForm',
+    validateOnBlur: true,
+    validateOnChange: true,
+    schema: signUpSchema,
+    onSubmit: async ({ name, email, password }) => {
+      const { error } = await wrap(
+        authClient.signUp.email({
+          name,
+          email,
+          password,
+        }),
+      )
+
+      if (error) {
+        throw new Error(error.message)
+      }
+
+      await wrap(session.retry())
+      urlAtom.go(homePath)
+    },
+  },
+)
+
+signUpForm.validation.triggerSchemaValidation()

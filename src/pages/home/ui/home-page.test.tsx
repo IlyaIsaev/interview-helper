@@ -4,7 +4,7 @@ import { expect, test } from 'vitest'
 
 import { HomePage } from './home-page'
 
-test('home page mounts without visible content', () => {
+test('home page mounts a session-aware shell', () => {
   const container = document.createElement('div')
 
   document.body.append(container)
@@ -13,5 +13,5 @@ test('home page mounts without visible content', () => {
     createRoot(container).render(<HomePage />)
   })
 
-  expect(container.textContent).toBe('')
+  expect(container.textContent?.toLowerCase()).toMatch(/loading session|sign in/)
 })

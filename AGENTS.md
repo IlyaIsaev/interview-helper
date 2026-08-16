@@ -16,11 +16,16 @@ Current layout:
 ```text
 src/
   app/                 ← entrypoint, Reatom logger/theme, routes, composition
-  pages/home/          ← blank starting page
+  pages/home/          ← signed-in status or sign-in/up links
+  pages/sign-in/       ← email/password sign-in
+  pages/sign-up/       ← email/password sign-up
+  shared/auth/         ← Better Auth client + session
   shared/api/          ← wrap-aware JSON request helper
   shared/ui/           ← SMUI / shadcn primitives
   shared/lib/          ← cn() and other UI infrastructure
+  shared/config/       ← path constants
 worker/                ← Hono API (not an FSD layer)
+  auth.ts              ← Better Auth Hono app
   db/                  ← Drizzle schema + D1 client
 e2e/                   ← Playwright end-to-end tests
 ```
@@ -33,7 +38,7 @@ This project uses [Reatom v1001](https://v1001.reatom.dev) for:
 
 - **State** — `atom`, `computed`, `action`, `effect` from `@reatom/core`
 - **Routing** — `reatomRoute` / `urlAtom` (do not add React Router)
-- **Forms** — `reatomForm` / `reatomField` and `bindField` from `@reatom/react` (do not add React Hook Form)
+- **Forms** — `reatomForm` / `reatomField` for state, Valibot schemas via `schema` (Standard Schema), shadcn `Form` / `FormField` / `FormItem` / `FormLabel` / `FormControl` / `FormMessage` from `@/shared/ui` for markup. Do not add React Hook Form or Zod.
 - **Backend** — `computed` + `withAsyncData` for queries, `action` + `withAsync` for mutations, `requestJson` from `@/shared/api` (do not add TanStack Query)
 
 Official docs: https://v1001.reatom.dev  
@@ -47,7 +52,7 @@ Defaults:
 - After `await` or in external callbacks, use `wrap(...)`.
 - UI that reads atoms is a `reatomComponent(() => { ... }, 'Name')`.
 - Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
-- Form submit lives in `reatomForm({ onSubmit })`; field checks in `validate`.
+- Form submit lives in `reatomForm({ onSubmit })`. Validate with a Valibot `schema`. Use field `validate` only for cross-field or async checks. Render every form with the shadcn form components in `@/shared/ui`.
 - Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from `app/`.
 
 ## UI
@@ -67,7 +72,18 @@ The API is a [Hono](https://hono.dev) Cloudflare Worker in `worker/`.
 
 - Only `/api/*` hits the Worker (`run_worker_first`). Everything else is the SPA.
 - Bindings come from `wrangler types` (`Env`). Do not hand-write binding interfaces.
-- Use `wrangler.jsonc`. Enable `nodejs_compat`. Do not store secrets in config.
+- Use `wrangler.jsonc`. Enable `nodejs_compat`. Do not store production secrets in config. Local secrets go in `.dev.vars`.
+
+## Auth
+
+Authentication is [Better Auth](https://better-auth.com) with email and password.
+
+- Server: `createAuth(env)` in `worker/auth.ts` — create per request, never as a Worker singleton.
+- Handler: dedicated Hono `auth` app in `worker/auth.ts`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`.
+- Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
+- Sign-in/up forms use `reatomForm`. After success, `session.retry()` and `urlAtom.go(homePath)`.
+- Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
+- Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.
 
 ## Database
 
