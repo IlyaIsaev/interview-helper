@@ -1,0 +1,145 @@
+@import '@fontsource/jetbrains-mono/400.css';
+@import '@fontsource/jetbrains-mono/500.css';
+@import '@fontsource/jetbrains-mono/600.css';
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  --background: 220 27% 94%;
+  --foreground: 220 16% 22%;
+  --card: 220 27% 92%;
+  --card-foreground: 220 16% 22%;
+  --popover: 220 27% 92%;
+  --popover-foreground: 220 16% 22%;
+  --primary: 213 32% 44%;
+  --primary-foreground: 220 27% 94%;
+  --secondary: 220 18% 86%;
+  --secondary-foreground: 220 16% 22%;
+  --muted: 220 18% 86%;
+  --muted-foreground: 218 13% 32%;
+  --accent: 213 32% 44%;
+  --accent-foreground: 220 27% 94%;
+  --destructive: 353 54% 41%;
+  --destructive-foreground: 220 27% 94%;
+  --border: 218 18% 82%;
+  --input: 218 18% 82%;
+  --ring: 213 32% 44%;
+  --radius: 0rem;
+  --smui-frost-1: 174 24% 65%;
+  --smui-frost-2: 193 44% 67%;
+  --smui-frost-3: 213 32% 63%;
+  --smui-frost-4: 213 32% 44%;
+  --smui-green: 92 28% 65%;
+  --smui-yellow: 40 71% 73%;
+  --smui-orange: 14 48% 63%;
+  --smui-red: 355 52% 64%;
+  --smui-purple: 311 24% 63%;
+  --smui-surface-0: 220 27% 94%;
+  --smui-surface-1: 220 27% 92%;
+  --smui-surface-2: 220 27% 88%;
+  --smui-surface-3: 220 16% 82%;
+  --smui-border-hover: 213 32% 44%;
+}
+
+.dark {
+  --background: 213 16% 12%;
+  --foreground: 220 27% 88%;
+  --card: 217 16% 15%;
+  --card-foreground: 220 27% 88%;
+  --popover: 217 16% 15%;
+  --popover-foreground: 220 27% 88%;
+  --primary: 193 44% 67%;
+  --primary-foreground: 213 16% 12%;
+  --secondary: 216 15% 19%;
+  --secondary-foreground: 220 27% 88%;
+  --muted: 216 15% 19%;
+  --muted-foreground: 213 14% 61%;
+  --accent: 193 10% 16%;
+  --accent-foreground: 193 44% 67%;
+  --destructive: 355 52% 64%;
+  --destructive-foreground: 219 28% 94%;
+  --border: 220 16% 28%;
+  --input: 220 16% 28%;
+  --ring: 193 44% 67%;
+  --smui-surface-0: 213 16% 12%;
+  --smui-surface-1: 217 16% 15%;
+  --smui-surface-2: 216 16% 19%;
+  --smui-surface-3: 216 15% 22%;
+  --smui-border-hover: 193 44% 67%;
+}
+
+@theme {
+  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
+  --font-sans: 'JetBrains Mono', ui-monospace, monospace;
+  --text-label: 11px;
+  --text-ui: 13px;
+  --text-heading: 22px;
+  --text-stat: 26px;
+  --text-hero: 42px;
+}
+
+@theme inline {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+  --color-popover: hsl(var(--popover));
+  --color-popover-foreground: hsl(var(--popover-foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-smui-frost-1: hsl(var(--smui-frost-1));
+  --color-smui-frost-2: hsl(var(--smui-frost-2));
+  --color-smui-frost-3: hsl(var(--smui-frost-3));
+  --color-smui-frost-4: hsl(var(--smui-frost-4));
+  --color-smui-red: hsl(var(--smui-red));
+  --color-smui-orange: hsl(var(--smui-orange));
+  --color-smui-yellow: hsl(var(--smui-yellow));
+  --color-smui-green: hsl(var(--smui-green));
+  --color-smui-purple: hsl(var(--smui-purple));
+  --color-smui-surface-0: hsl(var(--smui-surface-0));
+  --color-smui-surface-1: hsl(var(--smui-surface-1));
+  --color-smui-surface-2: hsl(var(--smui-surface-2));
+  --color-smui-surface-3: hsl(var(--smui-surface-3));
+  --color-smui-border-hover: hsl(var(--smui-border-hover));
+  --radius-sm: var(--radius);
+  --radius-md: var(--radius);
+  --radius-lg: var(--radius);
+  --radius-xl: var(--radius);
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  margin: 0;
+  min-height: 100svh;
+  background: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-mono);
+}
+
+.card-glow {
+  transition: border-color 0.15s;
+}
+
+.card-glow:hover {
+  border-color: hsl(var(--smui-border-hover));
+}
+
+::selection {
+  background: hsl(193 44% 67% / 0.2);
+  color: hsl(193 44% 67%);
+}
