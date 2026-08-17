@@ -16,7 +16,7 @@ import {
 
 import { signIn, signInForm } from '../model/sign-in'
 
-export const SignInPage = reatomComponent(() => {
+const SignInPage = reatomComponent(() => {
   const screen = signIn()
   const { fields, submit, validation } = signInForm
   const isSubmitReady = submit.ready()
@@ -84,3 +84,5 @@ export const SignInPage = reatomComponent(() => {
     </>
   )
 }, 'SignInPage')
+
+export default SignInPage

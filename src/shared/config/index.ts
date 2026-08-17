@@ -1,1 +1,8 @@
-export { homePath, signInPath, signUpPath } from './routes'
+export {
+  homePath,
+  profilePath,
+  questionPath,
+  questionsPath,
+  signInPath,
+  signUpPath,
+} from './routes'

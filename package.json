@@ -12,6 +12,7 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply interview-helper --local",
+    "db:studio": "drizzle-kit studio",
     "types": "wrangler types",
     "deploy": "vite build && wrangler deploy"
   },
@@ -29,6 +30,7 @@
     "drizzle-orm": "^0.45.2",
     "hono": "^4.13.2",
     "lucide-react": "^1.31.0",
+    "radix-ui": "^1.6.7",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwind-merge": "^3.6.0",
@@ -39,6 +41,7 @@
     "@babel/core": "^7.29.7",
     "@cloudflare/vite-plugin": "^1.52.1",
     "@cloudflare/workers-types": "^5.20260815.1",
+    "@libsql/client": "^0.17.4",
     "@playwright/test": "^1.62.1",
     "@reatom/vite": "^1001.0.0",
     "@rolldown/plugin-babel": "^0.2.3",

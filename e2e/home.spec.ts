@@ -28,17 +28,20 @@ test('signing in creates the demo user and shows home', async ({ page }) => {
   await page.getByRole('button', { name: 'Sign in' }).click()
 
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible({
     timeout: 15_000,
   })
-  await expect(page.getByText(email)).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Sign out' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+
+  await page.getByRole('button', { name: 'Demo user' }).click()
+  await expect(page.getByRole('menuitem', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Log Out' })).toBeVisible()
 
   await page.reload()
 
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
-  await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
 test('signing out returns to sign-in with the same demo user', async ({
@@ -50,7 +53,7 @@ test('signing out returns to sign-in with the same demo user', async ({
   const password = await page.getByLabel('password').inputValue()
 
   await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible({
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
     timeout: 15_000,
   })
 
@@ -62,7 +65,8 @@ test('signing out returns to sign-in with the same demo user', async ({
     }
   })
 
-  await page.getByRole('button', { name: 'Sign out' }).click()
+  await page.getByRole('button', { name: 'Demo user' }).click()
+  await page.getByRole('menuitem', { name: 'Log Out' }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByLabel('email')).toHaveValue(email)
@@ -72,8 +76,45 @@ test('signing out returns to sign-in with the same demo user', async ({
   await page.getByRole('button', { name: 'Sign in' }).click()
 
   await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible({
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible({
     timeout: 15_000,
   })
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+})
+
+test('user menu name opens the profile page without a sidebar', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  const email = await page.getByLabel('email').inputValue()
+
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
+    timeout: 15_000,
+  })
+
+  await page.getByRole('button', { name: 'Demo user' }).click()
+  await page.getByRole('menuitem', { name: 'Demo user' }).click()
+
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
   await expect(page.getByText(email)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Toggle Sidebar' })).toHaveCount(
+    0,
+  )
+  await expect(page.getByRole('link', { name: 'Home' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+
+  await page.getByRole('link', { name: 'Home' }).click()
+
+  await expect(page).toHaveURL(/\/$/)
+  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+})
+
+test('guests opening profile are redirected to sign-in', async ({ page }) => {
+  await page.goto('/profile')
+
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
 })

@@ -15,7 +15,7 @@ import {
 
 import { signUpForm } from '../model/sign-up'
 
-export const SignUpPage = reatomComponent(() => {
+const SignUpPage = reatomComponent(() => {
   const { fields, submit, validation } = signUpForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
@@ -82,3 +82,5 @@ export const SignUpPage = reatomComponent(() => {
     </section>
   )
 }, 'SignUpPage')
+
+export default SignUpPage

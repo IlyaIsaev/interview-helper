@@ -9,22 +9,38 @@ This project uses [Feature-Sliced Design (FSD)](https://fsd.how) for frontend ar
 
 A module may import only from layers strictly below it (`app` → `pages` → `widgets` → `features` → `entities` → `shared`). Cross-imports between slices on the same layer are forbidden. Consume slices through their public `index.ts`.
 
+Group `features/` and `entities/` slices by **business domain**, not by technical role.
+
+- When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`, `entities/questions/question`.
+- The domain folder is only for navigation. It is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
+- Slices in the same domain folder may import each other **only as a last resort**, and only through an FSD cross-import (`@x`, e.g. `import { Question } from '@/entities/questions/question/@x/answer'`). Prefer merging slices, moving shared code down a layer, or composing from `pages/` / `app/` first.
+- If the domain is unclear or the slice spans several domains (`cookie-consent`, `theme-switcher`, `user-menu`), keep it at the top of `features/` or `entities/`.
+
 Not all layers are required. Start with `app/`, `pages/`, and `shared/`. Extract to `features/` or `entities/` only when the same code is used in more than one place. Do not adopt `widgets/` by default. When in doubt, keep code in the page.
 
 Current layout:
 
 ```text
 src/
-  app/                 ← entrypoint, Reatom logger/theme, routes, composition
+  app/                 ← entrypoint, Reatom logger, routes, composition
+  pages/layout/        ← app chrome: header + toggleable sidebar
   pages/home/          ← signed-in shell (guests redirect to /sign-in)
+  pages/profile/       ← signed-in profile (no sidebar; user from route loader)
+  pages/questions/     ← signed-in questions list (/questions)
+  pages/question/      ← signed-in question detail (/questions/:id)
   pages/sign-in/       ← prefilled demo login + cookie consent
   pages/sign-up/       ← email/password sign-up
   features/cookie-consent/ ← accept/decline cookies, banner
+  features/questions/create-question/ ← dialog form to create a question + answer
+  widgets/user-menu/   ← header menu: wires profile link + log out into user entity
+  features/theme-switcher/ ← icon toggle for light/dark theme
+  entities/user/       ← user data + presentational avatar menu
   shared/auth/         ← Better Auth client + session
   shared/api/          ← wrap-aware JSON request helper
   shared/ui/           ← SMUI / shadcn primitives
   shared/lib/          ← cn() and other UI infrastructure
   shared/config/       ← path constants
+  shared/theme/        ← light/dark theme atom + document class sync
 worker/                ← Hono API (not an FSD layer)
   auth.ts              ← Better Auth Hono app
   demo-user.ts         ← generate demo credentials, create on sign-in, delete
@@ -33,7 +49,7 @@ worker/                ← Hono API (not an FSD layer)
 e2e/                   ← Playwright end-to-end tests
 ```
 
-Do not create empty `features/`, `entities/`, or `widgets/` folders. Import pages through `@/pages/<slice>` (the slice `index.ts`). Do not import `worker/` from `src/` at runtime. A type-only `AppType` import for Hono RPC is allowed (see Backend).
+Do not create empty `features/`, `entities/`, or `widgets/` folders. Import pages through `@/pages/<slice>` (the slice `index.ts`). Page `ui/` files have only a default export (`export default HomePage`). The slice `index.ts` re-exports that default (`export { default } from './ui/home-page'`). Load pages with `React.lazy(() => import('@/pages/<slice>'))`. Do not statically import page screens in `app/`. Do not import `worker/` from `src/` at runtime. A type-only `AppType` import for Hono RPC is allowed (see Backend).
 
 ## Reatom
 
@@ -62,12 +78,13 @@ Defaults:
 
 This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui theme) with Tailwind CSS v4.
 
+- For any visual UI, shadcn primitives and SMUI patterns are the first priority. Use existing components in `src/shared/ui`, follow `.agents/skills/smui/SKILL.md`, and add missing widgets with the shadcn CLI (`components.json` already points at `shared/ui`).
+- Write custom styles only when the desired appearance cannot be reached with shadcn and SMUI.
 - Local skill: `.agents/skills/smui/SKILL.md`
 - Primitives live in `src/shared/ui`. Class names go through `cn` from `@/shared/lib`.
 - Zero border radius. JetBrains Mono only. No emoji — use `lucide-react`.
 - Labels, card titles, and status text are uppercase with wide tracking.
-- Theme is the Reatom `theme` atom (`src/app/theme.ts`) plus the `.dark` class. Do not add `next-themes`.
-- Add new widgets with the shadcn CLI (`components.json` already points at `shared/ui`).
+- Theme is the Reatom `theme` atom (`src/shared/theme`) plus the `.dark` class. Do not add `next-themes`.
 
 ## Backend
 
@@ -101,6 +118,7 @@ Persistence is [Drizzle](https://orm.drizzle.team) on Cloudflare D1.
 - Schema: `worker/db/schema.ts`. Client: `createDatabase(env.DB)` from `worker/db/client.ts`.
 - `question` has a unique `id`, `question`, and `answer`.
 - Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`.
+- Browse the local D1 file with `pnpm db:studio` (Drizzle Studio at `127.0.0.1:4983` / [local.drizzle.studio](https://local.drizzle.studio)).
 - Local `database_id` is a placeholder. Create a real D1 database before remote deploy (`wrangler d1 create interview-helper`).
 
 ## Testing
