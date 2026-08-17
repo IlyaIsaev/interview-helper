@@ -26,6 +26,8 @@ export const isCreateQuestionDialogOpen = reatomBoolean(
   'isCreateQuestionDialogOpen',
 )
 
+export const openCreateQuestion = isCreateQuestionDialogOpen.setTrue
+
 export const closeCreateQuestionDialog = action(() => {
   isCreateQuestionDialogOpen.setFalse()
   createQuestionForm.reset()
