@@ -1,12 +1,35 @@
 import { reatomComponent } from '@reatom/react'
 
-const QuestionPage = reatomComponent(() => {
+type QuestionPageProps = {
+  question: {
+    question: string
+    answer: string
+  } | null
+}
+
+const QuestionPage = reatomComponent(({ question }: QuestionPageProps) => {
+  if (!question) {
+    return (
+      <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">
+        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
+          question not found
+        </p>
+      </section>
+    )
+  }
+
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">
       <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
         question
       </p>
-      <h1 className="text-heading font-medium tracking-tight">Question</h1>
+      <h1 className="text-heading font-medium tracking-tight">
+        {question.question}
+      </h1>
+      <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
+        answer
+      </p>
+      <p className="text-ui text-muted-foreground">{question.answer}</p>
     </section>
   )
 }, 'QuestionPage')

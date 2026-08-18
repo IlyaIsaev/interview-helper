@@ -1,6 +1,7 @@
-import { reatomRoute, urlAtom } from '@reatom/core'
+import { reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { lazy, Suspense } from 'react'
 
+import { api } from '@/shared/api'
 import { session } from '@/shared/auth'
 import { Spinner } from '@/shared/ui'
 import {
@@ -61,7 +62,11 @@ export const layoutRoute = rootRoute.reatomRoute(
       return {}
     },
     render({ outlet }) {
-      return <Layout>{outlet()}</Layout>
+      return (
+        <Layout>
+          <Suspense fallback={<PageFallback />}>{outlet()}</Suspense>
+        </Layout>
+      )
     },
   },
   'layoutRoute',
@@ -103,8 +108,23 @@ export const questionsRoute = homeRoute.reatomRoute(
 export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ':id',
-    render() {
-      return <QuestionPage />
+    async loader({ id }) {
+      const response = await wrap(
+        api.api.questions[':id'].$get({ param: { id } }),
+      )
+
+      if (!response.ok) {
+        return null
+      }
+
+      return await wrap(response.json())
+    },
+    render(question) {
+      if (!question.loader.ready()) {
+        return <PageFallback />
+      }
+
+      return <QuestionPage question={question.loader.data() ?? null} />
     },
   },
   'questionRoute',

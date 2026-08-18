@@ -22,9 +22,12 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
             <House />
           </a>
         </Button>
-        <p className="text-sm uppercase tracking-[2px] text-muted-foreground">
+        <a
+          className="text-sm uppercase tracking-[2px] text-muted-foreground"
+          href={homePath}
+        >
           Interview helper
-        </p>
+        </a>
         <div className="ml-auto flex items-center gap-3">
           <UserMenu />
           <ThemeSwitcher />

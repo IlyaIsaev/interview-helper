@@ -23,7 +23,7 @@ Current layout:
 ```text
 src/
   app/                 ← entrypoint, Reatom logger, routes, composition
-  pages/layout/        ← app chrome: header + toggleable sidebar
+  pages/layout/        ← app chrome: header + compose questions sidebar
   pages/home/          ← signed-in shell (guests redirect to /sign-in)
   pages/profile/       ← signed-in profile (no sidebar; user from route loader)
   pages/questions/     ← signed-in questions list (/questions)
@@ -32,8 +32,11 @@ src/
   pages/sign-up/       ← email/password sign-up
   features/cookie-consent/ ← accept/decline cookies, banner
   features/questions/create-question/ ← dialog form to create a question + answer
+  features/questions/toggle-sidebar/ ← open/close questions sidebar
+  widgets/questions-sidebar/ ← wires question links + create button into the sidebar entity
   widgets/user-menu/   ← header menu: wires profile link + log out into user entity
   features/theme-switcher/ ← icon toggle for light/dark theme
+  entities/questions/sidebar/ ← questions sidebar panel + list
   entities/user/       ← user data + presentational avatar menu
   shared/auth/         ← Better Auth client + session
   shared/api/          ← wrap-aware JSON request helper

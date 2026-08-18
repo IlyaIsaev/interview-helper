@@ -104,9 +104,12 @@ test('user menu name opens the profile page without a sidebar', async ({
     0,
   )
   await expect(page.getByRole('link', { name: 'Home' })).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: 'Interview helper' }),
+  ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 
-  await page.getByRole('link', { name: 'Home' }).click()
+  await page.getByRole('link', { name: 'Interview helper' }).click()
 
   await expect(page).toHaveURL(/\/$/)
   await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
