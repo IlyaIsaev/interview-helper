@@ -1,5 +1,4 @@
 import {
-  abortVar,
   atom,
   computed,
   effect,
@@ -12,7 +11,7 @@ import {
 } from '@reatom/core'
 import * as v from 'valibot'
 
-import { api } from '@/shared/api'
+import { clientApi } from '@/shared/api'
 import { authClient, session } from '@/shared/auth'
 import { homePath } from '@/shared/config'
 
@@ -87,13 +86,7 @@ const createdDemoUser = atom<DemoCredentials | null>(null, 'createdDemoUser').ex
 )
 
 const generatedDemoCredentials = computed(async () => {
-  const response = await wrap(api.api['demo-user'].$get())
-
-  if (!response.ok) {
-    throw new Error(`GET /api/demo-user failed: ${response.status}`)
-  }
-
-  return await wrap(response.json())
+  return await wrap(clientApi.loadDemoUser())
 }, 'generatedDemoCredentials').extend(withAsyncData({ initState: null }))
 
 const isDemoUserEmail = (email: string) => {
@@ -114,32 +107,7 @@ const signInWithPassword = async (email: string, password: string) => {
 }
 
 const createDemoUser = async (email: string, password: string) => {
-  const { controller, unsubscribe } = abortVar.subscribe()
-
-  try {
-    const response = await wrap(
-      api.api['demo-user'].$post(
-        {
-          json: {
-            email,
-            password,
-          },
-        },
-        {
-          init: {
-            signal: controller.signal,
-          },
-        },
-      ),
-    )
-
-    if (!response.ok) {
-      throw new Error(`POST /api/demo-user failed: ${response.status}`)
-    }
-  } finally {
-    unsubscribe()
-  }
-
+  await wrap(clientApi.createDemoUser({ email, password }))
   createdDemoUser.set({ email, password })
 }
 

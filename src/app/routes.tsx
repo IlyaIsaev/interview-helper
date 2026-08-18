@@ -1,7 +1,7 @@
 import { reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { lazy, Suspense } from 'react'
 
-import { api } from '@/shared/api'
+import { clientApi } from '@/shared/api'
 import { session } from '@/shared/auth'
 import { Spinner } from '@/shared/ui'
 import {
@@ -109,15 +109,7 @@ export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ':id',
     async loader({ id }) {
-      const response = await wrap(
-        api.api.questions[':id'].$get({ param: { id } }),
-      )
-
-      if (!response.ok) {
-        return null
-      }
-
-      return await wrap(response.json())
+      return await wrap(clientApi.loadQuestion(id))
     },
     render(question) {
       if (!question.loader.ready()) {

@@ -46,7 +46,7 @@ src/
   entities/questions/sidebar/ ← questions sidebar panel + list
   entities/user/       ← user data + presentational avatar menu
   shared/auth/         ← Better Auth client + session
-  shared/api/          ← wrap-aware JSON request helper
+  shared/api/          ← clientApi facade over wrap-aware Hono RPC
   shared/ui/           ← SMUI / shadcn primitives
   shared/lib/          ← cn() and other UI infrastructure
   shared/config/       ← path constants
@@ -68,7 +68,7 @@ This project uses [Reatom v1001](https://v1001.reatom.dev) for:
 - **State** — `atom`, `computed`, `action`, `effect` from `@reatom/core`
 - **Routing** — `reatomRoute` / `urlAtom` (do not add React Router)
 - **Forms** — `reatomForm` / `reatomField` for state, Valibot schemas via `schema` (Standard Schema), shadcn `Form` / `FormField` / `FormItem` / `FormLabel` / `FormControl` / `FormMessage` from `@/shared/ui` for markup. Do not add React Hook Form or Zod.
-- **Backend** — `computed` + `withAsyncData` for queries, `action` + `withAsync` for mutations, Hono RPC `api` from `@/shared/api` (do not add TanStack Query)
+- **Backend** — `computed` + `withAsyncData` for queries, `action` + `withAsync` for mutations, `clientApi` from `@/shared/api` (`clientApi.loadQuestions()`, …; do not add TanStack Query)
 
 Official docs: https://v1001.reatom.dev  
 Local skills: `.agents/skills/reatom/SKILL.md`, `.agents/skills/reatom-async/SKILL.md`
@@ -102,7 +102,7 @@ The API is a [Hono](https://hono.dev) Cloudflare Worker in `worker/`.
 
 - Official docs for LLMs: https://hono.dev/llms.txt
 - Validate request bodies and params with Valibot via `@hono/valibot-validator` (`vValidator`). Do not add Zod.
-- Frontend API calls use Hono RPC (`hc<AppType>` from `@/shared/api`). Better Auth stays on `authClient`.
+- Frontend API calls use `clientApi` from `@/shared/api` (`clientApi.loadQuestions()`, `clientApi.createQuestion()`, …). Hono RPC (`hc<AppType>`) is an implementation detail of that slice. Better Auth stays on `authClient`.
 - `import type { AppType } from '../../../worker'` in `@/shared/api` is the only allowed `src/` → `worker/` import (types only, no runtime). Chain Hono handlers (`.get().post()` / `.route()`) so `AppType` infers.
 - Only `/api/*` hits the Worker (`run_worker_first`). Everything else is the SPA.
 - Bindings come from `wrangler types` (`Env`). Do not hand-write binding interfaces.
