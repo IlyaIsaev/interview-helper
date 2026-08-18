@@ -79,6 +79,7 @@ Defaults:
 - Name every atom, action, computed, effect, form, and route.
 - Read with `atom()`; write with `atom.set(...)`.
 - After `await` or in external callbacks, use `wrap(...)`.
+- Update data optimistically: show existing `.data()` / `initState` immediately, then load the same resource from the backend (`retry()`) and replace it. Do not blank the UI or hide it behind a spinner while that refetch runs. Use `computed` + `withAsyncData`; do not add TanStack Query.
 - UI that reads atoms is a `reatomComponent(() => { ... }, 'Name')`.
 - Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
 - Form submit lives in `reatomForm({ onSubmit })`. Validate with a Valibot `schema`. Use field `validate` only for cross-field or async checks. Render every form with the shadcn form components in `@/shared/ui`.
