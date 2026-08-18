@@ -12,9 +12,10 @@ import { homePath } from '@/shared/config'
 import { SidebarInset } from '@/shared/ui'
 
 import '../model/layout'
+import HomePage from './home-page'
 
 type LayoutProps = {
-  children: ReactNode
+  children?: ReactNode
 }
 
 const Layout = ({ children }: LayoutProps) => {
@@ -36,7 +37,9 @@ const Layout = ({ children }: LayoutProps) => {
             <ThemeSwitcher />
           </div>
         </header>
-        <div className="min-w-0 flex-1">{Children.toArray(children)}</div>
+        <div className="min-w-0 flex-1">
+          {Children.count(children) === 0 ? <HomePage /> : Children.toArray(children)}
+        </div>
       </SidebarInset>
     </ToggleSidebarProvider>
   )

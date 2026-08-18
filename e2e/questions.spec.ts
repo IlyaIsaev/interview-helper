@@ -216,7 +216,7 @@ test('sidebar stays visible while a child page chunk is loading', async ({
     timeout: 15_000,
   })
 
-  await page.route('**/src/pages/layout/home/questions/question/**', async (route) => {
+  await page.route('**/src/pages/home/questions/question/**', async (route) => {
     await new Promise((resolve) => {
       setTimeout(resolve, 1000)
     })

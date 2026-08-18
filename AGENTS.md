@@ -23,14 +23,12 @@ Current layout:
 ```text
 src/
   app/                 ← entrypoint, Reatom logger, routes, composition
-  pages/layout/        ← signed-in chrome route group
-    index/             ← app chrome: header + compose questions sidebar
-    home/              ← signed-in home route group
-      index/           ← signed-in shell (guests redirect to /sign-in)
-      questions/       ← questions route group
-        index/         ← signed-in questions list (/questions)
-        question/
-          index/       ← signed-in question detail (/questions/:id)
+  pages/home/          ← signed-in home route group
+    layout/            ← homeRoute chrome (sidebar + header; HomePage when no child)
+    questions/         ← questions route group
+      index/           ← signed-in questions list (/questions)
+      question/
+        index/         ← signed-in question detail (/questions/:id)
   pages/profile/
     index/             ← signed-in profile (no sidebar; user from route loader)
   pages/sign-in/
@@ -59,7 +57,7 @@ worker/                ← Hono API (not an FSD layer)
 e2e/                   ← Playwright end-to-end tests
 ```
 
-Do not create empty `features/`, `entities/`, or `widgets/` folders. Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`. A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `index/` (`ui/`, `model/` when present, public `index.ts`). Import pages through `@/pages/<route-tree>/index`, e.g. `@/pages/layout/home/questions/index`. Page `ui/` files have only a default export (`export default HomePage`). The slice `index.ts` re-exports that default (`export { default } from './ui/home-page'`). Load pages with `React.lazy(() => import('@/pages/layout/home/questions/index'))`. Do not statically import page screens in `app/`. Do not import `worker/` from `src/` at runtime. A type-only `AppType` import for Hono RPC is allowed (see Backend).
+Do not create empty `features/`, `entities/`, or `widgets/` folders. Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`. A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present, public `index.ts`). Import pages through `@/pages/<route-tree>/layout` or `@/pages/<route-tree>/index`, e.g. `@/pages/home/questions/index`. Page `ui/` files have only a default export (`export default HomePage`). The slice `index.ts` re-exports that default (`export { default } from './ui/home-page'`). Load pages with `React.lazy(() => import('@/pages/home/questions/index'))`. Do not statically import page screens in `app/`. Do not import `worker/` from `src/` at runtime. A type-only `AppType` import for Hono RPC is allowed (see Backend).
 
 ## Reatom
 

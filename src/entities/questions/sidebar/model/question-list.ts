@@ -1,4 +1,4 @@
-import { action, computed, withAsyncData, wrap } from '@reatom/core'
+import { action, atom, withAsync, wrap } from '@reatom/core'
 
 import { clientApi } from '@/shared/api'
 
@@ -7,16 +7,21 @@ export type QuestionListItem = {
   question: string
 }
 
-export const questionList = computed(async (): Promise<Array<QuestionListItem>> => {
-  const { questions } = await wrap(clientApi.loadQuestions())
+export const questionList = atom<Array<QuestionListItem>>([], 'questionList')
 
-  return questions.map(({ id, question }) => ({
+export const loadQuestionList = action(async () => {
+  const { questions } = await wrap(clientApi.loadQuestions())
+  const items = questions.map(({ id, question }) => ({
     id,
     question,
   }))
-}, 'questionList').extend(withAsyncData({ initState: [] }))
+
+  questionList.set(items)
+
+  return items
+}, 'loadQuestionList').extend(withAsync())
 
 export const addQuestion = action((item: QuestionListItem) => {
-  questionList.data.set([...questionList.data(), item])
-  questionList.retry()
+  questionList.set([...questionList(), item])
+  loadQuestionList()
 }, 'addQuestion')

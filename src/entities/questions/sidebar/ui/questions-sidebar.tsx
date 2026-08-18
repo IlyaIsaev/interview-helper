@@ -13,7 +13,7 @@ import {
   Spinner,
 } from '@/shared/ui'
 
-import { questionList } from '../model/question-list'
+import { loadQuestionList, questionList } from '../model/question-list'
 
 type QuestionsSidebarProps = {
   headerAction?: ReactNode
@@ -22,8 +22,8 @@ type QuestionsSidebarProps = {
 
 export const QuestionsSidebar = reatomComponent(
   ({ headerAction, renderQuestion }: QuestionsSidebarProps) => {
-    const questions = questionList.data()
-    const isListReady = questionList.ready()
+    const questions = questionList()
+    const isListPending = loadQuestionList.pending() > 0
 
     return (
       <Sidebar collapsible="offcanvas">
@@ -38,7 +38,7 @@ export const QuestionsSidebar = reatomComponent(
             <SidebarGroupLabel className="uppercase tracking-[1.5px]">
               menu
             </SidebarGroupLabel>
-            {!isListReady && questions.length === 0 ? (
+            {isListPending && questions.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
                 <Spinner />
               </div>

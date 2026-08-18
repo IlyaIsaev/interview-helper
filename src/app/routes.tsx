@@ -1,6 +1,7 @@
 import { reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { lazy, Suspense } from 'react'
 
+import { loadQuestionList } from '@/entities/questions/sidebar'
 import { clientApi } from '@/shared/api'
 import { session } from '@/shared/auth'
 import { Spinner } from '@/shared/ui'
@@ -12,13 +13,11 @@ import {
   signUpPath,
 } from '@/shared/config'
 
-const Layout = lazy(() => import('@/pages/layout/index'))
+const HomeLayout = lazy(() => import('@/pages/home/layout'))
 
-const HomePage = lazy(() => import('@/pages/layout/home/index'))
+const QuestionsPage = lazy(() => import('@/pages/home/questions/index'))
 
-const QuestionsPage = lazy(() => import('@/pages/layout/home/questions/index'))
-
-const QuestionPage = lazy(() => import('@/pages/layout/home/questions/question/index'))
+const QuestionPage = lazy(() => import('@/pages/home/questions/question/index'))
 
 const SignInPage = lazy(() => import('@/pages/sign-in/index'))
 
@@ -45,9 +44,10 @@ export const rootRoute = reatomRoute(
   'rootRoute',
 )
 
-export const layoutRoute = rootRoute.reatomRoute(
+export const homeRoute = rootRoute.reatomRoute(
   {
     layout: true,
+    path: '',
     params() {
       const { pathname } = urlAtom()
 
@@ -59,23 +59,6 @@ export const layoutRoute = rootRoute.reatomRoute(
         return null
       }
 
-      return {}
-    },
-    render({ outlet }) {
-      return (
-        <Layout>
-          <Suspense fallback={<PageFallback />}>{outlet()}</Suspense>
-        </Layout>
-      )
-    },
-  },
-  'layoutRoute',
-)
-
-export const homeRoute = layoutRoute.reatomRoute(
-  {
-    path: '',
-    params() {
       if (!session.ready()) {
         return {}
       }
@@ -88,8 +71,19 @@ export const homeRoute = layoutRoute.reatomRoute(
 
       return null
     },
-    render() {
-      return <HomePage />
+    async loader() {
+      return await wrap(loadQuestionList())
+    },
+    render({ outlet }) {
+      const child = outlet()
+
+      return (
+        <HomeLayout>
+          {child ? (
+            <Suspense fallback={<PageFallback />}>{child}</Suspense>
+          ) : undefined}
+        </HomeLayout>
+      )
     },
   },
   'homeRoute',
@@ -202,7 +196,6 @@ export const signUpRoute = rootRoute.reatomRoute(
 
 export const appRoutes = {
   root: rootRoute,
-  layout: layoutRoute,
   home: homeRoute,
   questions: questionsRoute,
   question: questionRoute,
