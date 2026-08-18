@@ -38,7 +38,7 @@ export const QuestionsSidebar = reatomComponent(
             <SidebarGroupLabel className="uppercase tracking-[1.5px]">
               menu
             </SidebarGroupLabel>
-            {!isListReady ? (
+            {!isListReady && questions.length === 0 ? (
               <div className="flex flex-1 items-center justify-center">
                 <Spinner />
               </div>

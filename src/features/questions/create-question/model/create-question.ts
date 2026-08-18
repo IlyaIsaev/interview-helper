@@ -1,6 +1,7 @@
 import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/core'
 import * as v from 'valibot'
 
+import { addQuestion } from '@/entities/questions/sidebar'
 import { clientApi } from '@/shared/api'
 
 const createQuestionSchema = v.object({
@@ -37,7 +38,11 @@ export const createQuestionForm = reatomForm(
 )
 
 createQuestionForm.submit.onFulfill.extend(
-  withCallHook(() => {
+  withCallHook(({ payload: createdQuestion }) => {
+    addQuestion({
+      id: createdQuestion.id,
+      question: createdQuestion.question,
+    })
     closeCreateQuestionDialog()
   }),
 )

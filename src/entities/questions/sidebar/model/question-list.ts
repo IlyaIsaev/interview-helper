@@ -1,4 +1,4 @@
-import { computed, withAsyncData, wrap } from '@reatom/core'
+import { action, computed, withAsyncData, wrap } from '@reatom/core'
 
 import { clientApi } from '@/shared/api'
 
@@ -15,3 +15,8 @@ export const questionList = computed(async (): Promise<Array<QuestionListItem>> 
     question,
   }))
 }, 'questionList').extend(withAsyncData({ initState: [] }))
+
+export const addQuestion = action((item: QuestionListItem) => {
+  questionList.data.set([...questionList.data(), item])
+  questionList.retry()
+}, 'addQuestion')

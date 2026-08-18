@@ -112,6 +112,7 @@ test('creating a question from the sidebar goes to the new question page', async
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
   await expect(page.getByRole('heading', { name: 'What is FSD?' })).toBeVisible()
   await expect(page.getByText('Feature-Sliced Design')).toBeVisible()
+  await expect(page.getByRole('link', { name: 'What is FSD?' })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
