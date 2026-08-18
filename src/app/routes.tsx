@@ -12,19 +12,19 @@ import {
   signUpPath,
 } from '@/shared/config'
 
-const Layout = lazy(() => import('@/pages/layout'))
+const Layout = lazy(() => import('@/pages/layout/index'))
 
-const HomePage = lazy(() => import('@/pages/home'))
+const HomePage = lazy(() => import('@/pages/layout/home/index'))
 
-const QuestionsPage = lazy(() => import('@/pages/questions'))
+const QuestionsPage = lazy(() => import('@/pages/layout/home/questions/index'))
 
-const QuestionPage = lazy(() => import('@/pages/question'))
+const QuestionPage = lazy(() => import('@/pages/layout/home/questions/question/index'))
 
-const SignInPage = lazy(() => import('@/pages/sign-in'))
+const SignInPage = lazy(() => import('@/pages/sign-in/index'))
 
-const SignUpPage = lazy(() => import('@/pages/sign-up'))
+const SignUpPage = lazy(() => import('@/pages/sign-up/index'))
 
-const ProfilePage = lazy(() => import('@/pages/profile'))
+const ProfilePage = lazy(() => import('@/pages/profile/index'))
 
 function PageFallback() {
   return (
