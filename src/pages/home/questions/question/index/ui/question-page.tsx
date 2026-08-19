@@ -1,13 +1,10 @@
 import { reatomComponent } from '@reatom/react'
 
-type QuestionPageProps = {
-  question: {
-    question: string
-    answer: string
-  } | null
-}
+import { currentQuestion } from '@/entities/questions/question'
 
-const QuestionPage = reatomComponent(({ question }: QuestionPageProps) => {
+const QuestionPage = reatomComponent(() => {
+  const question = currentQuestion()
+
   if (!question) {
     return (
       <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">

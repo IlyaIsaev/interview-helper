@@ -1,7 +1,8 @@
 import { reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { lazy, Suspense } from 'react'
 
-import { loadQuestionList } from '@/entities/questions/sidebar'
+import { initQuestion } from '@/entities/questions/question'
+import { initQuestionList } from '@/entities/questions/sidebar'
 import { clientApi } from '@/shared/api'
 import { session } from '@/shared/auth'
 import { Spinner } from '@/shared/ui'
@@ -72,7 +73,9 @@ export const homeRoute = rootRoute.reatomRoute(
       return null
     },
     async loader() {
-      return await wrap(loadQuestionList())
+      const { questions } = await wrap(clientApi.loadQuestions())
+
+      initQuestionList(questions)
     },
     render({ outlet }) {
       const child = outlet()
@@ -103,14 +106,16 @@ export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ':id',
     async loader({ id }) {
-      return await wrap(clientApi.loadQuestion(id))
+      const question = await wrap(clientApi.loadQuestion(id))
+
+      initQuestion(question)
     },
     render(question) {
       if (!question.loader.ready()) {
         return <PageFallback />
       }
 
-      return <QuestionPage question={question.loader.data() ?? null} />
+      return <QuestionPage />
     },
   },
   'questionRoute',
