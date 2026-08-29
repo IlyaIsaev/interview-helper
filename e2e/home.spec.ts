@@ -1,5 +1,10 @@
 import { expect, test } from '@playwright/test'
 
+const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
+
+const isQuestionsListPath = (url: string) =>
+  new URL(url).pathname === '/questions'
+
 test('opening the app redirects guests to sign-in', async ({ page }) => {
   const signUpRequests: string[] = []
 
@@ -19,19 +24,21 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
   expect(signUpRequests).toEqual([])
 })
 
-test('signing in creates the demo user and shows home', async ({ page }) => {
+test('signing in creates the demo user and lands on questions', async ({
+  page,
+}) => {
   await page.goto('/')
-
-  const email = await page.getByLabel('email').inputValue()
 
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible({
-    timeout: 15_000,
-  })
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+
+  if (isQuestionsListPath(page.url())) {
+    await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
+    await expect(page.getByText('the questions list is empty')).toBeVisible()
+  }
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await expect(page.getByRole('menuitem', { name: 'Demo user' })).toBeVisible()
@@ -39,8 +46,7 @@ test('signing in creates the demo user and shows home', async ({ page }) => {
 
   await page.reload()
 
-  await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+  await expect(page).toHaveURL(signedInPath)
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
@@ -75,10 +81,7 @@ test('signing out returns to sign-in with the same demo user', async ({
 
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible({
-    timeout: 15_000,
-  })
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
@@ -111,8 +114,8 @@ test('user menu name opens the profile page without a sidebar', async ({
 
   await page.getByRole('link', { name: 'Interview helper' }).click()
 
-  await expect(page).toHaveURL(/\/$/)
-  await expect(page.getByRole('heading', { name: 'Home' })).toBeVisible()
+  await expect(page).toHaveURL(signedInPath)
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
 test('guests opening profile are redirected to sign-in', async ({ page }) => {
@@ -120,4 +123,19 @@ test('guests opening profile are redirected to sign-in', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
+})
+
+test('signed-in users opening sign-in are sent to questions', async ({
+  page,
+}) => {
+  await page.goto('/')
+
+  await page.getByRole('button', { name: 'Sign in' }).click()
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+
+  await page.goto('/sign-in')
+
+  await expect(page).toHaveURL(signedInPath)
+  await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0)
 })

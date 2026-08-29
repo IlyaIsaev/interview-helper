@@ -5,6 +5,7 @@ import {
   ToggleSidebar,
   ToggleSidebarProvider,
 } from '@/features/questions/toggle-sidebar'
+import { UpdateQuestion } from '@/features/questions/update-question'
 import { ThemeSwitcher } from '@/features/theme-switcher'
 import { QuestionsSidebar } from '@/widgets/questions-sidebar'
 import { UserMenu } from '@/widgets/user-menu'
@@ -23,6 +24,7 @@ const Layout = ({ children }: LayoutProps) => {
     <ToggleSidebarProvider>
       <QuestionsSidebar />
       <CreateQuestion />
+      <UpdateQuestion />
       <SidebarInset>
         <header className="flex h-12 items-center gap-3 border-b border-border px-3">
           <ToggleSidebar />

@@ -1,6 +1,7 @@
 import { wrap } from '@reatom/core'
 import { reatomComponent } from '@reatom/react'
 
+import { QuestionFields } from '@/features/questions/create-question/@x/update-question'
 import {
   Button,
   Dialog,
@@ -14,26 +15,25 @@ import {
 } from '@/shared/ui'
 
 import {
-  closeCreateQuestionDialog,
-  createQuestionForm,
-  isCreateQuestionDialogOpen,
-} from '../model/create-question'
-import { QuestionFields } from './question-fields'
+  closeUpdateQuestionDialog,
+  isUpdateQuestionDialogOpen,
+  updateQuestionForm,
+} from '../model/update-question'
 
-export const CreateQuestion = reatomComponent(() => {
-  const isDialogOpen = isCreateQuestionDialogOpen()
-  const { fields, submit, validation } = createQuestionForm
+export const UpdateQuestion = reatomComponent(() => {
+  const isDialogOpen = isUpdateQuestionDialogOpen()
+  const { fields, submit, validation } = updateQuestionForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
   const submitError = submit.error()
   const handleDialogOpenChange = wrap((isOpen: boolean) => {
     if (isOpen) {
-      isCreateQuestionDialogOpen.setTrue()
+      isUpdateQuestionDialogOpen.setTrue()
 
       return
     }
 
-    closeCreateQuestionDialog()
+    closeUpdateQuestionDialog()
   })
 
   return (
@@ -41,10 +41,10 @@ export const CreateQuestion = reatomComponent(() => {
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
         <DialogHeader>
           <DialogTitle className="text-xs uppercase tracking-[1.5px]">
-            Create question
+            Update question
           </DialogTitle>
           <DialogDescription className="text-ui text-muted-foreground">
-            Add a question and its answer.
+            Edit the question and its answer.
           </DialogDescription>
         </DialogHeader>
         <Form onSubmit={submit}>
@@ -54,7 +54,7 @@ export const CreateQuestion = reatomComponent(() => {
             <Button
               type="button"
               variant="outline"
-              onClick={wrap(closeCreateQuestionDialog)}
+              onClick={wrap(closeUpdateQuestionDialog)}
             >
               Cancel
             </Button>
@@ -62,11 +62,11 @@ export const CreateQuestion = reatomComponent(() => {
               type="submit"
               disabled={!isSubmitReady || hasValidationErrors}
             >
-              Create
+              Update
             </Button>
           </DialogFooter>
         </Form>
       </DialogContent>
     </Dialog>
   )
-}, 'CreateQuestion')
+}, 'UpdateQuestion')

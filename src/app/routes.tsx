@@ -1,30 +1,36 @@
-import { reatomRoute, urlAtom, wrap } from '@reatom/core'
+import { action, reatomRoute, urlAtom, wrap } from '@reatom/core'
 import { lazy, Suspense } from 'react'
 
 import { initQuestion } from '@/entities/questions/question'
-import { initQuestionList } from '@/entities/questions/sidebar'
+import { initQuestionList, questionList } from '@/entities/questions/sidebar'
 import { clientApi } from '@/shared/api'
 import { session } from '@/shared/auth'
-import { Spinner } from '@/shared/ui'
 import {
-  homePath,
   profilePath,
+  questionPath,
   questionsPath,
   signInPath,
   signUpPath,
 } from '@/shared/config'
+import { Spinner } from '@/shared/ui'
 
-const HomeLayout = lazy(() => import('@/pages/home/layout'))
+const HomeLayout = lazy(() => import('@/pages/home/layout/ui/layout'))
 
-const QuestionsPage = lazy(() => import('@/pages/home/questions/index'))
+const QuestionsPage = lazy(
+  () => import('@/pages/home/questions/index/ui/questions-page'),
+)
 
-const QuestionPage = lazy(() => import('@/pages/home/questions/question/index'))
+const QuestionPage = lazy(
+  () => import('@/pages/home/questions/question/index/ui/question-page'),
+)
 
-const SignInPage = lazy(() => import('@/pages/sign-in/index'))
+const SignInPage = lazy(() => import('@/pages/sign-in/index/ui/sign-in-page'))
 
-const SignUpPage = lazy(() => import('@/pages/sign-up/index'))
+const SignUpPage = lazy(() => import('@/pages/sign-up/index/ui/sign-up-page'))
 
-const ProfilePage = lazy(() => import('@/pages/profile/index'))
+const ProfilePage = lazy(() => import('@/pages/profile/index/ui/profile-page'))
+
+const questionPagePath = new RegExp(`^${questionsPath}/[^/]+$`)
 
 function PageFallback() {
   return (
@@ -34,6 +40,45 @@ function PageFallback() {
     </section>
   )
 }
+
+const isAuthPath = (pathname: string) => {
+  return pathname === signInPath || pathname === signUpPath
+}
+
+const openSignedInDestination = action(() => {
+  const questions = questionList()
+
+  if (questions === null) {
+    return
+  }
+
+  const { pathname } = urlAtom()
+
+  if (pathname === profilePath) {
+    return
+  }
+
+  if (questions.length === 0) {
+    if (pathname !== questionsPath) {
+      urlAtom.go(questionsPath, true)
+    }
+
+    return
+  }
+
+  if (questionPagePath.test(pathname)) {
+    return
+  }
+
+  const randomQuestion =
+    questions[Math.floor(Math.random() * questions.length)]
+
+  if (!randomQuestion) {
+    return
+  }
+
+  urlAtom.go(questionPath(randomQuestion.id), true)
+}, 'openSignedInDestination')
 
 export const rootRoute = reatomRoute(
   {
@@ -45,7 +90,67 @@ export const rootRoute = reatomRoute(
   'rootRoute',
 )
 
-export const homeRoute = rootRoute.reatomRoute(
+export const protectedRoute = rootRoute.reatomRoute(
+  {
+    layout: true,
+    params() {
+      const { pathname } = urlAtom()
+      const onAuthPage = isAuthPath(pathname)
+
+      if (!session.ready()) {
+        if (onAuthPage) {
+          return null
+        }
+
+        return {}
+      }
+
+      const user = session.data()?.user
+
+      if (!user) {
+        if (questionList() !== null) {
+          questionList.set(null)
+        }
+
+        if (!onAuthPage) {
+          urlAtom.go(signInPath, true)
+        }
+
+        return null
+      }
+
+      questionList()
+      openSignedInDestination()
+
+      return {}
+    },
+    async loader() {
+      if (!session.data()?.user) {
+        return
+      }
+
+      const { questions } = await wrap(clientApi.loadQuestions())
+
+      initQuestionList(questions)
+    },
+    render(protectedPage) {
+      if (!session.ready()) {
+        return <PageFallback />
+      }
+
+      if (session.data()?.user) {
+        if (!protectedPage.loader.ready() || questionList() === null) {
+          return <PageFallback />
+        }
+      }
+
+      return <>{protectedPage.outlet()}</>
+    },
+  },
+  'protectedRoute',
+)
+
+export const homeRoute = protectedRoute.reatomRoute(
   {
     layout: true,
     path: '',
@@ -60,29 +165,14 @@ export const homeRoute = rootRoute.reatomRoute(
         return null
       }
 
-      if (!session.ready()) {
-        return {}
-      }
-
-      if (session.data()?.user) {
-        return {}
-      }
-
-      urlAtom.go(signInPath, true)
-
-      return null
-    },
-    async loader() {
-      const { questions } = await wrap(clientApi.loadQuestions())
-
-      initQuestionList(questions)
+      return {}
     },
     render({ outlet }) {
       const child = outlet()
 
       return (
         <HomeLayout>
-          {child ? (
+          {child.length > 0 ? (
             <Suspense fallback={<PageFallback />}>{child}</Suspense>
           ) : undefined}
         </HomeLayout>
@@ -121,22 +211,9 @@ export const questionRoute = questionsRoute.reatomRoute(
   'questionRoute',
 )
 
-export const profileRoute = rootRoute.reatomRoute(
+export const profileRoute = protectedRoute.reatomRoute(
   {
     path: profilePath.slice(1),
-    params() {
-      if (!session.ready()) {
-        return {}
-      }
-
-      if (session.data()?.user) {
-        return {}
-      }
-
-      urlAtom.go(signInPath, true)
-
-      return null
-    },
     async loader() {
       const user = session.data()?.user
 
@@ -174,13 +251,11 @@ export const signInRoute = rootRoute.reatomRoute(
         return {}
       }
 
-      if (!session.data()?.user) {
-        return {}
+      if (session.data()?.user) {
+        return null
       }
 
-      urlAtom.go(homePath, true)
-
-      return null
+      return {}
     },
     render() {
       return <SignInPage />
@@ -192,6 +267,17 @@ export const signInRoute = rootRoute.reatomRoute(
 export const signUpRoute = rootRoute.reatomRoute(
   {
     path: signUpPath.slice(1),
+    params() {
+      if (!session.ready()) {
+        return {}
+      }
+
+      if (session.data()?.user) {
+        return null
+      }
+
+      return {}
+    },
     render() {
       return <SignUpPage />
     },
@@ -201,6 +287,7 @@ export const signUpRoute = rootRoute.reatomRoute(
 
 export const appRoutes = {
   root: rootRoute,
+  protected: protectedRoute,
   home: homeRoute,
   questions: questionsRoute,
   question: questionRoute,

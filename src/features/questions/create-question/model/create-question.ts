@@ -1,13 +1,9 @@
 import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/core'
-import * as v from 'valibot'
 
 import { addQuestion } from '@/entities/questions/sidebar'
 import { clientApi } from '@/shared/api'
 
-const createQuestionSchema = v.object({
-  question: v.pipe(v.string(), v.trim(), v.nonEmpty('Enter a question')),
-  answer: v.pipe(v.string(), v.trim(), v.nonEmpty('Enter an answer')),
-})
+import { questionFieldsSchema } from './question-fields'
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,
@@ -30,7 +26,7 @@ export const createQuestionForm = reatomForm(
     name: 'createQuestionForm',
     validateOnBlur: true,
     validateOnChange: true,
-    schema: createQuestionSchema,
+    schema: questionFieldsSchema,
     onSubmit: async ({ question, answer }) => {
       return await wrap(clientApi.createQuestion({ question, answer }))
     },

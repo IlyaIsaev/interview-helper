@@ -7,7 +7,7 @@ General style, immutability, domain naming, and kebab-case come from the parent 
 Use [Feature-Sliced Design (FSD)](https://fsd.how). Official docs for LLMs: https://fsd.how/llms.txt  
 Local skill: `.agents/skills/feature-sliced-design/SKILL.md` — follow it when placing, moving, or reviewing code.
 
-A module may import only from layers strictly below it (`app` → `pages` → `widgets` → `features` → `entities` → `shared`). Cross-imports between slices on the same layer are forbidden. Consume slices through their public `index.ts`.
+A module may import only from layers strictly below it (`app` → `pages` → `widgets` → `features` → `entities` → `shared`). Cross-imports between slices on the same layer are forbidden. Consume `features/`, `entities/`, and `widgets/` slices through their public `index.ts`. Pages are the exception: see **Pages and routes**.
 
 Group `features/` and `entities/` slices by **business domain**, not by technical role.
 
@@ -24,10 +24,11 @@ Current layout:
 
 ```text
 app/                 ← entrypoint, Reatom logger, routes, composition
-pages/home/          ← signed-in home route group
+                         protectedRoute: signed-in gate + landing (no page folder)
+pages/home/          ← signed-in home route group (under protectedRoute)
   layout/            ← homeRoute chrome (sidebar + header; HomePage when no child)
   questions/         ← questions route group
-    index/           ← signed-in questions list (/questions)
+    index/           ← questions list / empty state (/questions)
     question/
       index/         ← signed-in question detail (/questions/:id)
 pages/profile/
@@ -38,8 +39,10 @@ pages/sign-up/
   index/             ← email/password sign-up
 features/cookie-consent/ ← accept/decline cookies, banner
 features/questions/create-question/ ← dialog form to create a question + answer
+features/questions/show-answer/ ← reveal the answer on the question page
 features/questions/toggle-sidebar/ ← open/close questions sidebar
-widgets/questions-sidebar/ ← wires question links + create button into the sidebar entity
+features/questions/update-question/ ← dialog form to update a question + answer
+widgets/questions-sidebar/ ← wires question links + create/update buttons into the sidebar entity
 widgets/user-menu/   ← header menu: wires profile link + log out into user entity
 features/theme-switcher/ ← icon toggle for light/dark theme
 entities/questions/sidebar/ ← questions sidebar panel + list
@@ -55,10 +58,10 @@ shared/theme/        ← light/dark theme atom + document class sync
 ## Pages and routes
 
 - Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`.
-- A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present, public `index.ts`).
-- Import pages through `@/pages/<route-tree>/layout` or `@/pages/<route-tree>/index`, e.g. `@/pages/home/questions/index`.
-- Page `ui/` files have only a default export (`export default HomePage`). The slice `index.ts` re-exports that default (`export { default } from './ui/home-page'`).
-- Load pages with `React.lazy(() => import('@/pages/home/questions/index'))`. Do not statically import page screens in `app/`.
+- A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present).
+- Page `ui/` files have only a default export (`export default HomePage`). Do not add a slice `index.ts`.
+- Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/home/questions/index/ui/questions-page`.
+- Load pages with `React.lazy(() => import('@/pages/home/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
 - Pages export UI; they do not import from `app/`.
 - If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
 - The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestionList`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
@@ -195,8 +198,10 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 ## Auth
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
-- Sign-in/up forms use `reatomForm`. After success, `session.retry()` and `urlAtom.go(homePath)`.
-- Guests opening `/` are redirected to `/sign-in`. After Sign in, go home. Sign-out returns to `/sign-in` with the same demo credentials.
+- Sign-in/up forms use `reatomForm`. After success, `session.retry()`. `protectedRoute` lands the user: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
+- Guests opening protected URLs are redirected to `/sign-in`. Guests on `/sign-in` or `/sign-up` stay. Signed-in users on auth URLs follow the same landing as `/`.
+- `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
+- Sign-out returns to `/sign-in` with the same demo credentials.
 - Cookie-consent UI lives in `features/cookie-consent` and is only on `/sign-in`.
 - Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.

@@ -1,6 +1,7 @@
 import { reatomComponent } from '@reatom/react'
 
 import { currentQuestion } from '@/entities/questions/question'
+import { ShowAnswer } from '@/features/questions/show-answer'
 
 const QuestionPage = reatomComponent(() => {
   const question = currentQuestion()
@@ -23,10 +24,7 @@ const QuestionPage = reatomComponent(() => {
       <h1 className="text-heading font-medium tracking-tight">
         {question.question}
       </h1>
-      <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
-        answer
-      </p>
-      <p className="text-ui text-muted-foreground">{question.answer}</p>
+      <ShowAnswer answer={question.answer} />
     </section>
   )
 }, 'QuestionPage')

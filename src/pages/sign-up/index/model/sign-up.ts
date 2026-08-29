@@ -1,8 +1,7 @@
-import { reatomForm, urlAtom, wrap } from '@reatom/core'
+import { reatomForm, wrap } from '@reatom/core'
 import * as v from 'valibot'
 
 import { authClient, session } from '@/shared/auth'
-import { homePath } from '@/shared/config'
 
 const signUpSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
@@ -43,7 +42,6 @@ export const signUpForm = reatomForm(
       }
 
       await wrap(session.retry())
-      urlAtom.go(homePath)
     },
   },
 )

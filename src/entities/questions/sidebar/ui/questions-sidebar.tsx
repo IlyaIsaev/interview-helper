@@ -18,10 +18,11 @@ import { questionList } from '../model/question-list'
 type QuestionsSidebarProps = {
   headerAction?: ReactNode
   renderQuestion: (question: string, questionId: string) => ReactNode
+  renderQuestionAction?: (questionId: string) => ReactNode
 }
 
 export const QuestionsSidebar = reatomComponent(
-  ({ headerAction, renderQuestion }: QuestionsSidebarProps) => {
+  ({ headerAction, renderQuestion, renderQuestionAction }: QuestionsSidebarProps) => {
     const questions = questionList()
 
     return (
@@ -52,6 +53,7 @@ export const QuestionsSidebar = reatomComponent(
                     <SidebarMenuButton asChild>
                       {renderQuestion(item.question, item.id)}
                     </SidebarMenuButton>
+                    {renderQuestionAction?.(item.id)}
                   </SidebarMenuItem>
                 ))}
               </SidebarMenu>

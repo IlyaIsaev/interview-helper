@@ -22,3 +22,11 @@ export const initQuestionList = action((questions: Array<QuestionListItem>) => {
 export const addQuestion = action((item: QuestionListItem) => {
   questionList.set([...(questionList() ?? []), item])
 }, 'addQuestion')
+
+export const updateQuestion = action((item: QuestionListItem) => {
+  questionList.set(
+    (questionList() ?? []).map((question) =>
+      question.id === item.id ? item : question,
+    ),
+  )
+}, 'updateQuestion')

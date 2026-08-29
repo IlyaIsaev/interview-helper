@@ -3,7 +3,6 @@ import {
   computed,
   effect,
   reatomForm,
-  urlAtom,
   withAsyncData,
   withConnectHook,
   withCookie,
@@ -13,7 +12,6 @@ import * as v from 'valibot'
 
 import { clientApi } from '@/shared/api'
 import { authClient, session } from '@/shared/auth'
-import { homePath } from '@/shared/config'
 
 type DemoCredentials = {
   email: string
@@ -133,7 +131,6 @@ export const signInForm = reatomForm(
       }
 
       await wrap(session.retry())
-      urlAtom.go(homePath)
     },
   },
 )
