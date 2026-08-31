@@ -12,7 +12,6 @@ export default defineConfig({
     alias: {
       '@/app': resolve(srcRoot, 'app'),
       '@/pages': resolve(srcRoot, 'pages'),
-      '@/widgets': resolve(srcRoot, 'widgets'),
       '@/features': resolve(srcRoot, 'features'),
       '@/entities': resolve(srcRoot, 'entities'),
       '@/shared': resolve(srcRoot, 'shared'),

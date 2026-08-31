@@ -39,9 +39,9 @@ const loadQuestion = async (
 export const questions = new Hono<{ Bindings: Env }>()
   .get('/', async (context) => {
     const database = createDatabase(context.env.DB)
-    const questionRows = await database.select().from(question)
+    const questions = await database.select().from(question)
 
-    return context.json({ questions: questionRows }, 200)
+    return context.json({ questions }, 200)
   })
   .get('/:id', vValidator('param', questionIdSchema), async (context) => {
     const { id } = context.req.valid('param')

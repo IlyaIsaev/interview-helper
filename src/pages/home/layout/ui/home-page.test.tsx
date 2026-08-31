@@ -1,17 +1,10 @@
-import { createRoot } from 'react-dom/client'
-import { flushSync } from 'react-dom'
 import { expect, test } from 'vitest'
+import { render } from 'vitest-browser-react'
 
 import HomePage from './home-page'
 
-test('home page mounts a session-aware shell', () => {
-  const container = document.createElement('div')
+test('home page mounts a session-aware shell', async () => {
+  const screen = await render(<HomePage />)
 
-  document.body.append(container)
-
-  flushSync(() => {
-    createRoot(container).render(<HomePage />)
-  })
-
-  expect(container.textContent?.toLowerCase()).toContain('home')
+  await expect.element(screen.getByRole('heading', { name: 'Home' })).toBeVisible()
 })

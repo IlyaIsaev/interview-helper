@@ -2,8 +2,8 @@ import { reatomComponent } from '@reatom/react'
 import { House } from 'lucide-react'
 
 import { ThemeSwitcher } from '@/features/theme-switcher'
-import { UserMenu } from '@/widgets/user-menu'
-import { homePath } from '@/shared/config'
+import { UserMenu } from '@/features/user-menu'
+import { HOME_PATH } from '@/shared/config'
 import { Button } from '@/shared/ui'
 
 type ProfilePageProps = {
@@ -18,13 +18,13 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
     <>
       <header className="flex h-12 items-center gap-3 border-b border-border px-3">
         <Button asChild className="size-7" size="icon" variant="ghost">
-          <a aria-label="Home" href={homePath}>
+          <a aria-label="Home" href={HOME_PATH}>
             <House />
           </a>
         </Button>
         <a
           className="text-sm uppercase tracking-[2px] text-muted-foreground"
-          href={homePath}
+          href={HOME_PATH}
         >
           Interview helper
         </a>

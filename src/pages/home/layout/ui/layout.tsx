@@ -1,25 +1,21 @@
 import { Children, type ReactNode } from 'react'
 
 import { CreateQuestion } from '@/features/questions/create-question'
-import {
-  ToggleSidebar,
-  ToggleSidebarProvider,
-} from '@/features/questions/toggle-sidebar'
 import { UpdateQuestion } from '@/features/questions/update-question'
 import { ThemeSwitcher } from '@/features/theme-switcher'
-import { QuestionsSidebar } from '@/widgets/questions-sidebar'
-import { UserMenu } from '@/widgets/user-menu'
-import { homePath } from '@/shared/config'
-import { SidebarInset } from '@/shared/ui'
+import { UserMenu } from '@/features/user-menu'
+import { HOME_PATH } from '@/shared/config'
+import { SidebarInset, SidebarTrigger } from '@/shared/ui'
 
-import '../model/layout'
 import HomePage from './home-page'
+import { QuestionsSidebar } from './questions-sidebar'
+import { ToggleSidebarProvider } from './toggle-sidebar-provider'
 
 type LayoutProps = {
   children?: ReactNode
 }
 
-const Layout = ({ children }: LayoutProps) => {
+function Layout({ children }: LayoutProps) {
   return (
     <ToggleSidebarProvider>
       <QuestionsSidebar />
@@ -27,10 +23,10 @@ const Layout = ({ children }: LayoutProps) => {
       <UpdateQuestion />
       <SidebarInset>
         <header className="flex h-12 items-center gap-3 border-b border-border px-3">
-          <ToggleSidebar />
+          <SidebarTrigger />
           <a
             className="text-sm uppercase tracking-[2px] text-muted-foreground"
-            href={homePath}
+            href={HOME_PATH}
           >
             Interview helper
           </a>

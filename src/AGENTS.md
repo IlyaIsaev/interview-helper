@@ -7,46 +7,50 @@ General style, immutability, domain naming, and kebab-case come from the parent 
 Use [Feature-Sliced Design (FSD)](https://fsd.how). Official docs for LLMs: https://fsd.how/llms.txt  
 Local skill: `.agents/skills/feature-sliced-design/SKILL.md` — follow it when placing, moving, or reviewing code.
 
-A module may import only from layers strictly below it (`app` → `pages` → `widgets` → `features` → `entities` → `shared`). Cross-imports between slices on the same layer are forbidden. Consume `features/`, `entities/`, and `widgets/` slices through their public `index.ts`. Pages are the exception: see **Pages and routes**.
+### Import rules
+
+A module may import only from layers strictly below it (`app` → `pages` → `features` → `entities` → `shared`). Do not import a slice's internals (`ui/`, `model/`). Consume `features/` and `entities/` through their public `index.ts`. Pages are the exception: see **Pages and routes**.
+
+Same-layer internals are forbidden. Features that must share UI or a schema import the owning slice's public `index.ts`. `@x` is entities-only (see **Domain folders**).
+
+### When to extract slices
+
+Not all layers are required. Start with `app/`, `pages/`, and `shared/`. Extract to `features/` or `entities/` only when the same code is used in more than one place. Do not adopt `widgets/`. When in doubt, keep code in the page.
+
+Do not create empty `features/` or `entities/` folders.
+
+### Domain folders
 
 Group `features/` and `entities/` slices by **business domain**, not by technical role.
 
-- When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`, `entities/questions/question`.
+- When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`.
 - The domain folder is only for navigation. It is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
-- Slices in the same domain folder may import each other **only as a last resort**, and only through an FSD cross-import (`@x`, e.g. `import { Question } from '@/entities/questions/question/@x/answer'`). Prefer merging slices, moving shared code down a layer, or composing from `pages/` / `app/` first.
-- If the domain is unclear or the slice spans several domains (`cookie-consent`, `theme-switcher`, `user-menu`), keep it at the top of `features/` or `entities/`.
+- Slices on the same layer must not import each other's internals, including siblings in a domain folder. If two feature slices must share UI or a schema, export it from the owning slice's `index.ts`. Prefer merging slices, moving shared domain code to `entities/`, or composing from `pages/` / `app/` first.
+- `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged (e.g. `import { Question } from '@/entities/question/@x/answer'`). Document why merge does not apply. Never use `@x` on features.
+- If the domain is unclear or the slice spans several domains (`theme-switcher`, `user-menu`), keep it at the top of `features/` or `entities/`.
 
-Not all layers are required. Start with `app/`, `pages/`, and `shared/`. Extract to `features/` or `entities/` only when the same code is used in more than one place. Do not adopt `widgets/` by default. When in doubt, keep code in the page.
-
-Do not create empty `features/`, `entities/`, or `widgets/` folders.
-
-Current layout:
+### Current layout
 
 ```text
 app/                 ← entrypoint, Reatom logger, routes, composition
                          protectedRoute: signed-in gate + landing (no page folder)
 pages/home/          ← signed-in home route group (under protectedRoute)
-  layout/            ← homeRoute chrome (sidebar + header; HomePage when no child)
+  layout/            ← homeRoute chrome (sidebar + toggle + header; HomePage when no child)
   questions/         ← questions route group
     index/           ← questions list / empty state (/questions)
     question/
-      index/         ← signed-in question detail (/questions/:id)
+      index/         ← signed-in question detail + show-answer (/questions/:id)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
   index/             ← prefilled demo login + cookie consent
 pages/sign-up/
   index/             ← email/password sign-up
-features/cookie-consent/ ← accept/decline cookies, banner
 features/questions/create-question/ ← dialog form to create a question + answer
-features/questions/show-answer/ ← reveal the answer on the question page
-features/questions/toggle-sidebar/ ← open/close questions sidebar
 features/questions/update-question/ ← dialog form to update a question + answer
-widgets/questions-sidebar/ ← wires question links + create/update buttons into the sidebar entity
-widgets/user-menu/   ← header menu: wires profile link + log out into user entity
 features/theme-switcher/ ← icon toggle for light/dark theme
-entities/questions/sidebar/ ← questions sidebar panel + list
-entities/user/       ← user data + presentational avatar menu
+features/user-menu/  ← header menu: profile link + log out
+entities/question/   ← current question + question list (model only)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
@@ -57,16 +61,26 @@ shared/theme/        ← light/dark theme atom + document class sync
 
 ## Pages and routes
 
+Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from `app/`. Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
+
+### Folder layout
+
 - Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`.
 - A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present).
 - Page `ui/` files have only a default export (`export default HomePage`). Do not add a slice `index.ts`.
 - Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/home/questions/index/ui/questions-page`.
 - Load pages with `React.lazy(() => import('@/pages/home/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
-- Pages export UI; they do not import from `app/`.
-- If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
-- The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestionList`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
-- The `init*` action performs **all** mapping and derivation that slice needs, then writes the atom. It does not fetch. Keep `.map`, field picking, and domain defaults out of the loader.
-- UI reads the atom, not `route.loader.data()` from inside entities or features. Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
+- Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
+
+### Loaders and `init*`
+
+If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
+
+The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestionList`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
+
+The `init*` action performs **all** mapping and derivation that slice needs, then writes the atom. It does not fetch. Keep `.map`, field picking, and domain defaults out of the loader.
+
+UI reads the atom, not `route.loader.data()` from inside entities or features. Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
 
 ```ts
 export const questionList = atom<Array<QuestionListItem>>([], 'questionList')
@@ -97,6 +111,63 @@ async loader() {
 }
 ```
 
+### Side effects and redirects on `reatomRoute`
+
+Put matching rules and redirects in `params()`. Put data and scoped work in `loader()`. Do not redirect from `render` or from a free-floating `effect` when `params()` or `loader` can decide.
+
+| Kind of side effect                            | Where                                     |
+| ---------------------------------------------- | ----------------------------------------- |
+| Auth / role / “this URL is invalid”            | `params()` → `return null` + `.go()`      |
+| Redirect after fetch (404, forbidden resource) | `loader`                                  |
+| Per-visit models (form, poll, websocket)       | `effect` **inside** `loader`              |
+| Analytics, document title, scroll-to-top       | top-level `effect` on `urlAtom` / route   |
+| UI-only “don’t render yet”                     | `render` / component — not for navigation |
+
+`params()` runs as part of matching. Returning `null` blocks the route and its children, so loaders and `render` do not run. Call `.go()` there for auth and landing. Use `route.go(params, true)` when the blocked URL must not stay in history.
+
+```ts
+const protectedRoute = layoutRoute.reatomRoute(
+  {
+    layout: true,
+    params() {
+      const userData = user.data();
+
+      if (!userData) {
+        if (user.ready() && !signInRoute.match()) {
+          signInRoute.go(undefined, true);
+        }
+        return null;
+      }
+
+      if (signInRoute.match() || signUpRoute.match()) {
+        homeRoute.go(undefined, true);
+      }
+
+      return { rights: userData.rights };
+    },
+    render(self) {
+      return self.outlet();
+    },
+  },
+  "protectedRoute",
+);
+```
+
+Use `loader` when the decision needs fetched data (missing resource, API 403/404). Loaders abort on navigation and param change. Effects created inside a loader abort when the route is left — use that for polling, subscriptions, and per-visit forms.
+
+```ts
+async loader({ id }) {
+  const res = await wrap(clientApi.loadQuestion({ id }))
+  if (!res.question) {
+    questionsRoute.go(undefined, true)
+    return
+  }
+  initQuestion(res.question)
+}
+```
+
+A standalone `effect()` that watches `adminRoute()` and calls `.go()` is a last resort: the route already matched, loaders may start, and the UI can flash. Prefer `params()`.
+
 ## React
 
 - Declare with `function`, never arrow functions. This is the exception to the parent “prefer arrow functions” rule.
@@ -105,8 +176,8 @@ async loader() {
 
 ```ts
 type FormProps = {
-  id: string
-}
+  id: string;
+};
 
 function Form({ id }: FormProps) {
   // ...
@@ -128,7 +199,7 @@ Use [Reatom v1001](https://v1001.reatom.dev) for:
 Official docs: https://v1001.reatom.dev  
 Local skills: `.agents/skills/reatom/SKILL.md`, `.agents/skills/reatom-async/SKILL.md`
 
-Defaults:
+### Defaults
 
 - Import `src/app/setup.ts` before any other app module (already done in `main.tsx`).
 - Name every atom, action, computed, effect, form, and route.
@@ -137,10 +208,8 @@ Defaults:
 - UI that reads atoms is a `reatomComponent(() => { ... }, 'Name')`. Keep it as dumb/declarative as possible. Never put multi-step side effects directly in JSX.
 - Put logic in a dedicated `action` when several operations belong together. Actions may call other actions freely — this is the primary composition technique.
 - Prefer extracting a named local handler (`const handleClose = wrap(...)`) so JSX stays clean. That local binding is not an action name; actions still use verb + domain object.
-- Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
 - Form submit lives in `reatomForm({ onSubmit })`. Validate with a Valibot `schema`. Use field `validate` only for cross-field or async checks. Render every form with the shadcn form components in `@/shared/ui`.
 - Update data optimistically: show existing `.data()` / `initState` immediately, then load the same resource from the backend (`retry()`) and replace it. Do not blank the UI or hide it behind a spinner while that refetch runs.
-- Define routes in `src/app/routes.tsx`. Pages do not import from `app/`.
 
 ```ts
 export const QuestionDialog = reatomComponent(({ questionId }: { questionId: string }) => {
@@ -174,7 +243,7 @@ onClick={wrap(() => {
 
 ## Validation
 
-- Form schemas use Valibot via `reatomForm` `schema` (Standard Schema). Do not add Zod or React Hook Form.
+Form schemas use Valibot via `reatomForm` `schema` (Standard Schema). Do not add Zod or React Hook Form.
 
 ## API client
 
@@ -198,18 +267,21 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 ## Auth
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
-- Sign-in/up forms use `reatomForm`. After success, `session.retry()`. `protectedRoute` lands the user: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
-- Guests opening protected URLs are redirected to `/sign-in`. Guests on `/sign-in` or `/sign-up` stay. Signed-in users on auth URLs follow the same landing as `/`.
-- `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
+- Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
+- Auth gates and landing live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
+  - Guests opening protected URLs go to `/sign-in`.
+  - Guests on `/sign-in` or `/sign-up` stay.
+  - Signed-in users on `/` or auth URLs: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
+  - `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials.
-- Cookie-consent UI lives in `features/cookie-consent` and is only on `/sign-in`.
-- Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
+- Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.
 
 ## Unit tests
 
 - Vitest Browser Mode (`pnpm test`). Tests live next to source as `*.test.ts(x)` and run in Chromium.
-- Do not use jsdom, Cypress, or Testing Library-in-Node.
+- React components: `await render(...)` from `vitest-browser-react`, query with locators (`getByRole`, `getByText`), assert with `await expect.element(...).toBeVisible()`.
+- Do not use `createRoot`, `flushSync`, jsdom, Cypress, or Testing Library-in-Node.
 - Do not put Playwright specs in `src/` — those belong in `e2e/`.
 
 ## Naming
@@ -219,11 +291,11 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 - Prefer full words in props (`user`, `config`, `options` — not `usr`, `cfg`, `opts`)
 - Atoms/actions: **domain noun** (state) or **verb + domain object** (action). Do not encode Reatom in the name.
 
-| Instead of (weak / technical) | Prefer (business) |
-|-------------------------------|-------------------|
-| `handleClickSubmit` | `submitOrder` |
-| `userDataAtom` | `user` / `currentUser` |
-| `onChangeEmailInput` | `changeEmail` |
+| Instead of (weak / technical) | Prefer (business)      |
+| ----------------------------- | ---------------------- |
+| `handleClickSubmit`           | `submitOrder`          |
+| `userDataAtom`                | `user` / `currentUser` |
+| `onChangeEmailInput`          | `changeEmail`          |
 
 ```ts
 // Values — business intent

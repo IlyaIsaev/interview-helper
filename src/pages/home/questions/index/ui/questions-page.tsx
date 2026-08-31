@@ -1,6 +1,6 @@
 import { reatomComponent } from '@reatom/react'
 
-import { questionList } from '@/entities/questions/sidebar'
+import { questionList } from '@/entities/question'
 import { CreateQuestionEmptyButton } from '@/features/questions/create-question'
 import { Spinner } from '@/shared/ui'
 

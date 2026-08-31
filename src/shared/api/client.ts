@@ -34,17 +34,24 @@ const readJson = async <T>(
 }
 
 type QuestionsResponse = InferResponseType<typeof api.api.questions.$get>
+
 type QuestionResponse = InferResponseType<(typeof api.api.questions)[':id']['$get'], 200>
+
 type CreateQuestionBody = InferRequestType<typeof api.api.questions.$post>['json']
+
 type CreatedQuestion = InferResponseType<typeof api.api.questions.$post, 201>
+
 type UpdateQuestionBody = InferRequestType<
   (typeof api.api.questions)[':id']['$put']
 >['json']
+
 type UpdatedQuestion = InferResponseType<
   (typeof api.api.questions)[':id']['$put'],
   200
 >
+
 type DemoUserCredentials = InferResponseType<(typeof api.api)['demo-user']['$get']>
+
 type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json']
 
 export const clientApi = {

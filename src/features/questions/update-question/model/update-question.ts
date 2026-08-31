@@ -8,9 +8,12 @@ import {
   wrap,
 } from '@reatom/core'
 
-import { initQuestion } from '@/entities/questions/question'
-import { initQuestionList, updateQuestion } from '@/entities/questions/sidebar'
-import { questionFieldsSchema } from '@/features/questions/create-question/@x/update-question'
+import {
+  initQuestion,
+  initQuestionList,
+  updateQuestion,
+} from '@/entities/question'
+import { questionFieldsSchema } from '@/features/questions/create-question'
 import { clientApi } from '@/shared/api'
 import { questionPath } from '@/shared/config'
 

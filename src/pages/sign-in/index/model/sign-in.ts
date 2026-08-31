@@ -10,6 +10,8 @@ import {
 } from '@reatom/core'
 import * as v from 'valibot'
 
+import type { JSONValue } from 'es-toolkit/types'
+
 import { clientApi } from '@/shared/api'
 import { authClient, session } from '@/shared/auth'
 
@@ -43,7 +45,7 @@ const readDemoCredentials = (snapshot: string): DemoCredentials | null => {
   }
 
   try {
-    const credentials: unknown = JSON.parse(snapshot)
+    const credentials: JSONValue = JSON.parse(snapshot) as JSONValue
 
     if (typeof credentials !== 'object' || credentials === null) {
       return null
@@ -126,7 +128,9 @@ export const signInForm = reatomForm(
 
       if (shouldCreateDemoUser) {
         await wrap(createDemoUser(email, password))
-      } else {
+      }
+
+      if (!shouldCreateDemoUser) {
         await wrap(signInWithPassword(email, password))
       }
 

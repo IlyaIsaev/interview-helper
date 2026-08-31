@@ -1,7 +1,8 @@
-import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/core'
+import { action, reatomBoolean, reatomForm, urlAtom, withCallHook, wrap } from '@reatom/core'
 
-import { addQuestion } from '@/entities/questions/sidebar'
+import { addQuestion } from '@/entities/question'
 import { clientApi } from '@/shared/api'
+import { questionPath } from '@/shared/config'
 
 import { questionFieldsSchema } from './question-fields'
 
@@ -40,5 +41,6 @@ createQuestionForm.submit.onFulfill.extend(
       question: createdQuestion.question,
     })
     closeCreateQuestionDialog()
+    urlAtom.go(questionPath(createdQuestion.id))
   }),
 )

@@ -1,7 +1,7 @@
 import { reatomComponent } from '@reatom/react'
 
-import { CookieConsent } from '@/features/cookie-consent'
-import { signUpPath } from '@/shared/config'
+import { CookieConsent } from './cookie-consent'
+import { SIGN_UP_PATH } from '@/shared/config'
 import {
   bindFormControl,
   Button,
@@ -73,7 +73,7 @@ const SignInPage = reatomComponent(() => {
             Need an account?{' '}
             <a
               className="text-primary underline-offset-4 hover:underline"
-              href={signUpPath}
+              href={SIGN_UP_PATH}
             >
               Sign up
             </a>

@@ -1,7 +1,8 @@
 import { reatomComponent } from '@reatom/react'
 
-import { currentQuestion } from '@/entities/questions/question'
-import { ShowAnswer } from '@/features/questions/show-answer'
+import { currentQuestion } from '@/entities/question'
+
+import { ShowAnswer } from './show-answer'
 
 const QuestionPage = reatomComponent(() => {
   const question = currentQuestion()

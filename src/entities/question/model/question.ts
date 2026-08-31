@@ -1,9 +1,11 @@
 import { action, atom } from '@reatom/core'
+import { pick, pipe } from 'es-toolkit/fp'
+import type { DeepReadonly } from 'es-toolkit/types'
 
-export type Question = {
+export type Question = DeepReadonly<{
   question: string
   answer: string
-}
+}>
 
 export const currentQuestion = atom<Question | null>(null, 'currentQuestion')
 
@@ -14,8 +16,5 @@ export const initQuestion = action((question: Question | null) => {
     return
   }
 
-  currentQuestion.set({
-    question: question.question,
-    answer: question.answer,
-  })
+  currentQuestion.set(pipe(question, pick(['question', 'answer'])))
 }, 'initQuestion')

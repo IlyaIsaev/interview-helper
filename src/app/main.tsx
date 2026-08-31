@@ -7,8 +7,13 @@ import { createRoot } from 'react-dom/client'
 import { App } from './app'
 import './styles/global.css'
 
+const rootElement = document.getElementById('root')
 
-createRoot(document.getElementById('root')!).render(
+if (!rootElement) {
+  throw new Error('Missing #root')
+}
+
+createRoot(rootElement).render(
   <StrictMode>
     <App />
   </StrictMode>,

@@ -44,7 +44,7 @@ const markdownComponents: Components = {
   ),
 }
 
-export const MarkdownPreview = ({ children }: MarkdownPreviewProps) => {
+export function MarkdownPreview({ children }: MarkdownPreviewProps) {
   return (
     <div className={cn('min-h-32 space-y-2 border border-border bg-card p-3')}>
       <Markdown components={markdownComponents}>{children}</Markdown>

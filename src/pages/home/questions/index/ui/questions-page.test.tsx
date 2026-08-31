@@ -1,24 +1,18 @@
-import { createRoot } from 'react-dom/client'
-import { flushSync } from 'react-dom'
 import { expect, test } from 'vitest'
+import { render } from 'vitest-browser-react'
 
-import { initQuestionList } from '@/entities/questions/sidebar'
+import { initQuestionList } from '@/entities/question'
 
 import QuestionsPage from './questions-page'
 
-test('empty questions page shows create question', () => {
+test('empty questions page shows create question', async () => {
   initQuestionList([])
 
-  const container = document.createElement('div')
+  const screen = await render(<QuestionsPage />)
 
-  document.body.append(container)
-
-  flushSync(() => {
-    createRoot(container).render(<QuestionsPage />)
-  })
-
-  expect(container.textContent?.toLowerCase()).toContain(
-    'the questions list is empty',
-  )
-  expect(container.textContent).toContain('Create question')
+  await expect.element(screen.getByRole('heading', { name: 'Questions' })).toBeVisible()
+  await expect.element(screen.getByText('the questions list is empty')).toBeVisible()
+  await expect
+    .element(screen.getByRole('button', { name: 'Create question' }))
+    .toBeVisible()
 })

@@ -235,6 +235,47 @@ test('app title and sidebar question links navigate without losing the sidebar',
   await expect(sidebarCreateQuestion(page)).toBeVisible()
 })
 
+test('reloading a question page fetches that question once', async ({
+  page,
+}) => {
+  const questionText = `Reload once ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Once on reload')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+
+  const questionId = new URL(page.url()).pathname.split('/').at(-1)
+  const questionRequests: string[] = []
+
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') {
+
+      return
+    }
+
+    if (new URL(request.url()).pathname === `/api/questions/${questionId}`) {
+      questionRequests.push(request.url())
+    }
+  })
+
+  await page.reload()
+
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
+  await expect(sidebarCreateQuestion(page)).toBeVisible()
+  expect(questionRequests).toHaveLength(1)
+})
+
 test('list and auth routes send signed-in users with questions to a question page', async ({
   page,
 }) => {
