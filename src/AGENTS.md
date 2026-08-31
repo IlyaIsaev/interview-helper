@@ -47,6 +47,7 @@ pages/sign-in/
 pages/sign-up/
   index/             ← email/password sign-up
 features/questions/create-question/ ← dialog form to create a question + answer
+features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user-menu/  ← header menu: profile link + log out

@@ -100,6 +100,18 @@ export const clientApi = {
     )
   },
 
+  async deleteQuestion(id: string) {
+    const response = await wrap(
+      api.api.questions[':id'].$delete({
+        param: { id },
+      }),
+    )
+
+    if (!response.ok) {
+      throw new Error(`DELETE /api/questions/:id failed: ${response.status}`)
+    }
+  },
+
   async loadDemoUser() {
     const response = await wrap(api.api['demo-user'].$get())
 

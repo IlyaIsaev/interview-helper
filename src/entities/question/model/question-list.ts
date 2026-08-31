@@ -1,5 +1,5 @@
 import { action, atom } from '@reatom/core'
-import { map, pick, pipe } from 'es-toolkit/fp'
+import { filter, map, pick, pipe } from 'es-toolkit/fp'
 import type { DeepReadonly } from 'es-toolkit/types'
 
 export type QuestionListItem = DeepReadonly<{
@@ -33,3 +33,10 @@ export const updateQuestion = action((question: QuestionListItem) => {
 
   questionList.set(pipe(questionList() ?? [], map(listedQuestionWithUpdate)))
 }, 'updateQuestion')
+
+export const removeQuestion = action((questionId: string) => {
+  const isKeptQuestion = (listedQuestion: QuestionListItem) =>
+    listedQuestion.id !== questionId
+
+  questionList.set(pipe(questionList() ?? [], filter(isKeptQuestion)))
+}, 'removeQuestion')

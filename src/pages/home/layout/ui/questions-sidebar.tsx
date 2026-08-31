@@ -3,6 +3,7 @@ import { map, pipe } from 'es-toolkit/fp'
 
 import { questionList, type QuestionListItem } from '@/entities/question'
 import { CreateQuestionButton } from '@/features/questions/create-question'
+import { DeleteQuestionButton } from '@/features/questions/delete-question'
 import { UpdateQuestionButton } from '@/features/questions/update-question'
 import { questionPath } from '@/shared/config'
 import {
@@ -23,12 +24,16 @@ export const QuestionsSidebar = reatomComponent(() => {
   function questionMenuItem(question: QuestionListItem) {
     return (
       <SidebarMenuItem key={question.id}>
-        <SidebarMenuButton asChild>
+        <SidebarMenuButton
+          asChild
+          className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
+        >
           <a href={questionPath(question.id)}>
             <span>{question.question}</span>
           </a>
         </SidebarMenuButton>
-        <UpdateQuestionButton questionId={question.id} />
+        <UpdateQuestionButton className="right-7" questionId={question.id} />
+        <DeleteQuestionButton questionId={question.id} />
       </SidebarMenuItem>
     )
   }

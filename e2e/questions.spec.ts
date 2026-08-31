@@ -169,6 +169,48 @@ test('updating a question from the sidebar goes to the question page', async ({
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
+test('deleting a question from the sidebar removes it', async ({ page }) => {
+  const questionText = `Delete me ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Gone')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const questionItem = page
+    .getByRole('listitem')
+    .filter({ hasText: questionText })
+
+  await questionItem.hover()
+  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+
+  await expect(
+    page.getByRole('heading', { name: 'Delete question' }),
+  ).toBeVisible()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+
+  await questionItem.hover()
+  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+
+  await expect(page.getByRole('link', { name: questionText })).toHaveCount(0)
+  await expect(page.getByRole('heading', { name: questionText })).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page).toHaveURL(signedInPath)
+})
+
 test('mobile sidebar sheet shows Questions and opens create form', async ({
   page,
 }) => {

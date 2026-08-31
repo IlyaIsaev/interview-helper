@@ -1,6 +1,7 @@
 import { Children, type ReactNode } from 'react'
 
 import { CreateQuestion } from '@/features/questions/create-question'
+import { DeleteQuestion } from '@/features/questions/delete-question'
 import { UpdateQuestion } from '@/features/questions/update-question'
 import { ThemeSwitcher } from '@/features/theme-switcher'
 import { UserMenu } from '@/features/user-menu'
@@ -21,6 +22,7 @@ function Layout({ children }: LayoutProps) {
       <QuestionsSidebar />
       <CreateQuestion />
       <UpdateQuestion />
+      <DeleteQuestion />
       <SidebarInset>
         <header className="flex h-12 items-center gap-3 border-b border-border px-3">
           <SidebarTrigger />
