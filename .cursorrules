@@ -1,0 +1,16 @@
+# Playwright and Browser Interaction Rules
+
+## Core Directive
+- NEVER launch external browser windows or allow MCP tools to open a visible GUI.
+- ALWAYS use the native, built-in Cursor "Integrated Browser Tab" for active web navigation, visual debugging, DOM checking, and element selection.
+- All Playwright MCP automated tasks must be executed strictly with the `--headless` flag in the background.
+
+## Workspace Layout
+- The user will keep an integrated browser panel open side-by-side on the right side of the workspace.
+- When inspecting layouts, checking elements, or debugging failing tests, read from this active view or ask the user to navigate within it if necessary.
+
+## Writing Playwright Test Scripts
+- Write clean, modern Playwright locators (e.g., `page.getByRole()`, `page.getByText()`, `page.getByTestId()`).
+- Base your element selectors on the accessibility tree and DOM structure exposed via the active in-editor integrated browser.
+- If you need to verify a selector or layout, run the headless background tool silently, or use the interactive browser panel. Do not spin up separate headed Chromium processes.
+
