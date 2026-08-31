@@ -1,3 +1,4 @@
+import { urlAtom } from '@reatom/core'
 import { reatomComponent } from '@reatom/react'
 import { map, pipe } from 'es-toolkit/fp'
 
@@ -20,15 +21,23 @@ import {
 
 export const QuestionsSidebar = reatomComponent(() => {
   const questions = questionList()
+  const openedQuestionPath = urlAtom().pathname
 
   function questionMenuItem(question: QuestionListItem) {
+    const questionHref = questionPath(question.id)
+    const isOpenedQuestion = openedQuestionPath === questionHref
+
     return (
       <SidebarMenuItem key={question.id}>
         <SidebarMenuButton
           asChild
+          isActive={isOpenedQuestion}
           className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
         >
-          <a href={questionPath(question.id)}>
+          <a
+            aria-current={isOpenedQuestion ? 'page' : undefined}
+            href={questionHref}
+          >
             <span>{question.question}</span>
           </a>
         </SidebarMenuButton>

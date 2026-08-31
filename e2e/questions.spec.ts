@@ -113,6 +113,9 @@ test('creating a question from the sidebar goes to the new question page', async
   await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
   await revealAnswer(page, 'Feature-Sliced Design')
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(
+    page.getByRole('link', { name: questionText, current: 'page' }),
+  ).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
@@ -272,6 +275,9 @@ test('app title and sidebar question links navigate without losing the sidebar',
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/)
   await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
   await revealAnswer(page, 'Feature-Sliced Design')
+  await expect(
+    page.getByRole('link', { name: questionText, current: 'page' }),
+  ).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Home' })).toHaveCount(0)
   await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
   await expect(sidebarCreateQuestion(page)).toBeVisible()
