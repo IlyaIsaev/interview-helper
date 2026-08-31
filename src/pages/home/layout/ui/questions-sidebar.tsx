@@ -24,7 +24,9 @@ export const QuestionsSidebar = reatomComponent(() => {
     return (
       <SidebarMenuItem key={question.id}>
         <SidebarMenuButton asChild>
-          <a href={questionPath(question.id)}>{question.question}</a>
+          <a href={questionPath(question.id)}>
+            <span>{question.question}</span>
+          </a>
         </SidebarMenuButton>
         <UpdateQuestionButton questionId={question.id} />
       </SidebarMenuItem>
