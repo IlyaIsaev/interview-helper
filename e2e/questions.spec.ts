@@ -32,6 +32,22 @@ const signIn = async (page: Page) => {
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 }
 
+const failQuestionMutation = async (page: Page, method: 'PUT' | 'DELETE') => {
+  await page.route('**/api/questions/*', async (route) => {
+    if (route.request().method() === method) {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{}',
+      })
+
+      return
+    }
+
+    await route.continue()
+  })
+}
+
 test('guests opening questions routes are redirected to sign-in', async ({
   page,
 }) => {
@@ -212,6 +228,84 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await expect(page.getByRole('heading', { name: questionText })).toHaveCount(0)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page).toHaveURL(signedInPath)
+})
+
+test('a failed delete restores the question and shows a toast', async ({
+  page,
+}) => {
+  const questionText = `Delete fail ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Stays')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+
+  await failQuestionMutation(page, 'DELETE')
+
+  const questionItem = page
+    .getByRole('listitem')
+    .filter({ hasText: questionText })
+
+  await questionItem.hover()
+  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+  await page.getByRole('button', { name: 'Delete', exact: true }).click()
+
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByText('Could not delete the question')).toBeVisible()
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+})
+
+test('a failed update restores the question and shows a toast', async ({
+  page,
+}) => {
+  const questionText = `Update fail ${Date.now()}`
+  const updatedQuestionText = `Updated fail ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Original answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+
+  await failQuestionMutation(page, 'PUT')
+
+  const questionItem = page
+    .getByRole('listitem')
+    .filter({ hasText: questionText })
+
+  await questionItem.hover()
+  await questionItem.getByRole('button', { name: 'Update question' }).click()
+
+  await expect(
+    page.getByRole('heading', { name: 'Update question' }),
+  ).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(updatedQuestionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Updated answer')
+  await page.getByRole('button', { name: 'Update' }).click()
+
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(page.getByText('Could not update the question')).toBeVisible()
+  await expect(page.getByRole('link', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('link', { name: updatedQuestionText })).toHaveCount(
+    0,
+  )
 })
 
 test('mobile sidebar sheet shows Questions and opens create form', async ({

@@ -6,6 +6,7 @@ export {
   questionList,
   removeQuestion,
   resetQuestionList,
+  restoreQuestion,
   updateQuestion,
   type QuestionListItem,
 } from './model/question-list'

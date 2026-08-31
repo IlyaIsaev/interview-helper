@@ -9,13 +9,16 @@ import {
 } from '@reatom/core'
 
 import {
+  currentQuestion,
   initQuestion,
   initQuestionList,
+  questionList,
   updateQuestion,
 } from '@/entities/question'
 import { questionFieldsSchema } from '@/features/questions/create-question'
 import { clientApi } from '@/shared/api'
 import { questionPath } from '@/shared/config'
+import { toast } from '@/shared/ui'
 
 export const questionBeingUpdated = atom<string | null>(
   null,
@@ -50,24 +53,59 @@ export const updateQuestionForm = reatomForm(
         return
       }
 
-      const updatedQuestion = await wrap(
-        clientApi.updateQuestion(questionId, { question, answer }),
+      const listedQuestion = (questionList() ?? []).find(
+        (listedQuestion) => listedQuestion.id === questionId,
       )
+      const shouldUpdateOpenedQuestion =
+        urlAtom().pathname === questionPath(questionId)
+      const openedQuestion = shouldUpdateOpenedQuestion
+        ? currentQuestion()
+        : undefined
 
-      updateQuestion({
-        id: updatedQuestion.id,
-        question: updatedQuestion.question,
-      })
-      initQuestion({
-        question: updatedQuestion.question,
-        answer: updatedQuestion.answer,
-      })
+      closeUpdateQuestionDialog()
+      updateQuestion({ id: questionId, question })
 
-      const { questions } = await wrap(clientApi.loadQuestions())
+      if (shouldUpdateOpenedQuestion) {
+        initQuestion({ question, answer })
+      }
 
-      initQuestionList(questions)
+      try {
+        const updatedQuestion = await wrap(
+          clientApi.updateQuestion(questionId, { question, answer }),
+        )
 
-      return updatedQuestion
+        updateQuestion({
+          id: updatedQuestion.id,
+          question: updatedQuestion.question,
+        })
+
+        if (shouldUpdateOpenedQuestion) {
+          initQuestion({
+            question: updatedQuestion.question,
+            answer: updatedQuestion.answer,
+          })
+        }
+
+        try {
+          const { questions } = await wrap(clientApi.loadQuestions())
+
+          initQuestionList(questions)
+        } catch {
+          return updatedQuestion
+        }
+
+        return updatedQuestion
+      } catch {
+        if (listedQuestion) {
+          updateQuestion(listedQuestion)
+        }
+
+        if (shouldUpdateOpenedQuestion) {
+          initQuestion(openedQuestion ?? null)
+        }
+
+        toast.error('Could not update the question')
+      }
     },
   },
 )
@@ -94,7 +132,6 @@ updateQuestionForm.submit.onFulfill.extend(
       return
     }
 
-    closeUpdateQuestionDialog()
     urlAtom.go(questionPath(updatedQuestion.id))
   }),
 )

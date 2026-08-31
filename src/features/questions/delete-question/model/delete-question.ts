@@ -1,20 +1,15 @@
-import {
-  action,
-  atom,
-  reatomBoolean,
-  urlAtom,
-  withAsync,
-  withCallHook,
-  wrap,
-} from '@reatom/core'
+import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core'
 
 import {
   initQuestion,
   initQuestionList,
+  questionList,
   removeQuestion,
+  restoreQuestion,
 } from '@/entities/question'
 import { clientApi } from '@/shared/api'
 import { questionPath, QUESTIONS_PATH } from '@/shared/config'
+import { toast } from '@/shared/ui'
 
 export const questionBeingDeleted = atom<string | null>(
   null,
@@ -43,22 +38,36 @@ export const deleteQuestion = action(async () => {
     return
   }
 
-  await wrap(clientApi.deleteQuestion(questionId))
+  const listedQuestions = questionList() ?? []
+  const listedQuestionIndex = listedQuestions.findIndex(
+    (listedQuestion) => listedQuestion.id === questionId,
+  )
+  const listedQuestion = listedQuestions[listedQuestionIndex]
 
+  closeDeleteQuestionDialog()
   removeQuestion(questionId)
+
+  try {
+    await wrap(clientApi.deleteQuestion(questionId))
+  } catch {
+    if (listedQuestion !== undefined) {
+      restoreQuestion(listedQuestion, listedQuestionIndex)
+    }
+    toast.error('Could not delete the question')
+
+    return
+  }
 
   if (urlAtom().pathname === questionPath(questionId)) {
     initQuestion(null)
     urlAtom.go(QUESTIONS_PATH)
   }
 
-  const { questions } = await wrap(clientApi.loadQuestions())
+  try {
+    const { questions } = await wrap(clientApi.loadQuestions())
 
-  initQuestionList(questions)
+    initQuestionList(questions)
+  } catch {
+    return
+  }
 }, 'deleteQuestion').extend(withAsync())
-
-deleteQuestion.onFulfill.extend(
-  withCallHook(() => {
-    closeDeleteQuestionDialog()
-  }),
-)

@@ -40,3 +40,12 @@ export const removeQuestion = action((questionId: string) => {
 
   questionList.set(pipe(questionList() ?? [], filter(isKeptQuestion)))
 }, 'removeQuestion')
+
+export const restoreQuestion = action(
+  (question: QuestionListItem, atIndex: number) => {
+    questionList.set(
+      (questionList() ?? []).toSpliced(atIndex, 0, questionListItem(question)),
+    )
+  },
+  'restoreQuestion',
+)

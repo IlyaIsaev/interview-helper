@@ -20,7 +20,6 @@ import {
 export const DeleteQuestion = reatomComponent(() => {
   const isDialogOpen = isDeleteQuestionDialogOpen()
   const isDeleteReady = deleteQuestion.ready()
-  const deleteError = deleteQuestion.error()
   const handleDialogOpenChange = wrap((isOpen: boolean) => {
     if (isOpen) {
       isDeleteQuestionDialogOpen.setTrue()
@@ -43,9 +42,6 @@ export const DeleteQuestion = reatomComponent(() => {
             This cannot be undone.
           </DialogDescription>
         </DialogHeader>
-        {deleteError ? (
-          <p className="text-ui text-destructive">{deleteError.message}</p>
-        ) : null}
         <DialogFooter>
           <Button
             type="button"

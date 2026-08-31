@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
-  FormMessage,
 } from '@/shared/ui'
 
 import {
@@ -25,7 +24,6 @@ export const UpdateQuestion = reatomComponent(() => {
   const { fields, submit, validation } = updateQuestionForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
-  const submitError = submit.error()
   const handleDialogOpenChange = wrap((isOpen: boolean) => {
     if (isOpen) {
       isUpdateQuestionDialogOpen.setTrue()
@@ -49,7 +47,6 @@ export const UpdateQuestion = reatomComponent(() => {
         </DialogHeader>
         <Form onSubmit={submit}>
           <QuestionFields question={fields.question} answer={fields.answer} />
-          <FormMessage>{submitError?.message}</FormMessage>
           <DialogFooter>
             <Button
               type="button"

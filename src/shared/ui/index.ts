@@ -30,6 +30,9 @@ export { Skeleton } from './skeleton'
 
 export { Spinner } from './spinner'
 
+export { Toaster } from './sonner'
+export { toast } from 'sonner'
+
 export {
   Sheet,
   SheetClose,
