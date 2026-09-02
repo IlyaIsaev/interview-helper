@@ -1,24 +1,8 @@
-import {
-  computed,
-  effect,
-  peek,
-  reatomForm,
-  withConnectHook,
-  wrap,
-} from '@reatom/core'
+import { computed, effect, reatomForm, withConnectHook, wrap } from '@reatom/core'
 import * as v from 'valibot'
 
-import type { DeepReadonly } from 'es-toolkit/types'
-
-import { clientApi } from '@/shared/api'
-import {
-  createdDemoUser,
-  demoCredentials,
-  session,
-  type DemoCredentials,
-} from '@/shared/auth'
-
-type SignInScreen = DeepReadonly<{ kind: 'loading' } | { kind: 'form' }>
+import { authClient, createdDemoUser, session, type DemoCredentials } from '@/shared/auth'
+import { toast } from '@/shared/ui'
 
 const signInSchema = v.object({
   email: v.pipe(
@@ -44,7 +28,19 @@ export const signInForm = reatomForm(
     validateOnChange: true,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
-      await wrap(clientApi.createDemoUser({ email, password }))
+      const { error } = await wrap(
+        authClient.signIn.email({
+          email,
+          password,
+        }),
+      )
+
+      if (error) {
+        toast.error("This user doesn't exist anymore.")
+
+        return
+      }
+
       await wrap(session.retry())
     },
   },
@@ -55,26 +51,21 @@ const fillSignInForm = (credentials: DemoCredentials) => {
   signInForm.fields.password.change(credentials.password)
 }
 
-export const signIn = computed((): SignInScreen => {
-  if (!demoCredentials.ready()) {
-    return { kind: 'loading' }
-  }
-
-  return { kind: 'form' }
-}, 'signIn').extend(
+export const signIn = computed(() => true, 'signIn').extend(
   withConnectHook(() => {
     effect(() => {
-      const credentials = demoCredentials.data()
+      const credentials = createdDemoUser()
 
       if (!credentials) {
+        signInForm.reset()
+        signInForm.validation.triggerSchemaValidation()
+
         return
       }
 
-      if (peek(createdDemoUser)?.email !== credentials.email) {
-        createdDemoUser.set(credentials)
-      }
-
       fillSignInForm(credentials)
-    }, 'signIn.prefillDemoCredentials')
+    }, 'signIn.prefillCreatedDemoUser')
   }),
 )
+
+signInForm.validation.triggerSchemaValidation()

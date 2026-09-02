@@ -42,9 +42,9 @@ pages/questions/     ← questions route group (under protectedRoute)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
-  index/             ← prefilled demo login + cookie consent
+  index/             ← login (prefill from createdDemoUser cookie) + cookie consent
 pages/sign-up/
-  index/             ← email/password sign-up
+  index/             ← prefilled demo credentials + create account
 features/questions/create-question/ ← dialog form to create a question + answer
 features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/update-question/ ← dialog form to update a question + answer
@@ -272,14 +272,15 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
 - Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
-- On `/sign-in`, `GET /api/demo-user` reuses `createdDemoUser` or generates credentials; the form is prefilled and the session stays empty. Sign in creates the account (`POST /api/demo-user`) and authenticates.
+- On `/sign-in`, the form is empty unless `createdDemoUser` already has credentials (then it is prefilled). Do not call `GET`/`POST /api/demo-user` there. Sign in uses `authClient.signIn.email`. If the account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore.
+- On `/sign-up`, `GET /api/demo-user` reuses `createdDemoUser` or generates credentials; the form is prefilled and the session stays empty. Create account creates the demo user (`POST /api/demo-user`) or signs up a custom email, then authenticates.
 - Auth gates and landing live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`.
   - Guests on `/sign-in` or `/sign-up` stay.
   - Signed-in users on `/` or auth URLs: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
   - `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
-- Sign-out returns to `/sign-in` with the same demo credentials.
-- Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with new demo credentials.
+- Sign-out returns to `/sign-in` with the same demo credentials from the cookie.
+- Delete account on `/profile` removes the signed-in user and their questions, clears `createdDemoUser`, then `/sign-in` with an empty form. New demo credentials are generated only on `/sign-up`.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.
 

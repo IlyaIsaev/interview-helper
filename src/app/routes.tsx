@@ -16,7 +16,7 @@ import {
   SIGN_IN_PATH,
   SIGN_UP_PATH,
 } from "@/shared/config";
-import { Spinner } from "@/shared/ui";
+import { PageFallback } from "@/shared/ui";
 
 const QuestionsLayout = lazy(() => import("@/pages/questions/layout/ui/layout"));
 
@@ -31,15 +31,6 @@ const SignUpPage = lazy(() => import("@/pages/sign-up/index/ui/sign-up-page"));
 const ProfilePage = lazy(() => import("@/pages/profile/index/ui/profile-page"));
 
 const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
-
-function PageFallback() {
-  return (
-    <section className="flex min-h-svh items-center justify-center">
-      <Spinner className="size-6" />
-      <span className="sr-only">loading</span>
-    </section>
-  );
-}
 
 const openSignedInDestination = action(() => {
   const questions = questionList();

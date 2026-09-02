@@ -2,16 +2,40 @@ import { expect, test, type Page } from '@playwright/test'
 
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
+const demoEmail = /demo-user-[a-f0-9]{8}@demo\.com/
+
 const isQuestionsListPath = (url: string) =>
   new URL(url).pathname === '/questions'
 
 const notifications = (page: Page) =>
   page.getByRole('region', { name: /Notifications/i })
 
+const createDemoAccount = async (page: Page) => {
+  await page.goto('/sign-up')
+
+  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
+
+  const email = await page.getByLabel('email').inputValue()
+  const password = await page.getByLabel('password').inputValue()
+
+  await expect(page.getByRole('button', { name: 'Create account' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Create account' }).click()
+
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+
+  return { email, password }
+}
+
 test('opening the app redirects guests to sign-in', async ({ page }) => {
+  const demoUserGets: string[] = []
   const signUpRequests: string[] = []
 
   page.on('request', (request) => {
+    if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
+      demoUserGets.push(request.url())
+    }
+
     if (request.url().includes('/api/auth/sign-up/email')) {
       signUpRequests.push(request.url())
     }
@@ -21,21 +45,16 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
-  await expect(page.getByLabel('email')).toHaveValue(/demo-user-[a-f0-9]{8}@demo\.com/)
-  await expect(page.getByLabel('password')).not.toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
   await expect(page.getByRole('heading', { name: 'We use cookies' })).toBeVisible()
   await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
+  expect(demoUserGets).toEqual([])
   expect(signUpRequests).toEqual([])
 })
 
-test('signing in lands on questions with the demo user', async ({ page }) => {
-  await page.goto('/')
-
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+test('signing up lands on questions with the demo user', async ({ page }) => {
+  await createDemoAccount(page)
 
   if (isQuestionsListPath(page.url())) {
     await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
@@ -55,17 +74,7 @@ test('signing in lands on questions with the demo user', async ({ page }) => {
 test('signing out returns to sign-in with the same demo user', async ({
   page,
 }) => {
-  await page.goto('/')
-
-  await expect(page.getByLabel('email')).toHaveValue(/demo-user-[a-f0-9]{8}@demo\.com/)
-
-  const email = await page.getByLabel('email').inputValue()
-  const password = await page.getByLabel('password').inputValue()
-
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
-    timeout: 15_000,
-  })
+  const { email, password } = await createDemoAccount(page)
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await page.getByRole('menuitem', { name: 'Log Out' }).click()
@@ -90,16 +99,7 @@ test('signing out returns to sign-in with the same demo user', async ({
 test('user menu name opens the profile page without a sidebar', async ({
   page,
 }) => {
-  await page.goto('/')
-
-  await expect(page.getByLabel('email')).toHaveValue(/demo-user-[a-f0-9]{8}@demo\.com/)
-
-  const email = await page.getByLabel('email').inputValue()
-
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
-    timeout: 15_000,
-  })
+  const { email } = await createDemoAccount(page)
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -132,11 +132,7 @@ test('guests opening profile are redirected to sign-in', async ({ page }) => {
 test('signed-in users opening sign-in are sent to questions', async ({
   page,
 }) => {
-  await page.goto('/')
-
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await createDemoAccount(page)
 
   await page.goto('/sign-in')
 
@@ -145,13 +141,7 @@ test('signed-in users opening sign-in are sent to questions', async ({
 })
 
 test('cancelling account deletion stays on profile', async ({ page }) => {
-  await page.goto('/')
-
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
-    timeout: 15_000,
-  })
+  await createDemoAccount(page)
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -173,18 +163,9 @@ test('cancelling account deletion stays on profile', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
-test('deleting the account lands on sign-in with a new demo user', async ({
-  page,
-}) => {
-  await page.goto('/')
-
-  await expect(page.getByLabel('email')).toHaveValue(/demo-user-[a-f0-9]{8}@demo\.com/)
-  const deletedEmail = await page.getByLabel('email').inputValue()
-
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible({
-    timeout: 15_000,
-  })
+test('deleting the account lands on empty sign-in', async ({ page }) => {
+  const { email: deletedEmail, password: deletedPassword } =
+    await createDemoAccount(page)
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -195,16 +176,31 @@ test('deleting the account lands on sign-in with a new demo user', async ({
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/, { timeout: 15_000 })
-  await expect(page.getByLabel('email')).toHaveValue(/demo-user-[a-f0-9]{8}@demo\.com/)
-  await expect(page.getByLabel('email')).not.toHaveValue(deletedEmail)
-  await expect(page.getByLabel('password')).not.toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
 
-  await page.getByRole('button', { name: 'Sign in' }).click()
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  const demoUserPosts: string[] = []
 
-  if (isQuestionsListPath(page.url())) {
-    await expect(page.getByText('the questions list is empty')).toBeVisible()
-  }
+  page.on('request', (request) => {
+    if (request.url().includes('/api/demo-user') && request.method() === 'POST') {
+      demoUserPosts.push(request.url())
+    }
+  })
+
+  await page.getByLabel('email').fill(deletedEmail)
+  await page.getByLabel('password').fill(deletedPassword)
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(
+    notifications(page).getByText("This user doesn't exist anymore."),
+  ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Demo user' })).toHaveCount(0)
+  expect(demoUserPosts).toEqual([])
+
+  await page.getByRole('link', { name: 'Sign up' }).click()
+
+  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
+  await expect(page.getByLabel('email')).not.toHaveValue(deletedEmail)
 })

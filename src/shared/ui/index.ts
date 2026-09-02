@@ -30,6 +30,8 @@ export { Skeleton } from './skeleton'
 
 export { Spinner } from './spinner'
 
+export { PageFallback } from './page-fallback'
+
 export { Toaster } from './sonner'
 export { toast } from 'sonner'
 
