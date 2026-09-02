@@ -26,8 +26,8 @@ export const CreateQuestion = reatomComponent(() => {
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
   const submitError = submit.error()
-  const handleDialogOpenChange = wrap((isOpen: boolean) => {
-    if (isOpen) {
+  const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
+    if (shouldOpen) {
       isCreateQuestionDialogOpen.setTrue()
 
       return

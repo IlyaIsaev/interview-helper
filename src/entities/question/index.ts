@@ -1,4 +1,4 @@
-export { currentQuestion, initQuestion, type Question } from './model/question'
+export { initQuestion, question, type Question } from './model/question'
 
 export {
   addQuestion,

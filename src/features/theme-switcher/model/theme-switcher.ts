@@ -1,7 +1,9 @@
 import { action } from '@reatom/core'
 
-import { theme } from '@/shared/theme'
+import { theme, ThemeMode } from '@/shared/theme'
 
 export const toggleTheme = action(() => {
-  theme.set((mode) => (mode === 'dark' ? 'light' : 'dark'))
+  theme.set((themeMode) =>
+    themeMode === ThemeMode.dark ? ThemeMode.light : ThemeMode.dark,
+  )
 }, 'toggleTheme')

@@ -1,6 +1,6 @@
 # Frontend
 
-General style, immutability, domain naming, and kebab-case come from the parent `AGENTS.md`. This file adds architecture, React, Reatom, UI, and unit-test conventions.
+General style, immutability, domain naming, kebab-case, `es-toolkit/fp` pipelines, and `es-toolkit/types` come from the parent `AGENTS.md`. This file adds architecture, React, Reatom, UI, and unit-test conventions.
 
 ## Architecture
 
@@ -34,12 +34,11 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 ```text
 app/                 ← entrypoint, Reatom logger, routes, composition
                          protectedRoute: signed-in gate + landing (no page folder)
-pages/home/          ← signed-in home route group (under protectedRoute)
-  layout/            ← homeRoute chrome (sidebar + toggle + header; HomePage when no child)
-  questions/         ← questions route group
-    index/           ← questions list / empty state (/questions)
-    question/
-      index/         ← signed-in question detail + show-answer (/questions/:id)
+pages/questions/     ← questions route group (under protectedRoute)
+  layout/            ← questionsRoute chrome (sidebar + toggle + header)
+  index/             ← questions list / empty state (/questions)
+  question/
+    index/           ← signed-in question detail + show-answer (/questions/:id)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
@@ -68,9 +67,9 @@ Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from 
 
 - Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`.
 - A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present).
-- Page `ui/` files have only a default export (`export default HomePage`). Do not add a slice `index.ts`.
-- Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/home/questions/index/ui/questions-page`.
-- Load pages with `React.lazy(() => import('@/pages/home/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
+- Page `ui/` files have only a default export (`export default QuestionsPage`). Do not add a slice `index.ts`.
+- Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/questions/index/ui/questions-page`.
+- Load pages with `React.lazy(() => import('@/pages/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
 - Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
 
 ### Loaders and `init*`
@@ -84,12 +83,15 @@ The `init*` action performs **all** mapping and derivation that slice needs, the
 UI reads the atom, not `route.loader.data()` from inside entities or features. Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
 
 ```ts
+import { map, pick, pipe } from 'es-toolkit/fp'
+
+const questionListItem = (question: Question) =>
+  pipe(question, pick(['id', 'question']))
+
 export const questionList = atom<Array<QuestionListItem>>([], 'questionList')
 
 export const initQuestionList = action((questions: Array<Question>) => {
-  questionList.set(
-    questions.map(({ id, question }) => ({ id, question })),
-  )
+  questionList.set(pipe(questions, map(questionListItem)))
 }, 'initQuestionList')
 
 async loader() {
@@ -108,7 +110,7 @@ export const loadQuestionList = action(async () => {
 async loader() {
   const { questions } = await wrap(clientApi.loadQuestions())
 
-  initQuestionList(questions.map(({ id, question }) => ({ id, question })))
+  initQuestionList(pipe(questions, map(questionListItem)))
 }
 ```
 
@@ -141,7 +143,7 @@ const protectedRoute = layoutRoute.reatomRoute(
       }
 
       if (signInRoute.match() || signUpRoute.match()) {
-        homeRoute.go(undefined, true);
+        questionsRoute.go(undefined, true);
       }
 
       return { rights: userData.rights };
@@ -295,13 +297,13 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 | Instead of (weak / technical) | Prefer (business)      |
 | ----------------------------- | ---------------------- |
 | `handleClickSubmit`           | `submitOrder`          |
-| `userDataAtom`                | `user` / `currentUser` |
+| `userDataAtom`                | `user`                 |
 | `onChangeEmailInput`          | `changeEmail`          |
 
 ```ts
 // Values — business intent
 export const cartItems = atom<CartItem[]>([], 'cartItems')
-export const currentUser = atom<User | null>(null, 'currentUser')
+export const user = atom<User | null>(null, 'user')
 export const checkout = action(async () => { ... }, 'checkout')
 export const applyDiscount = action((code: string) => { ... }, 'applyDiscount')
 export const isCheckoutReady = computed(() => ..., 'isCheckoutReady')

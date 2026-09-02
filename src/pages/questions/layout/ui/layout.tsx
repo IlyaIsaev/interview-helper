@@ -1,7 +1,7 @@
 import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { map, pipe } from "es-toolkit/fp";
-import { Children, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
 import { questionList, type QuestionListItem } from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
@@ -25,8 +25,6 @@ import {
   Spinner,
 } from "@/shared/ui";
 
-import HomePage from "./home-page";
-
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
 
 type LayoutProps = {
@@ -34,25 +32,24 @@ type LayoutProps = {
 };
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
-  const isOpen = isSidebarOpen();
   const questions = questionList();
-  const openedQuestionPath = urlAtom().pathname;
+  const currentPath = urlAtom().pathname;
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
   });
 
   function questionMenuItem(question: QuestionListItem) {
     const questionHref = questionPath(question.id);
-    const isOpenedQuestion = openedQuestionPath === questionHref;
+    const isQuestionOpened = currentPath === questionHref;
 
     return (
       <SidebarMenuItem key={question.id}>
         <SidebarMenuButton
           asChild
-          isActive={isOpenedQuestion}
+          isActive={isQuestionOpened}
           className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
         >
-          <a aria-current={isOpenedQuestion ? "page" : undefined} href={questionHref}>
+          <a aria-current={isQuestionOpened ? "page" : undefined} href={questionHref}>
             <span>{question.question}</span>
           </a>
         </SidebarMenuButton>
@@ -63,7 +60,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
   }
 
   return (
-    <SidebarProvider open={isOpen} onOpenChange={changeSidebarOpen}>
+    <SidebarProvider open={isSidebarOpen()} onOpenChange={changeSidebarOpen}>
       <Sidebar collapsible="offcanvas">
         <SidebarHeader className="h-12 flex-row items-center gap-3 border-b border-sidebar-border px-3 py-0">
           <p className="text-xs uppercase tracking-[2px] text-muted-foreground">Questions</p>
@@ -100,9 +97,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
             <ThemeSwitcher />
           </div>
         </header>
-        <div className="min-w-0 flex-1">
-          {Children.count(children) === 0 ? <HomePage /> : Children.toArray(children)}
-        </div>
+        <div className="min-w-0 flex-1">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

@@ -3,9 +3,9 @@ import { action, computed, withAsync, withAsyncData, wrap } from '@reatom/core'
 import { authClient } from './auth-client'
 
 export const session = computed(async () => {
-  const { data: currentSession } = await wrap(authClient.getSession())
+  const authSession = await wrap(authClient.getSession())
 
-  return currentSession
+  return authSession.data
 }, 'session').extend(withAsyncData({ initState: null }))
 
 export const signOut = action(async () => {

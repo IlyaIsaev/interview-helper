@@ -30,15 +30,15 @@ const buildUserInitials = (name: string): string => {
   return initials
 }
 
-export const currentUser = computed((): User | null => {
-  const user = session.data()?.user
+export const user = computed((): User | null => {
+  const name = session.data()?.user?.name
 
-  if (!user) {
+  if (typeof name !== 'string') {
     return null
   }
 
   return {
-    name: user.name,
-    initials: buildUserInitials(user.name),
+    name,
+    initials: buildUserInitials(name),
   }
-}, 'currentUser')
+}, 'user')

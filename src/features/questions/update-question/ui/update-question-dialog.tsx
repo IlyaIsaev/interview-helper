@@ -11,21 +11,24 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
+  Spinner,
 } from '@/shared/ui'
 
 import {
   closeUpdateQuestionDialog,
   isUpdateQuestionDialogOpen,
+  openUpdateQuestion,
   updateQuestionForm,
 } from '../model/update-question'
 
 export const UpdateQuestion = reatomComponent(() => {
   const isDialogOpen = isUpdateQuestionDialogOpen()
+  const isQuestionReady = openUpdateQuestion.ready()
   const { fields, submit, validation } = updateQuestionForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
-  const handleDialogOpenChange = wrap((isOpen: boolean) => {
-    if (isOpen) {
+  const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
+    if (shouldOpen) {
       isUpdateQuestionDialogOpen.setTrue()
 
       return
@@ -45,24 +48,31 @@ export const UpdateQuestion = reatomComponent(() => {
             Edit the question and its answer.
           </DialogDescription>
         </DialogHeader>
-        <Form onSubmit={submit}>
-          <QuestionFields question={fields.question} answer={fields.answer} />
-          <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={wrap(closeUpdateQuestionDialog)}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={!isSubmitReady || hasValidationErrors}
-            >
-              Update
-            </Button>
-          </DialogFooter>
-        </Form>
+        {!isQuestionReady ? (
+          <div className="flex min-h-40 items-center justify-center">
+            <Spinner className="size-6" />
+            <span className="sr-only">loading</span>
+          </div>
+        ) : (
+          <Form onSubmit={submit}>
+            <QuestionFields question={fields.question} answer={fields.answer} />
+            <DialogFooter>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={wrap(closeUpdateQuestionDialog)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isSubmitReady || hasValidationErrors}
+              >
+                Update
+              </Button>
+            </DialogFooter>
+          </Form>
+        )}
       </DialogContent>
     </Dialog>
   )

@@ -12,13 +12,13 @@ import {
   DropdownMenuTrigger,
 } from '@/shared/ui'
 
-import { currentUser } from '../model/user'
+import { user } from '../model/user'
 
 export const UserMenu = reatomComponent(() => {
-  const user = currentUser()
+  const { name, initials } = user() ?? { name: '', initials: '' }
   const handleLogOut = wrap(signOut)
 
-  if (!user) {
+  if (!name) {
     return null
   }
 
@@ -26,13 +26,13 @@ export const UserMenu = reatomComponent(() => {
     <DropdownMenu>
       <DropdownMenuTrigger className="rounded-full outline-none focus-visible:ring-1 focus-visible:ring-ring">
         <Avatar>
-          <AvatarFallback>{user.initials}</AvatarFallback>
+          <AvatarFallback>{initials}</AvatarFallback>
         </Avatar>
-        <span className="sr-only">{user.name}</span>
+        <span className="sr-only">{name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <a href={PROFILE_PATH}>{user.name}</a>
+          <a href={PROFILE_PATH}>{name}</a>
         </DropdownMenuItem>
         <DropdownMenuItem disabled={!signOut.ready()} onClick={handleLogOut}>
           Log Out

@@ -1,4 +1,5 @@
 import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core'
+import { findIndex, pipe } from 'es-toolkit/fp'
 
 import {
   initQuestion,
@@ -6,6 +7,7 @@ import {
   questionList,
   removeQuestion,
   restoreQuestion,
+  type QuestionListItem,
 } from '@/entities/question'
 import { clientApi } from '@/shared/api'
 import { questionPath, QUESTIONS_PATH } from '@/shared/config'
@@ -20,6 +22,11 @@ export const isDeleteQuestionDialogOpen = reatomBoolean(
   false,
   'isDeleteQuestionDialogOpen',
 )
+
+const hasQuestionId =
+  (questionId: string) =>
+  (question: QuestionListItem): boolean =>
+    question.id === questionId
 
 export const closeDeleteQuestionDialog = action(() => {
   isDeleteQuestionDialogOpen.setFalse()
@@ -38,11 +45,9 @@ export const deleteQuestion = action(async () => {
     return
   }
 
-  const listedQuestions = questionList() ?? []
-  const listedQuestionIndex = listedQuestions.findIndex(
-    (listedQuestion) => listedQuestion.id === questionId,
-  )
-  const listedQuestion = listedQuestions[listedQuestionIndex]
+  const questions = questionList() ?? []
+  const index = pipe(questions, findIndex(hasQuestionId(questionId)))
+  const question = questions[index]
 
   closeDeleteQuestionDialog()
   removeQuestion(questionId)
@@ -50,13 +55,19 @@ export const deleteQuestion = action(async () => {
   try {
     await wrap(clientApi.deleteQuestion(questionId))
   } catch {
-    if (listedQuestion !== undefined) {
-      restoreQuestion(listedQuestion, listedQuestionIndex)
+    if (question !== undefined) {
+      restoreQuestion(question, index)
     }
-    toast.error('Could not delete the question')
+    toast.error('Could not delete the question. Try again later.', {
+      description: question?.question,
+    })
 
     return
   }
+
+  toast.success('Question deleted.', {
+    description: question?.question,
+  })
 
   if (urlAtom().pathname === questionPath(questionId)) {
     initQuestion(null)

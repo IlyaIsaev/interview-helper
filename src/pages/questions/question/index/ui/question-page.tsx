@@ -1,13 +1,13 @@
 import { reatomComponent } from '@reatom/react'
 
-import { currentQuestion } from '@/entities/question'
+import { question } from '@/entities/question'
 
 import { ShowAnswer } from './show-answer'
 
 const QuestionPage = reatomComponent(() => {
-  const question = currentQuestion()
+  const openedQuestion = question()
 
-  if (!question) {
+  if (!openedQuestion) {
     return (
       <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">
         <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
@@ -23,9 +23,9 @@ const QuestionPage = reatomComponent(() => {
         question
       </p>
       <h1 className="text-heading font-medium tracking-tight">
-        {question.question}
+        {openedQuestion.question}
       </h1>
-      <ShowAnswer answer={question.answer} />
+      <ShowAnswer answer={openedQuestion.answer} />
     </section>
   )
 }, 'QuestionPage')

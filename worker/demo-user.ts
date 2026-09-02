@@ -23,18 +23,18 @@ const demoSignInSchema = v.object({
   password: v.pipe(v.string(), v.minLength(8, 'Password is too short')),
 })
 
-const isDemoUserEmail = (email: string) => {
+const isDemoUserEmail = (email: string): boolean => {
   return DEMO_USER_EMAIL_PATTERN.test(email)
 }
 
-const selectRandomPasswordCharacter = () => {
+const selectRandomPasswordCharacter = (): string => {
   const characterIndex =
     crypto.getRandomValues(new Uint32Array(1))[0] % PASSWORD_CHARACTERS.length
 
   return PASSWORD_CHARACTERS[characterIndex] ?? 'A'
 }
 
-const createDemoPassword = () => {
+const createDemoPassword = (): string => {
   const randomCharacters = Array.from({ length: 16 }, selectRandomPasswordCharacter).join(
     '',
   )
@@ -42,7 +42,7 @@ const createDemoPassword = () => {
   return `${randomCharacters}Aa1!`
 }
 
-const createDemoEmail = () => {
+const createDemoEmail = (): string => {
   const shortId = crypto.randomUUID().replaceAll('-', '').slice(0, 8)
 
   return `demo-user-${shortId}@demo.com`

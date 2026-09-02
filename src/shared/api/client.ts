@@ -1,4 +1,5 @@
 import { abortVar, wrap } from '@reatom/core'
+import { toMerged } from 'es-toolkit'
 import { hc } from 'hono/client'
 import type { InferRequestType, InferResponseType } from 'hono/client'
 
@@ -12,10 +13,12 @@ const api = hc<AppType>('/', {
     const { controller, unsubscribe } = abortVar.subscribe()
 
     return wrap(
-      fetch(input, {
-        ...init,
-        signal: init?.signal ?? controller.signal,
-      }),
+      fetch(
+        input,
+        toMerged(init ?? {}, {
+          signal: init?.signal ?? controller.signal,
+        }),
+      ),
     ).finally(() => {
       unsubscribe()
     })
@@ -55,13 +58,13 @@ type DemoUserCredentials = InferResponseType<(typeof api.api)['demo-user']['$get
 type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json']
 
 export const clientApi = {
-  async loadQuestions() {
+  async loadQuestions(): Promise<QuestionsResponse> {
     const response = await wrap(api.api.questions.$get())
 
     return await readJson<QuestionsResponse>(response, 'GET /api/questions failed')
   },
 
-  async loadQuestion(id: string) {
+  async loadQuestion(id: string): Promise<QuestionResponse | null> {
     const response = await wrap(
       api.api.questions[':id'].$get({ param: { id } }),
     )
@@ -76,7 +79,7 @@ export const clientApi = {
     )
   },
 
-  async createQuestion(questionFields: CreateQuestionBody) {
+  async createQuestion(questionFields: CreateQuestionBody): Promise<CreatedQuestion> {
     const response = await wrap(
       api.api.questions.$post({
         json: questionFields,
@@ -86,7 +89,10 @@ export const clientApi = {
     return await readJson<CreatedQuestion>(response, 'POST /api/questions failed')
   },
 
-  async updateQuestion(id: string, questionFields: UpdateQuestionBody) {
+  async updateQuestion(
+    id: string,
+    questionFields: UpdateQuestionBody,
+  ): Promise<UpdatedQuestion> {
     const response = await wrap(
       api.api.questions[':id'].$put({
         param: { id },
@@ -100,7 +106,7 @@ export const clientApi = {
     )
   },
 
-  async deleteQuestion(id: string) {
+  async deleteQuestion(id: string): Promise<void> {
     const response = await wrap(
       api.api.questions[':id'].$delete({
         param: { id },
@@ -112,7 +118,7 @@ export const clientApi = {
     }
   },
 
-  async loadDemoUser() {
+  async loadDemoUser(): Promise<DemoUserCredentials> {
     const response = await wrap(api.api['demo-user'].$get())
 
     return await readJson<DemoUserCredentials>(
@@ -121,7 +127,7 @@ export const clientApi = {
     )
   },
 
-  async createDemoUser(demoSignIn: CreateDemoUserBody) {
+  async createDemoUser(demoSignIn: CreateDemoUserBody): Promise<void> {
     const response = await wrap(
       api.api['demo-user'].$post({
         json: demoSignIn,

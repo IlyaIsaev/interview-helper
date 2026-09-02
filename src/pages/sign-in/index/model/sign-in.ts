@@ -10,17 +10,21 @@ import {
 } from '@reatom/core'
 import * as v from 'valibot'
 
-import type { JSONValue } from 'es-toolkit/types'
+import type { DeepReadonly, JSONValue } from 'es-toolkit/types'
 
 import { clientApi } from '@/shared/api'
 import { authClient, session } from '@/shared/auth'
 
-type DemoCredentials = {
+type DemoCredentials = DeepReadonly<{
   email: string
   password: string
-}
+}>
 
-type SignInScreen = { kind: 'loading' } | { kind: 'form' }
+type SignInScreen = DeepReadonly<{ kind: 'loading' } | { kind: 'form' }>
+
+const CREATED_DEMO_USER_COOKIE_KEY = 'createdDemoUser'
+
+const COOKIE_PATH = '/'
 
 const CREATED_DEMO_USER_EXPIRES_AT = new Date('9999-12-31T23:59:59.000Z')
 
@@ -39,6 +43,13 @@ const signInSchema = v.object({
   ),
 })
 
+const isDemoCredentials = (json: JSONValue): json is DemoCredentials =>
+  typeof json === 'object' &&
+  json !== null &&
+  !Array.isArray(json) &&
+  typeof json.email === 'string' &&
+  typeof json.password === 'string'
+
 const readDemoCredentials = (snapshot: string): DemoCredentials | null => {
   if (!snapshot) {
     return null
@@ -47,25 +58,7 @@ const readDemoCredentials = (snapshot: string): DemoCredentials | null => {
   try {
     const credentials: JSONValue = JSON.parse(snapshot) as JSONValue
 
-    if (typeof credentials !== 'object' || credentials === null) {
-      return null
-    }
-
-    if (!('email' in credentials) || !('password' in credentials)) {
-      return null
-    }
-
-    if (
-      typeof credentials.email !== 'string' ||
-      typeof credentials.password !== 'string'
-    ) {
-      return null
-    }
-
-    return {
-      email: credentials.email,
-      password: credentials.password,
-    }
+    return isDemoCredentials(credentials) ? credentials : null
   } catch {
     return null
   }
@@ -73,8 +66,8 @@ const readDemoCredentials = (snapshot: string): DemoCredentials | null => {
 
 const createdDemoUser = atom<DemoCredentials | null>(null, 'createdDemoUser').extend(
   withCookie({
-    key: 'createdDemoUser',
-    path: '/',
+    key: CREATED_DEMO_USER_COOKIE_KEY,
+    path: COOKIE_PATH,
     expires: CREATED_DEMO_USER_EXPIRES_AT,
     // document.cookie cannot subscribe; CookieAttributes types this as `never`.
     // @ts-expect-error persist subscribe is a separate option from cookie attrs
@@ -85,13 +78,12 @@ const createdDemoUser = atom<DemoCredentials | null>(null, 'createdDemoUser').ex
   }),
 )
 
-const generatedDemoCredentials = computed(async () => {
+const demoCredentials = computed(async () => {
   return await wrap(clientApi.loadDemoUser())
-}, 'generatedDemoCredentials').extend(withAsyncData({ initState: null }))
+}, 'demoCredentials').extend(withAsyncData({ initState: null }))
 
-const isDemoUserEmail = (email: string) => {
-  return DEMO_USER_EMAIL_PATTERN.test(email)
-}
+const isDemoUserEmail = (email: string): boolean =>
+  DEMO_USER_EMAIL_PATTERN.test(email)
 
 const signInWithPassword = async (email: string, password: string) => {
   const { error } = await wrap(
@@ -122,9 +114,9 @@ export const signInForm = reatomForm(
     validateOnChange: true,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
-      const storedCredentials = createdDemoUser()
+      const credentials = createdDemoUser()
       const shouldCreateDemoUser =
-        isDemoUserEmail(email) && storedCredentials?.email !== email
+        isDemoUserEmail(email) && credentials?.email !== email
 
       if (shouldCreateDemoUser) {
         await wrap(createDemoUser(email, password))
@@ -149,7 +141,7 @@ export const signIn = computed((): SignInScreen => {
     return { kind: 'form' }
   }
 
-  if (!generatedDemoCredentials.ready()) {
+  if (!demoCredentials.ready()) {
     return { kind: 'loading' }
   }
 
@@ -157,21 +149,13 @@ export const signIn = computed((): SignInScreen => {
 }, 'signIn').extend(
   withConnectHook(() => {
     effect(() => {
-      const storedCredentials = createdDemoUser()
+      const credentials = createdDemoUser() ?? demoCredentials.data()
 
-      if (storedCredentials) {
-        fillSignInForm(storedCredentials)
-
+      if (!credentials) {
         return
       }
 
-      const generatedCredentials = generatedDemoCredentials.data()
-
-      if (!generatedCredentials) {
-        return
-      }
-
-      fillSignInForm(generatedCredentials)
+      fillSignInForm(credentials)
     }, 'signIn.prefillDemoCredentials')
   }),
 )

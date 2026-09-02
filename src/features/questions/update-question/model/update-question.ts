@@ -4,16 +4,20 @@ import {
   reatomBoolean,
   reatomForm,
   urlAtom,
+  withAbort,
+  withAsync,
   withCallHook,
   wrap,
 } from '@reatom/core'
+import { find, pipe } from 'es-toolkit/fp'
 
 import {
-  currentQuestion,
   initQuestion,
   initQuestionList,
+  question as openedQuestionState,
   questionList,
   updateQuestion,
+  type QuestionListItem,
 } from '@/entities/question'
 import { questionFieldsSchema } from '@/features/questions/create-question'
 import { clientApi } from '@/shared/api'
@@ -30,7 +34,13 @@ export const isUpdateQuestionDialogOpen = reatomBoolean(
   'isUpdateQuestionDialogOpen',
 )
 
+const hasQuestionId =
+  (questionId: string) =>
+  (question: QuestionListItem): boolean =>
+    question.id === questionId
+
 export const closeUpdateQuestionDialog = action(() => {
+  openUpdateQuestion.abort()
   isUpdateQuestionDialogOpen.setFalse()
   questionBeingUpdated.set(null)
   updateQuestionForm.reset()
@@ -46,32 +56,34 @@ export const updateQuestionForm = reatomForm(
     validateOnBlur: true,
     validateOnChange: true,
     schema: questionFieldsSchema,
-    onSubmit: async ({ question, answer }) => {
+    onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {
       const questionId = questionBeingUpdated()
 
       if (!questionId) {
         return
       }
 
-      const listedQuestion = (questionList() ?? []).find(
-        (listedQuestion) => listedQuestion.id === questionId,
-      )
-      const shouldUpdateOpenedQuestion =
-        urlAtom().pathname === questionPath(questionId)
-      const openedQuestion = shouldUpdateOpenedQuestion
-        ? currentQuestion()
+      const questions = questionList() ?? []
+      const question = pipe(questions, find(hasQuestionId(questionId)))
+      const isQuestionOpened = urlAtom().pathname === questionPath(questionId)
+      const openedQuestion = isQuestionOpened
+        ? openedQuestionState()
         : undefined
+      const questionText = question?.question ?? openedQuestion?.question
 
       closeUpdateQuestionDialog()
-      updateQuestion({ id: questionId, question })
+      updateQuestion({ id: questionId, question: nextQuestion })
 
-      if (shouldUpdateOpenedQuestion) {
-        initQuestion({ question, answer })
+      if (isQuestionOpened) {
+        initQuestion({ question: nextQuestion, answer: nextAnswer })
       }
 
       try {
         const updatedQuestion = await wrap(
-          clientApi.updateQuestion(questionId, { question, answer }),
+          clientApi.updateQuestion(questionId, {
+            question: nextQuestion,
+            answer: nextAnswer,
+          }),
         )
 
         updateQuestion({
@@ -79,12 +91,16 @@ export const updateQuestionForm = reatomForm(
           question: updatedQuestion.question,
         })
 
-        if (shouldUpdateOpenedQuestion) {
+        if (isQuestionOpened) {
           initQuestion({
             question: updatedQuestion.question,
             answer: updatedQuestion.answer,
           })
         }
+
+        toast.success('Question updated.', {
+          description: questionText,
+        })
 
         try {
           const { questions } = await wrap(clientApi.loadQuestions())
@@ -96,15 +112,17 @@ export const updateQuestionForm = reatomForm(
 
         return updatedQuestion
       } catch {
-        if (listedQuestion) {
-          updateQuestion(listedQuestion)
+        if (question) {
+          updateQuestion(question)
         }
 
-        if (shouldUpdateOpenedQuestion) {
+        if (isQuestionOpened) {
           initQuestion(openedQuestion ?? null)
         }
 
-        toast.error('Could not update the question')
+        toast.error('Could not update the question. Try again later.', {
+          description: questionText,
+        })
       }
     },
   },
@@ -114,17 +132,17 @@ export const openUpdateQuestion = action(async (questionId: string) => {
   questionBeingUpdated.set(questionId)
   isUpdateQuestionDialogOpen.setTrue()
 
-  const question = await wrap(clientApi.loadQuestion(questionId))
+  const nextQuestion = await wrap(clientApi.loadQuestion(questionId))
 
-  if (!question) {
+  if (!nextQuestion) {
     closeUpdateQuestionDialog()
 
     return
   }
 
-  updateQuestionForm.fields.question.change(question.question)
-  updateQuestionForm.fields.answer.change(question.answer)
-}, 'openUpdateQuestion')
+  updateQuestionForm.fields.question.change(nextQuestion.question)
+  updateQuestionForm.fields.answer.change(nextQuestion.answer)
+}, 'openUpdateQuestion').extend(withAsync(), withAbort())
 
 updateQuestionForm.submit.onFulfill.extend(
   withCallHook(({ payload: updatedQuestion }) => {

@@ -1,4 +1,5 @@
 import { action, reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { pipe, sample } from "es-toolkit/fp";
 import { lazy, Suspense } from "react";
 
 import {
@@ -17,11 +18,11 @@ import {
 } from "@/shared/config";
 import { Spinner } from "@/shared/ui";
 
-const HomeLayout = lazy(() => import("@/pages/home/layout/ui/layout"));
+const QuestionsLayout = lazy(() => import("@/pages/questions/layout/ui/layout"));
 
-const QuestionsPage = lazy(() => import("@/pages/home/questions/index/ui/questions-page"));
+const QuestionsPage = lazy(() => import("@/pages/questions/index/ui/questions-page"));
 
-const QuestionPage = lazy(() => import("@/pages/home/questions/question/index/ui/question-page"));
+const QuestionPage = lazy(() => import("@/pages/questions/question/index/ui/question-page"));
 
 const SignInPage = lazy(() => import("@/pages/sign-in/index/ui/sign-in-page"));
 
@@ -55,6 +56,8 @@ const openSignedInDestination = action(() => {
 
   if (questions.length === 0 && pathname !== QUESTIONS_PATH) {
     questionsRoute.go(undefined, true);
+
+    return;
   }
 
   if (questions.length === 0 && pathname === QUESTIONS_PATH) {
@@ -65,13 +68,13 @@ const openSignedInDestination = action(() => {
     return;
   }
 
-  const randomQuestion = questions[Math.floor(Math.random() * questions.length)];
+  const question = pipe(questions, sample());
 
-  if (!randomQuestion) {
+  if (!question) {
     return;
   }
 
-  questionRoute.go({ id: randomQuestion.id }, true);
+  questionRoute.go({ id: question.id }, true);
 }, "openSignedInDestination");
 
 export const rootRoute = reatomRoute(
@@ -107,9 +110,11 @@ export const protectedRoute = rootRoute.reatomRoute(
 
       if (!user && !onAuthPage) {
         signInRoute.go(undefined, true);
+
+        return null;
       }
 
-      if (!user) {
+      if (!user && onAuthPage) {
         return null;
       }
 
@@ -142,37 +147,20 @@ export const protectedRoute = rootRoute.reatomRoute(
   "protectedRoute",
 );
 
-export const homeRoute = protectedRoute.reatomRoute(
+export const questionsRoute = protectedRoute.reatomRoute(
   {
     layout: true,
-    path: "",
-    params() {
-      const { pathname } = urlAtom();
-
-      if (pathname === SIGN_IN_PATH || pathname === SIGN_UP_PATH || pathname === PROFILE_PATH) {
-        return null;
-      }
-
-      return {};
-    },
+    path: QUESTIONS_PATH.slice(1),
     render({ outlet }) {
       const child = outlet();
 
       return (
-        <HomeLayout>
-          {child.length > 0 ? <Suspense fallback={<PageFallback />}>{child}</Suspense> : undefined}
-        </HomeLayout>
+        <QuestionsLayout>
+          <Suspense fallback={<PageFallback />}>
+            {child.length > 0 ? child : <QuestionsPage />}
+          </Suspense>
+        </QuestionsLayout>
       );
-    },
-  },
-  "homeRoute",
-);
-
-export const questionsRoute = homeRoute.reatomRoute(
-  {
-    path: QUESTIONS_PATH.slice(1),
-    render() {
-      return <QuestionsPage />;
     },
   },
   "questionsRoute",
@@ -183,7 +171,6 @@ export const questionRoute = questionsRoute.reatomRoute(
     path: ":id",
     params({ id }) {
       if (!session.ready() || !session.data()?.user) {
-
         return null;
       }
 
@@ -282,7 +269,6 @@ export const signUpRoute = rootRoute.reatomRoute(
 export const appRoutes = {
   root: rootRoute,
   protected: protectedRoute,
-  home: homeRoute,
   questions: questionsRoute,
   question: questionRoute,
   profile: profileRoute,

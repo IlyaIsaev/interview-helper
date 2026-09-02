@@ -22,8 +22,6 @@ export const QuestionFields = reatomComponent(
   ({ question, answer }: QuestionFieldsProps) => {
     const questionField = bindFormControl(question)
     const answerField = bindFormControl(answer)
-    const questionValue = question()
-    const answerValue = answer()
 
     return (
       <>
@@ -34,7 +32,7 @@ export const QuestionFields = reatomComponent(
               <FormControl>
                 <Textarea className="min-h-32" {...questionField} />
               </FormControl>
-              <MarkdownPreview>{questionValue}</MarkdownPreview>
+              <MarkdownPreview>{question()}</MarkdownPreview>
             </div>
             <FormMessage />
           </FormItem>
@@ -46,7 +44,7 @@ export const QuestionFields = reatomComponent(
               <FormControl>
                 <Textarea className="min-h-32" {...answerField} />
               </FormControl>
-              <MarkdownPreview>{answerValue}</MarkdownPreview>
+              <MarkdownPreview>{answer()}</MarkdownPreview>
             </div>
             <FormMessage />
           </FormItem>

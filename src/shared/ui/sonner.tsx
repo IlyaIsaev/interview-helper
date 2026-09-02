@@ -22,6 +22,9 @@ function Toaster({ theme, ...props }: ToasterProps) {
       }}
       toastOptions={{
         className: 'rounded-none font-mono text-ui',
+        classNames: {
+          description: 'line-clamp-4 whitespace-pre-wrap break-words',
+        },
       }}
       style={
         {

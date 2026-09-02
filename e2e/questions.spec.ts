@@ -48,6 +48,31 @@ const failQuestionMutation = async (page: Page, method: 'PUT' | 'DELETE') => {
   })
 }
 
+const holdQuestionGet = async (page: Page) => {
+  let releaseLoad = () => {}
+  const loadHeld = new Promise<void>((resolve) => {
+    releaseLoad = resolve
+  })
+
+  await page.route('**/api/questions/*', async (route) => {
+    if (route.request().method() !== 'GET') {
+      await route.continue()
+
+      return
+    }
+
+    await loadHeld
+    await route.continue()
+  })
+
+  return () => {
+    releaseLoad()
+  }
+}
+
+const notifications = (page: Page) =>
+  page.getByRole('region', { name: /Notifications/i })
+
 test('guests opening questions routes are redirected to sign-in', async ({
   page,
 }) => {
@@ -186,6 +211,58 @@ test('updating a question from the sidebar goes to the question page', async ({
   ).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toHaveCount(0)
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(notifications(page).getByText('Question updated.')).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
+})
+
+test('updating a question shows a spinner while the question loads', async ({
+  page,
+}) => {
+  const questionText = `Update spinner ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Original answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const releaseQuestionGet = await holdQuestionGet(page)
+  const questionItem = page
+    .getByRole('listitem')
+    .filter({ hasText: questionText })
+  const updateDialog = page.getByRole('dialog')
+
+  await questionItem.hover()
+  await questionItem.getByRole('button', { name: 'Update question' }).click()
+
+  await expect(
+    updateDialog.getByRole('heading', { name: 'Update question' }),
+  ).toBeVisible()
+  await expect(
+    updateDialog.getByRole('status', { name: 'Loading' }),
+  ).toBeVisible()
+  await expect(updateDialog.getByRole('textbox', { name: 'question' })).toHaveCount(
+    0,
+  )
+
+  releaseQuestionGet()
+
+  await expect(updateDialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    questionText,
+  )
+  await expect(updateDialog.getByRole('textbox', { name: 'answer' })).toHaveValue(
+    'Original answer',
+  )
+  await expect(
+    updateDialog.getByRole('status', { name: 'Loading' }),
+  ).toHaveCount(0)
 })
 
 test('deleting a question from the sidebar removes it', async ({ page }) => {
@@ -228,6 +305,8 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await expect(page.getByRole('heading', { name: questionText })).toHaveCount(0)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page).toHaveURL(signedInPath)
+  await expect(notifications(page).getByText('Question deleted.')).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
 })
 
 test('a failed delete restores the question and shows a toast', async ({
@@ -259,7 +338,12 @@ test('a failed delete restores the question and shows a toast', async ({
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByText('Could not delete the question')).toBeVisible()
+  await expect(
+    notifications(page).getByText(
+      'Could not delete the question. Try again later.',
+    ),
+  ).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
   await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
 })
@@ -300,7 +384,12 @@ test('a failed update restores the question and shows a toast', async ({
   await page.getByRole('button', { name: 'Update' }).click()
 
   await expect(page.getByRole('dialog')).toHaveCount(0)
-  await expect(page.getByText('Could not update the question')).toBeVisible()
+  await expect(
+    notifications(page).getByText(
+      'Could not update the question. Try again later.',
+    ),
+  ).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
   await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
   await expect(page.getByRole('link', { name: updatedQuestionText })).toHaveCount(
@@ -449,7 +538,7 @@ test('sidebar stays visible while a child page chunk is loading', async ({
 }) => {
   await signIn(page)
 
-  await page.route('**/src/pages/home/questions/question/**', async (route) => {
+  await page.route('**/src/pages/questions/question/**', async (route) => {
     await new Promise((resolve) => {
       setTimeout(resolve, 1000)
     })

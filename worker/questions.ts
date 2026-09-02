@@ -6,6 +6,8 @@ import * as v from 'valibot'
 import { createDatabase } from './db/client'
 import { question } from './db/schema'
 
+type Question = typeof question.$inferSelect
+
 const questionFieldsSchema = v.object({
   question: v.pipe(
     v.string('Question must be a string'),
@@ -26,7 +28,7 @@ const questionIdSchema = v.object({
 const loadQuestion = async (
   database: ReturnType<typeof createDatabase>,
   questionId: string,
-) => {
+): Promise<Question | null> => {
   const [foundQuestion] = await database
     .select()
     .from(question)
@@ -44,9 +46,9 @@ export const questions = new Hono<{ Bindings: Env }>()
     return context.json({ questions }, 200)
   })
   .get('/:id', vValidator('param', questionIdSchema), async (context) => {
-    const { id } = context.req.valid('param')
+    const { id: questionId } = context.req.valid('param')
     const database = createDatabase(context.env.DB)
-    const foundQuestion = await loadQuestion(database, id)
+    const foundQuestion = await loadQuestion(database, questionId)
 
     if (!foundQuestion) {
       return context.json({ message: 'Question not found' }, 404)
@@ -73,7 +75,7 @@ export const questions = new Hono<{ Bindings: Env }>()
     vValidator('param', questionIdSchema),
     vValidator('json', questionFieldsSchema),
     async (context) => {
-      const { id } = context.req.valid('param')
+      const { id: questionId } = context.req.valid('param')
       const questionFields = context.req.valid('json')
       const database = createDatabase(context.env.DB)
       const [updatedQuestion] = await database
@@ -82,7 +84,7 @@ export const questions = new Hono<{ Bindings: Env }>()
           question: questionFields.question,
           answer: questionFields.answer,
         })
-        .where(eq(question.id, id))
+        .where(eq(question.id, questionId))
         .returning()
 
       if (!updatedQuestion) {
@@ -93,11 +95,11 @@ export const questions = new Hono<{ Bindings: Env }>()
     },
   )
   .delete('/:id', vValidator('param', questionIdSchema), async (context) => {
-    const { id } = context.req.valid('param')
+    const { id: questionId } = context.req.valid('param')
     const database = createDatabase(context.env.DB)
     const [deletedQuestion] = await database
       .delete(question)
-      .where(eq(question.id, id))
+      .where(eq(question.id, questionId))
       .returning()
 
     if (!deletedQuestion) {

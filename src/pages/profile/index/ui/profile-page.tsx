@@ -1,4 +1,5 @@
 import { reatomComponent } from '@reatom/react'
+import type { DeepReadonly } from 'es-toolkit/types'
 import { House } from 'lucide-react'
 
 import { ThemeSwitcher } from '@/features/theme-switcher'
@@ -7,10 +8,10 @@ import { HOME_PATH } from '@/shared/config'
 import { Button } from '@/shared/ui'
 
 type ProfilePageProps = {
-  user: {
+  user: DeepReadonly<{
     name: string
     email: string
-  }
+  }>
 }
 
 const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {

@@ -17,7 +17,7 @@ import {
 import { signIn, signInForm } from '../model/sign-in'
 
 const SignInPage = reatomComponent(() => {
-  const screen = signIn()
+  const signInScreen = signIn()
   const { fields, submit, validation } = signInForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
@@ -27,7 +27,7 @@ const SignInPage = reatomComponent(() => {
 
   return (
     <>
-      {screen.kind === 'loading' ? (
+      {signInScreen.kind === 'loading' ? (
         <section className="px-4 py-16">
           <p className="text-label uppercase tracking-wider text-muted-foreground">
             loading session

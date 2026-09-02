@@ -1,5 +1,5 @@
 import { action, atom } from '@reatom/core'
-import { filter, map, pick, pipe } from 'es-toolkit/fp'
+import { filter, flatten, map, pick, pipe } from 'es-toolkit/fp'
 import type { DeepReadonly } from 'es-toolkit/types'
 
 export type QuestionListItem = DeepReadonly<{
@@ -24,21 +24,20 @@ export const resetQuestionList = action(() => {
 }, 'resetQuestionList')
 
 export const addQuestion = action((question: QuestionListItem) => {
-  questionList.set([...(questionList() ?? []), question])
+  questionList.set(pipe([questionList() ?? [], [question]], flatten()))
 }, 'addQuestion')
 
 export const updateQuestion = action((question: QuestionListItem) => {
-  const listedQuestionWithUpdate = (listedQuestion: QuestionListItem) =>
-    listedQuestion.id === question.id ? question : listedQuestion
+  const replaceQuestion = (row: QuestionListItem) =>
+    row.id === question.id ? question : row
 
-  questionList.set(pipe(questionList() ?? [], map(listedQuestionWithUpdate)))
+  questionList.set(pipe(questionList() ?? [], map(replaceQuestion)))
 }, 'updateQuestion')
 
 export const removeQuestion = action((questionId: string) => {
-  const isKeptQuestion = (listedQuestion: QuestionListItem) =>
-    listedQuestion.id !== questionId
+  const isOtherQuestion = (row: QuestionListItem) => row.id !== questionId
 
-  questionList.set(pipe(questionList() ?? [], filter(isKeptQuestion)))
+  questionList.set(pipe(questionList() ?? [], filter(isOtherQuestion)))
 }, 'removeQuestion')
 
 export const restoreQuestion = action(

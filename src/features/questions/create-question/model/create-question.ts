@@ -28,9 +28,8 @@ export const createQuestionForm = reatomForm(
     validateOnBlur: true,
     validateOnChange: true,
     schema: questionFieldsSchema,
-    onSubmit: async ({ question, answer }) => {
-      return await wrap(clientApi.createQuestion({ question, answer }))
-    },
+    onSubmit: ({ question, answer }) =>
+      wrap(clientApi.createQuestion({ question, answer })),
   },
 )
 

@@ -15,6 +15,5 @@ const mergeClassNames = extendTailwindMerge({
   },
 })
 
-export const cn = (...classNames: ClassValue[]) => {
-  return mergeClassNames(clsx(classNames))
-}
+export const cn = (...classNames: ClassValue[]): string =>
+  mergeClassNames(clsx(classNames))

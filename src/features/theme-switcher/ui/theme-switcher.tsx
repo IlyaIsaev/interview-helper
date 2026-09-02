@@ -2,14 +2,14 @@ import { wrap } from '@reatom/core'
 import { reatomComponent } from '@reatom/react'
 import { Moon, Sun } from 'lucide-react'
 
-import { theme } from '@/shared/theme'
+import { theme, ThemeMode } from '@/shared/theme'
 import { Button } from '@/shared/ui'
 
 import { toggleTheme } from '../model/theme-switcher'
 
 export const ThemeSwitcher = reatomComponent(() => {
-  const mode = theme()
-  const isDark = mode === 'dark'
+  const themeMode = theme()
+  const isDark = themeMode === ThemeMode.dark
   const handleToggleTheme = wrap(toggleTheme)
 
   return (

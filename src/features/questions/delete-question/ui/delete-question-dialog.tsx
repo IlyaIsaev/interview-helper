@@ -20,8 +20,8 @@ import {
 export const DeleteQuestion = reatomComponent(() => {
   const isDialogOpen = isDeleteQuestionDialogOpen()
   const isDeleteReady = deleteQuestion.ready()
-  const handleDialogOpenChange = wrap((isOpen: boolean) => {
-    if (isOpen) {
+  const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
+    if (shouldOpen) {
       isDeleteQuestionDialogOpen.setTrue()
 
       return

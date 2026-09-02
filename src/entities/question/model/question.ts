@@ -7,14 +7,14 @@ export type Question = DeepReadonly<{
   answer: string
 }>
 
-export const currentQuestion = atom<Question | null>(null, 'currentQuestion')
+export const question = atom<Question | null>(null, 'question')
 
-export const initQuestion = action((question: Question | null) => {
-  if (!question) {
-    currentQuestion.set(null)
+export const initQuestion = action((nextQuestion: Question | null) => {
+  if (!nextQuestion) {
+    question.set(null)
 
     return
   }
 
-  currentQuestion.set(pipe(question, pick(['question', 'answer'])))
+  question.set(pipe(nextQuestion, pick(['question', 'answer'])))
 }, 'initQuestion')
