@@ -54,6 +54,10 @@ const openSignedInDestination = action(() => {
     return;
   }
 
+  if (QUESTION_PAGE_PATH.test(pathname)) {
+    return;
+  }
+
   if (questions.length === 0 && pathname !== QUESTIONS_PATH) {
     questionsRoute.go(undefined, true);
 
@@ -61,10 +65,6 @@ const openSignedInDestination = action(() => {
   }
 
   if (questions.length === 0 && pathname === QUESTIONS_PATH) {
-    return;
-  }
-
-  if (QUESTION_PAGE_PATH.test(pathname)) {
     return;
   }
 

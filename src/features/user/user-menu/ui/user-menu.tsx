@@ -32,7 +32,7 @@ export const UserMenu = reatomComponent(() => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <a href={PROFILE_PATH}>{name}</a>
+          <a href={PROFILE_PATH}>Profile</a>
         </DropdownMenuItem>
         <DropdownMenuItem disabled={!signOut.ready()} onClick={handleLogOut}>
           Log Out

@@ -1,6 +1,7 @@
 import { vValidator } from '@hono/valibot-validator'
 import { eq } from 'drizzle-orm'
 import { Hono } from 'hono'
+import { deleteCookie, getCookie } from 'hono/cookie'
 import * as v from 'valibot'
 
 import { createAuth } from './auth'
@@ -8,6 +9,8 @@ import { createDatabase } from './db/client'
 import { account, session, user } from './db/schema'
 
 const DEMO_USER_NAME = 'Demo user'
+
+const CREATED_DEMO_USER_COOKIE_KEY = 'createdDemoUser'
 
 const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/
 
@@ -22,10 +25,6 @@ const demoSignInSchema = v.object({
   ),
   password: v.pipe(v.string(), v.minLength(8, 'Password is too short')),
 })
-
-const isDemoUserEmail = (email: string): boolean => {
-  return DEMO_USER_EMAIL_PATTERN.test(email)
-}
 
 const selectRandomPasswordCharacter = (): string => {
   const characterIndex =
@@ -48,10 +47,33 @@ const createDemoEmail = (): string => {
   return `demo-user-${shortId}@demo.com`
 }
 
+const readStoredDemoCredentials = (
+  snapshot: string | undefined,
+): v.InferOutput<typeof demoSignInSchema> | null => {
+  if (!snapshot) {
+    return null
+  }
+
+  try {
+    const parsedCredentials = v.safeParse(
+      demoSignInSchema,
+      JSON.parse(snapshot) as unknown,
+    )
+
+    return parsedCredentials.success ? parsedCredentials.output : null
+  } catch {
+    return null
+  }
+}
+
 export const demoUser = new Hono<{ Bindings: Env }>()
   .get('/', (context) => {
+    const storedDemoCredentials = readStoredDemoCredentials(
+      getCookie(context, CREATED_DEMO_USER_COOKIE_KEY),
+    )
+
     return context.json(
-      {
+      storedDemoCredentials ?? {
         email: createDemoEmail(),
         password: createDemoPassword(),
       },
@@ -105,16 +127,14 @@ export const demoUser = new Hono<{ Bindings: Env }>()
       return context.json({ message: 'Unauthorized' }, 401)
     }
 
-    if (!isDemoUserEmail(currentSession.user.email)) {
-      return context.json({ message: 'Forbidden' }, 403)
-    }
-
     const database = createDatabase(context.env.DB)
     const userId = currentSession.user.id
 
     await database.delete(session).where(eq(session.userId, userId))
     await database.delete(account).where(eq(account.userId, userId))
     await database.delete(user).where(eq(user.id, userId))
+
+    deleteCookie(context, CREATED_DEMO_USER_COOKIE_KEY, { path: '/' })
 
     return context.body(null, 204)
   })

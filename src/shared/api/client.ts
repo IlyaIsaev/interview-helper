@@ -36,7 +36,7 @@ const readJson = async <T>(
   return await wrap(response.json())
 }
 
-type QuestionsResponse = InferResponseType<typeof api.api.questions.$get>
+type QuestionsResponse = InferResponseType<typeof api.api.questions.$get, 200>
 
 type QuestionResponse = InferResponseType<(typeof api.api.questions)[':id']['$get'], 200>
 
@@ -136,6 +136,14 @@ export const clientApi = {
 
     if (!response.ok) {
       throw new Error(`POST /api/demo-user failed: ${response.status}`)
+    }
+  },
+
+  async deleteUser(): Promise<void> {
+    const response = await wrap(api.api['demo-user'].$delete())
+
+    if (!response.ok) {
+      throw new Error(`DELETE /api/demo-user failed: ${response.status}`)
     }
   },
 }

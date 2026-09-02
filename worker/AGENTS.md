@@ -6,7 +6,7 @@ General style, naming, and kebab-case come from the parent `AGENTS.md`. Frontend
 
 ```text
 auth.ts              ← Better Auth Hono app
-demo-user.ts         ← generate demo credentials, create on sign-in, delete
+demo-user.ts         ← generate or reuse demo credentials, create on Sign in, delete
 questions.ts         ← questions Hono app
 db/                  ← Drizzle schema + D1 client
 ```
@@ -29,7 +29,8 @@ Authentication is [Better Auth](https://better-auth.com) with email and password
 
 - Server: `createAuth(env)` in `auth.ts` — create per request, never as a Worker singleton.
 - Handler: dedicated Hono `auth` app in `auth.ts`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`.
-- Do not create a user until Sign in (`POST /api/demo-user`). Demo emails are `demo-user-{8 hex}@demo.com` plus a generated password. After create, the client stores `{ email, password }` in `createdDemoUser`.
+- `GET /api/demo-user` returns the `createdDemoUser` cookie when it holds a valid demo email and password; otherwise it invents `demo-user-{8 hex}@demo.com` credentials. It does not insert a row. `POST /api/demo-user` creates the account (or signs in if it already exists) and sets session cookies. The client stores `{ email, password }` in `createdDemoUser` when credentials are generated.
+- `DELETE /api/demo-user` deletes the signed-in user (any email). Questions cascade. It expires `createdDemoUser` so the next `GET` invents new demo credentials.
 - Cookie consent is only on `/sign-in`: Accept sets the `cookieConsent=true` cookie; Decline redirects to `https://www.google.com` (do not delete the user).
 - Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.
 
@@ -40,7 +41,7 @@ Client session, forms, and redirects are in `src/AGENTS.md`.
 Persistence is [Drizzle](https://orm.drizzle.team) on Cloudflare D1.
 
 - Schema: `db/schema.ts`. Client: `createDatabase(env.DB)` from `db/client.ts`.
-- `question` has a unique `id`, `question`, and `answer`.
+- `question` has a unique `id`, `question`, `answer`, and `userId` (FK to `user.id`, cascade on delete). List and mutate only that user's rows.
 - Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`.
 - Browse the local D1 file with `pnpm db:studio` (Drizzle Studio at `127.0.0.1:4983` / [local.drizzle.studio](https://local.drizzle.studio)).
 - Local `database_id` is a placeholder. Create a real D1 database before remote deploy (`wrangler d1 create interview-helper`).

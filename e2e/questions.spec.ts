@@ -160,6 +160,70 @@ test('creating a question from the sidebar goes to the new question page', async
   await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
+test('questions belong only to the user who created them', async ({
+  browser,
+}) => {
+  const ownerContext = await browser.newContext()
+  const otherContext = await browser.newContext()
+  const ownerPage = await ownerContext.newPage()
+  const otherPage = await otherContext.newPage()
+
+  try {
+    const questionText = `Owner only ${Date.now()}`
+
+    await signIn(ownerPage)
+
+    await sidebarCreateQuestion(ownerPage).click()
+    await expect(ownerPage.getByRole('dialog')).toBeVisible()
+    await ownerPage.getByRole('textbox', { name: 'question' }).fill(questionText)
+    await ownerPage.getByRole('textbox', { name: 'answer' }).fill('Private answer')
+    await ownerPage.getByRole('button', { name: 'Create' }).click()
+
+    await expect(ownerPage).toHaveURL(/\/questions\/[0-9a-f-]+$/, {
+      timeout: 15_000,
+    })
+    await expect(
+      ownerPage.getByRole('heading', { name: questionText }),
+    ).toBeVisible()
+
+    const questionId = new URL(ownerPage.url()).pathname.split('/').at(-1)
+    const otherQuestionText = `Other user ${Date.now()}`
+
+    await signIn(otherPage)
+
+    await expect(otherPage).toHaveURL(/\/questions$/)
+    await expect(otherPage.getByText('the questions list is empty')).toBeVisible()
+    await expect(otherPage.getByRole('link', { name: questionText })).toHaveCount(0)
+
+    await sidebarCreateQuestion(otherPage).click()
+    await expect(otherPage.getByRole('dialog')).toBeVisible()
+    await otherPage
+      .getByRole('textbox', { name: 'question' })
+      .fill(otherQuestionText)
+    await otherPage.getByRole('textbox', { name: 'answer' }).fill('Other answer')
+    await otherPage.getByRole('button', { name: 'Create' }).click()
+
+    await expect(otherPage).toHaveURL(/\/questions\/[0-9a-f-]+$/, {
+      timeout: 15_000,
+    })
+    await expect(
+      otherPage.getByRole('heading', { name: otherQuestionText }),
+    ).toBeVisible()
+    await expect(otherPage.getByRole('link', { name: questionText })).toHaveCount(0)
+
+    await otherPage.goto(`/questions/${questionId}`)
+
+    await expect(otherPage).toHaveURL(new RegExp(`/questions/${questionId}$`))
+    await expect(otherPage.getByText('question not found')).toBeVisible()
+    await expect(
+      otherPage.getByRole('heading', { name: questionText }),
+    ).toHaveCount(0)
+  } finally {
+    await ownerContext.close()
+    await otherContext.close()
+  }
+})
+
 test('updating a question from the sidebar goes to the question page', async ({
   page,
 }) => {
@@ -457,7 +521,6 @@ test('app title and sidebar question links navigate without losing the sidebar',
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/)
   await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
-  await revealAnswer(page, 'Feature-Sliced Design')
   await expect(
     page.getByRole('link', { name: questionText, current: 'page' }),
   ).toBeVisible()

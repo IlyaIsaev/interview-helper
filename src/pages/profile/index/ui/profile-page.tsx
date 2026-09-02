@@ -3,7 +3,8 @@ import type { DeepReadonly } from 'es-toolkit/types'
 import { House } from 'lucide-react'
 
 import { ThemeSwitcher } from '@/features/theme-switcher'
-import { UserMenu } from '@/features/user-menu'
+import { DeleteUser, DeleteUserButton } from '@/features/user/delete-user'
+import { UserMenu } from '@/features/user/user-menu'
 import { HOME_PATH } from '@/shared/config'
 import { Button } from '@/shared/ui'
 
@@ -40,7 +41,9 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
         </p>
         <h1 className="text-heading font-medium tracking-tight">{user.name}</h1>
         <p className="text-ui text-muted-foreground">{user.email}</p>
+        <DeleteUserButton />
       </section>
+      <DeleteUser />
     </>
   )
 }, 'ProfilePage')

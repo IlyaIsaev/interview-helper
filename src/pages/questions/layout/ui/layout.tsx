@@ -8,7 +8,7 @@ import { CreateQuestion, CreateQuestionButton } from "@/features/questions/creat
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
-import { UserMenu } from "@/features/user-menu";
+import { UserMenu } from "@/features/user/user-menu";
 import { HOME_PATH, questionPath } from "@/shared/config";
 import {
   Sidebar,

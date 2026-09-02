@@ -27,7 +27,7 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 - The domain folder is only for navigation. It is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
 - Slices on the same layer must not import each other's internals, including siblings in a domain folder. If two feature slices must share UI or a schema, export it from the owning slice's `index.ts`. Prefer merging slices, moving shared domain code to `entities/`, or composing from `pages/` / `app/` first.
 - `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged (e.g. `import { Question } from '@/entities/question/@x/answer'`). Document why merge does not apply. Never use `@x` on features.
-- If the domain is unclear or the slice spans several domains (`theme-switcher`, `user-menu`), keep it at the top of `features/` or `entities/`.
+- If the domain is unclear or the slice spans several domains (`theme-switcher`), keep it at the top of `features/` or `entities/`.
 
 ### Current layout
 
@@ -49,7 +49,8 @@ features/questions/create-question/ ← dialog form to create a question + answe
 features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
-features/user-menu/  ← header menu: profile link + log out
+features/user/user-menu/ ← header menu: profile link + log out
+features/user/delete-user/ ← confirm dialog to delete the signed-in account
 entities/question/   ← current question + question list (model only)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
@@ -271,12 +272,14 @@ This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui the
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
 - Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
+- On `/sign-in`, `GET /api/demo-user` reuses `createdDemoUser` or generates credentials; the form is prefilled and the session stays empty. Sign in creates the account (`POST /api/demo-user`) and authenticates.
 - Auth gates and landing live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`.
   - Guests on `/sign-in` or `/sign-up` stay.
   - Signed-in users on `/` or auth URLs: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
   - `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials.
+- Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with new demo credentials.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.
 

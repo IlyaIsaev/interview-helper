@@ -1,12 +1,26 @@
 import { vValidator } from '@hono/valibot-validator'
-import { eq } from 'drizzle-orm'
-import { Hono } from 'hono'
+import { and, eq } from 'drizzle-orm'
+import { Hono, type Context, type Next } from 'hono'
 import * as v from 'valibot'
 
+import { createAuth } from './auth'
 import { createDatabase } from './db/client'
 import { question } from './db/schema'
 
-type Question = typeof question.$inferSelect
+type QuestionsContext = {
+  Bindings: Env
+  Variables: {
+    userId: string
+  }
+}
+
+const questionRow = {
+  id: question.id,
+  question: question.question,
+  answer: question.answer,
+}
+
+type QuestionRow = Omit<typeof question.$inferSelect, 'userId'>
 
 const questionFieldsSchema = v.object({
   question: v.pipe(
@@ -25,30 +39,55 @@ const questionIdSchema = v.object({
   id: v.pipe(v.string(), v.minLength(1)),
 })
 
+const ownedQuestion = (questionId: string, userId: string) =>
+  and(eq(question.id, questionId), eq(question.userId, userId))
+
+const requireSession = async (context: Context<QuestionsContext>, next: Next) => {
+  const currentSession = await createAuth(context.env).api.getSession({
+    headers: context.req.raw.headers,
+  })
+
+  if (!currentSession) {
+    return context.json({ message: 'Unauthorized' }, 401)
+  }
+
+  context.set('userId', currentSession.user.id)
+  await next()
+}
+
 const loadQuestion = async (
   database: ReturnType<typeof createDatabase>,
   questionId: string,
-): Promise<Question | null> => {
+  userId: string,
+): Promise<QuestionRow | null> => {
   const [foundQuestion] = await database
-    .select()
+    .select(questionRow)
     .from(question)
-    .where(eq(question.id, questionId))
+    .where(ownedQuestion(questionId, userId))
     .limit(1)
 
   return foundQuestion ?? null
 }
 
-export const questions = new Hono<{ Bindings: Env }>()
+export const questions = new Hono<QuestionsContext>()
+  .use(requireSession)
   .get('/', async (context) => {
     const database = createDatabase(context.env.DB)
-    const questions = await database.select().from(question)
+    const questions = await database
+      .select(questionRow)
+      .from(question)
+      .where(eq(question.userId, context.get('userId')))
 
     return context.json({ questions }, 200)
   })
   .get('/:id', vValidator('param', questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid('param')
     const database = createDatabase(context.env.DB)
-    const foundQuestion = await loadQuestion(database, questionId)
+    const foundQuestion = await loadQuestion(
+      database,
+      questionId,
+      context.get('userId'),
+    )
 
     if (!foundQuestion) {
       return context.json({ message: 'Question not found' }, 404)
@@ -65,8 +104,9 @@ export const questions = new Hono<{ Bindings: Env }>()
         id: crypto.randomUUID(),
         question: questionFields.question,
         answer: questionFields.answer,
+        userId: context.get('userId'),
       })
-      .returning()
+      .returning(questionRow)
 
     return context.json(createdQuestion, 201)
   })
@@ -84,8 +124,8 @@ export const questions = new Hono<{ Bindings: Env }>()
           question: questionFields.question,
           answer: questionFields.answer,
         })
-        .where(eq(question.id, questionId))
-        .returning()
+        .where(ownedQuestion(questionId, context.get('userId')))
+        .returning(questionRow)
 
       if (!updatedQuestion) {
         return context.json({ message: 'Question not found' }, 404)
@@ -99,8 +139,8 @@ export const questions = new Hono<{ Bindings: Env }>()
     const database = createDatabase(context.env.DB)
     const [deletedQuestion] = await database
       .delete(question)
-      .where(eq(question.id, questionId))
-      .returning()
+      .where(ownedQuestion(questionId, context.get('userId')))
+      .returning(questionRow)
 
     if (!deletedQuestion) {
       return context.json({ message: 'Question not found' }, 404)

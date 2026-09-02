@@ -1,4 +1,4 @@
-import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -54,9 +54,16 @@ export const verification = sqliteTable('verification', {
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
 })
 
-export const question = sqliteTable('question', {
-  id: text('id').primaryKey(),
-  question: text('question').notNull(),
-  answer: text('answer').notNull(),
-})
+export const question = sqliteTable(
+  'question',
+  {
+    id: text('id').primaryKey(),
+    question: text('question').notNull(),
+    answer: text('answer').notNull(),
+    userId: text('userId')
+      .notNull()
+      .references(() => user.id, { onDelete: 'cascade' }),
+  },
+  (table) => [index('question_userId_idx').on(table.userId)],
+)
 
