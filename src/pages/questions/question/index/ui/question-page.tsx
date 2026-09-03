@@ -2,9 +2,8 @@ import { reatomComponent } from '@reatom/react'
 
 import { question } from '@/entities/question'
 import { cn } from '@/shared/lib'
-import { Markdown, Separator } from '@/shared/ui'
+import { Markdown } from '@/shared/ui'
 
-import { isAnswerVisible } from '../model/show-answer'
 import { NextQuestion } from './next-question'
 import { ShowAnswer } from './show-answer'
 
@@ -28,7 +27,6 @@ const QuestionPage = reatomComponent(() => {
   return (
     <section className={questionPageClassName}>
       <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
-      {isAnswerVisible() && <Separator decorative={false} />}
       <ShowAnswer
         key={openedQuestion.question}
         answer={openedQuestion.answer}

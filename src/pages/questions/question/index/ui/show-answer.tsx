@@ -20,7 +20,7 @@ export const ShowAnswer = reatomComponent(({ answer }: ShowAnswerProps) => {
   }
 
   return (
-    <div className="min-h-0 flex-1 overflow-y-auto">
+    <div className="mt-[3lh] min-h-0 flex-1 overflow-y-auto">
       <Markdown>{answer}</Markdown>
     </div>
   )

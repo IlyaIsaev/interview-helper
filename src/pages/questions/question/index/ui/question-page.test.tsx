@@ -49,20 +49,6 @@ test('next question is hidden until the answer is visible', async () => {
     .not.toBeInTheDocument()
 })
 
-test('separator is visible only when the answer is visible', async () => {
-  openQuestionPage('one')
-
-  const screen = await render(<QuestionPage />)
-  const separator = screen.getByRole('separator')
-
-  await expect.element(separator).not.toBeInTheDocument()
-
-  await userEvent.click(screen.getByRole('button', { name: 'Show answer' }))
-
-  await expect.element(separator).toBeInTheDocument()
-  await expect.element(screen.getByText('hidden answer')).toBeVisible()
-})
-
 test('next question is focused after reveal when another question is loaded', async () => {
   openQuestionPage('two')
 
