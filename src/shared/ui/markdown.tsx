@@ -99,6 +99,44 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
   )
 }
 
-export { Markdown }
+const stripMarkdownImages = (markdown: string) =>
+  markdown.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
+
+const stripMarkdownLinks = (markdown: string) =>
+  markdown.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
+
+const stripMarkdownHeadings = (markdown: string) =>
+  markdown.replace(/^#{1,6}\s+/gm, '')
+
+const stripMarkdownEmphasis = (markdown: string) =>
+  markdown
+    .replace(/\*\*([^*]+)\*\*/g, '$1')
+    .replace(/__([^_]+)__/g, '$1')
+    .replace(/\*([^*]+)\*/g, '$1')
+    .replace(/_([^_]+)_/g, '$1')
+
+const stripMarkdownCode = (markdown: string) => markdown.replace(/`([^`]+)`/g, '$1')
+
+const stripMarkdownQuotesAndLists = (markdown: string) =>
+  markdown
+    .replace(/^>\s?/gm, '')
+    .replace(/^[-*+]\s+/gm, '')
+    .replace(/^\d+\.\s+/gm, '')
+
+const collapseWhitespace = (text: string) => text.replace(/\s+/g, ' ').trim()
+
+const markdownPlainText = (markdown: string) =>
+  pipe(
+    markdown,
+    stripMarkdownImages,
+    stripMarkdownLinks,
+    stripMarkdownHeadings,
+    stripMarkdownEmphasis,
+    stripMarkdownCode,
+    stripMarkdownQuotesAndLists,
+    collapseWhitespace,
+  )
+
+export { Markdown, markdownPlainText }
 
 export type { MarkdownProps }

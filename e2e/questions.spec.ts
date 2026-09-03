@@ -684,3 +684,40 @@ test('next question opens another loaded question', async ({ page }) => {
   await expect(page.getByText('Second answer')).toHaveCount(0)
   await expect(page.getByRole('button', { name: 'Next question' })).toHaveCount(0)
 })
+
+test('sidebar search filters questions by visible text', async ({ page }) => {
+  const firstQuestion = `Search alpha ${Date.now()}`
+  const secondQuestion = `Search beta ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(firstQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Alpha answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(openedQuestion(page, firstQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(secondQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Beta answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(openedQuestion(page, secondQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  const questionSearch = page.getByRole('searchbox', { name: 'search' })
+
+  await questionSearch.fill('alpha')
+  await expect(page.getByRole('link', { name: firstQuestion })).toBeVisible()
+  await expect(page.getByRole('link', { name: secondQuestion })).toHaveCount(0)
+
+  await questionSearch.fill('')
+  await expect(page.getByRole('link', { name: firstQuestion })).toBeVisible()
+  await expect(page.getByRole('link', { name: secondQuestion })).toBeVisible()
+})

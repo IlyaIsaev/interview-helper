@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { render } from 'vitest-browser-react'
 
-import { Markdown } from './markdown'
+import { Markdown, markdownPlainText } from './markdown'
 
 test('renders markdown instead of raw syntax', async () => {
   const screen = await render(<Markdown>{'# Hello\n\n**bold**'}</Markdown>)
@@ -32,4 +32,11 @@ test('plain markdown links are text inside a parent link', async () => {
   await expect
     .element(screen.getByRole('link', { name: 'Hello' }))
     .toHaveAttribute('href', '/questions/1')
+})
+
+test('markdownPlainText strips markup to visible text', () => {
+  expect(markdownPlainText('# Hello')).toBe('Hello')
+  expect(markdownPlainText('**bold**')).toBe('bold')
+  expect(markdownPlainText('[Hello](https://example.com)')).toBe('Hello')
+  expect(markdownPlainText('# Hello field\n\n**bold**')).toBe('Hello field bold')
 })

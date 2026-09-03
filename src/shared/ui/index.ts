@@ -97,7 +97,7 @@ export { Input } from './input'
 
 export { Label } from './label'
 
-export { Markdown } from './markdown'
+export { Markdown, markdownPlainText } from './markdown'
 
 export { Textarea } from './textarea'
 

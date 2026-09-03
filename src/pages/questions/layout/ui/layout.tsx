@@ -1,30 +1,29 @@
-import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
+import { reatomBoolean, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
-import { map, pipe } from "es-toolkit/fp";
-import { type ReactNode } from "react";
+import { type ChangeEvent, type ReactNode } from "react";
 
-import { questionList, type QuestionListItem } from "@/entities/question";
+import { questionList } from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
-import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
-import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
+import { DeleteQuestion } from "@/features/questions/delete-question";
+import { UpdateQuestion } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
-import { HOME_PATH, questionPath } from "@/shared/config";
+import { HOME_PATH } from "@/shared/config";
 import {
-  Markdown,
+  Input,
+  Label,
   Sidebar,
   SidebarContent,
   SidebarGroup,
-  SidebarGroupLabel,
   SidebarHeader,
   SidebarInset,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
   SidebarProvider,
   SidebarTrigger,
   Spinner,
 } from "@/shared/ui";
+
+import { filteredQuestions, questionSearch } from "../model/question-search";
+import { QuestionList } from "./question-list";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
 
@@ -34,31 +33,14 @@ type LayoutProps = {
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const questions = questionList();
-  const currentPath = urlAtom().pathname;
+  const visibleQuestions = filteredQuestions();
+  const search = questionSearch();
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
   });
-
-  function questionMenuItem(question: QuestionListItem) {
-    const questionHref = questionPath(question.id);
-    const isQuestionOpened = currentPath === questionHref;
-
-    return (
-      <SidebarMenuItem key={question.id}>
-        <SidebarMenuButton
-          asChild
-          isActive={isQuestionOpened}
-          className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
-        >
-          <a aria-current={isQuestionOpened ? "page" : undefined} href={questionHref}>
-            <Markdown plain>{question.question}</Markdown>
-          </a>
-        </SidebarMenuButton>
-        <UpdateQuestionButton className="right-7" questionId={question.id} />
-        <DeleteQuestionButton questionId={question.id} />
-      </SidebarMenuItem>
-    );
-  }
+  const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
+    questionSearch.set(event.currentTarget.value);
+  });
 
   return (
     <SidebarProvider
@@ -71,19 +53,31 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
           <p className="text-xs uppercase tracking-[2px] text-muted-foreground">Questions</p>
           <CreateQuestionButton />
         </SidebarHeader>
-        <SidebarContent>
-          <SidebarGroup className="flex-1">
-            <SidebarGroupLabel className="uppercase tracking-[1.5px]">menu</SidebarGroupLabel>
-            {questions === null ? (
-              <div className="flex flex-1 items-center justify-center">
+        <SidebarContent className="overflow-hidden">
+          <SidebarGroup className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="shrink-0 pb-2">
+              <Label htmlFor="question-search">search</Label>
+              <Input
+                id="question-search"
+                type="search"
+                value={search}
+                onChange={changeQuestionSearch}
+              />
+            </div>
+            {questions === null || visibleQuestions === null ? (
+              <div className="flex min-h-0 flex-1 items-center justify-center">
                 <Spinner />
               </div>
             ) : questions.length === 0 ? (
               <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
                 no questions
               </p>
+            ) : visibleQuestions.length === 0 ? (
+              <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
+                no matches
+              </p>
             ) : (
-              <SidebarMenu>{pipe(questions, map(questionMenuItem))}</SidebarMenu>
+              <QuestionList questions={visibleQuestions} />
             )}
           </SidebarGroup>
         </SidebarContent>
