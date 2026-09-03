@@ -2,7 +2,7 @@ import { wrap } from '@reatom/core'
 import { reatomComponent } from '@reatom/react'
 import { useLayoutEffect, useRef } from 'react'
 
-import { Button, Card, CardContent, Markdown } from '@/shared/ui'
+import { Button, Markdown } from '@/shared/ui'
 
 import { isAnswerVisible, showAnswer } from '../model/show-answer'
 
@@ -79,11 +79,7 @@ export const ShowAnswer = reatomComponent(({ answer }: ShowAnswerProps) => {
 
   return (
     <div className="min-h-0 flex-1 overflow-y-auto">
-      <Card>
-        <CardContent className="pt-3.5">
-          <Markdown>{answer}</Markdown>
-        </CardContent>
-      </Card>
+      <Markdown>{answer}</Markdown>
     </div>
   )
 }, 'ShowAnswer')

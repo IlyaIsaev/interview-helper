@@ -2,7 +2,7 @@ import { reatomComponent } from '@reatom/react'
 
 import { question } from '@/entities/question'
 import { cn } from '@/shared/lib'
-import { Card, CardContent, Markdown } from '@/shared/ui'
+import { Markdown } from '@/shared/ui'
 
 import { NextQuestion } from './next-question'
 import { ShowAnswer } from './show-answer'
@@ -26,11 +26,7 @@ const QuestionPage = reatomComponent(() => {
 
   return (
     <section className={questionPageClassName}>
-      <Card className="shrink-0">
-        <CardContent className="pt-3.5">
-          <Markdown>{openedQuestion.question}</Markdown>
-        </CardContent>
-      </Card>
+      <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
       <ShowAnswer
         key={openedQuestion.question}
         answer={openedQuestion.answer}
