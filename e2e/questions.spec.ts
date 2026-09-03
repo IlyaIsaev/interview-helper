@@ -6,11 +6,17 @@ const isQuestionsListPath = (url: string) =>
   new URL(url).pathname === '/questions'
 
 const revealAnswer = async (page: Page, answer: string) => {
-  await expect(page.getByRole('button', { name: 'Show answer' })).toBeVisible()
+  const showAnswer = page.getByRole('button', { name: 'Show answer' })
+
+  await expect(showAnswer).toBeVisible()
+  await expect(showAnswer).toBeFocused()
   await expect(page.getByText(answer)).toHaveCount(0)
-  await page.getByRole('button', { name: 'Show answer' }).click()
+  await page.keyboard.press('Enter')
   await expect(page.getByText(answer)).toBeVisible()
 }
+
+const openedQuestion = (page: Page, questionText: string) =>
+  page.getByRole('main').getByText(questionText, { exact: true })
 
 const sidebarCreateQuestion = (page: Page) =>
   page
@@ -154,8 +160,9 @@ test('creating a question from the sidebar goes to the new question page', async
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await revealAnswer(page, 'Feature-Sliced Design')
+  await expect(page.getByRole('button', { name: 'Next question' })).toHaveCount(0)
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
   await expect(
     page.getByRole('link', { name: questionText, current: 'page' }),
@@ -186,7 +193,7 @@ test('questions belong only to the user who created them', async ({
       timeout: 15_000,
     })
     await expect(
-      ownerPage.getByRole('heading', { name: questionText }),
+      openedQuestion(ownerPage, questionText),
     ).toBeVisible()
 
     const questionId = new URL(ownerPage.url()).pathname.split('/').at(-1)
@@ -210,7 +217,7 @@ test('questions belong only to the user who created them', async ({
       timeout: 15_000,
     })
     await expect(
-      otherPage.getByRole('heading', { name: otherQuestionText }),
+      openedQuestion(otherPage, otherQuestionText),
     ).toBeVisible()
     await expect(otherPage.getByRole('link', { name: questionText })).toHaveCount(0)
 
@@ -219,7 +226,7 @@ test('questions belong only to the user who created them', async ({
     await expect(otherPage).toHaveURL(new RegExp(`/questions/${questionId}$`))
     await expect(otherPage.getByText('question not found')).toBeVisible()
     await expect(
-      otherPage.getByRole('heading', { name: questionText }),
+      openedQuestion(otherPage, questionText),
     ).toHaveCount(0)
   } finally {
     await ownerContext.close()
@@ -243,7 +250,7 @@ test('updating a question from the sidebar goes to the question page', async ({
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
@@ -270,7 +277,7 @@ test('updating a question from the sidebar goes to the question page', async ({
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
   await expect(
-    page.getByRole('heading', { name: updatedQuestionText }),
+    openedQuestion(page, updatedQuestionText),
   ).toBeVisible()
   await revealAnswer(page, 'Updated answer')
   await expect(
@@ -297,7 +304,7 @@ test('updating a question shows a spinner while the question loads', async ({
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
   const releaseQuestionGet = await holdQuestionGet(page)
@@ -345,7 +352,7 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
@@ -362,14 +369,14 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await page.getByRole('button', { name: 'Cancel' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
 
   await questionItem.hover()
   await questionItem.getByRole('button', { name: 'Delete question' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page.getByRole('link', { name: questionText })).toHaveCount(0)
-  await expect(page.getByRole('heading', { name: questionText })).toHaveCount(0)
+  await expect(openedQuestion(page, questionText)).toHaveCount(0)
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page).toHaveURL(signedInPath)
   await expect(notifications(page).getByText('Question deleted.')).toBeVisible()
@@ -391,7 +398,7 @@ test('a failed delete restores the question and shows a toast', async ({
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
 
   await failQuestionMutation(page, 'DELETE')
@@ -412,7 +419,7 @@ test('a failed delete restores the question and shows a toast', async ({
   ).toBeVisible()
   await expect(notifications(page).getByText(questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
 })
 
 test('a failed update restores the question and shows a toast', async ({
@@ -431,7 +438,7 @@ test('a failed update restores the question and shows a toast', async ({
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
 
   await failQuestionMutation(page, 'PUT')
@@ -458,7 +465,7 @@ test('a failed update restores the question and shows a toast', async ({
   ).toBeVisible()
   await expect(notifications(page).getByText(questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('link', { name: updatedQuestionText })).toHaveCount(
     0,
   )
@@ -501,12 +508,12 @@ test('app title and sidebar question links navigate without losing the sidebar',
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await revealAnswer(page, 'Feature-Sliced Design')
 
   await page.reload()
 
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible({
+  await expect(openedQuestion(page, questionText)).toBeVisible({
     timeout: 15_000,
   })
   await revealAnswer(page, 'Feature-Sliced Design')
@@ -523,7 +530,7 @@ test('app title and sidebar question links navigate without losing the sidebar',
   await page.getByRole('link', { name: questionText }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/)
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
   await expect(
     page.getByRole('link', { name: questionText, current: 'page' }),
   ).toBeVisible()
@@ -546,7 +553,7 @@ test('reloading a question page fetches that question once', async ({
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toBeVisible()
 
   const questionId = new URL(page.url()).pathname.split('/').at(-1)
   const questionRequests: string[] = []
@@ -564,7 +571,7 @@ test('reloading a question page fetches that question once', async ({
 
   await page.reload()
 
-  await expect(page.getByRole('heading', { name: questionText })).toBeVisible({
+  await expect(openedQuestion(page, questionText)).toBeVisible({
     timeout: 15_000,
   })
   await expect(page.getByRole('link', { name: questionText })).toBeVisible()
@@ -617,7 +624,7 @@ test('sidebar stays visible while a child page chunk is loading', async ({
   await page.getByRole('textbox', { name: 'answer' }).fill('Keep the sidebar')
   await page.getByRole('button', { name: 'Create' }).click()
 
-  await expect(page.getByRole('heading', { name: 'Suspense nav' })).toHaveCount(
+  await expect(openedQuestion(page, 'Suspense nav')).toHaveCount(
     0,
     {
       timeout: 500,
@@ -626,11 +633,54 @@ test('sidebar stays visible while a child page chunk is loading', async ({
   await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
   await expect(sidebarCreateQuestion(page)).toBeVisible()
 
-  await expect(page.getByRole('heading', { name: 'Suspense nav' })).toBeVisible({
+  await expect(openedQuestion(page, 'Suspense nav')).toBeVisible({
     timeout: 15_000,
   })
   await revealAnswer(page, 'Keep the sidebar')
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/)
   await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
   await expect(sidebarCreateQuestion(page)).toBeVisible()
+})
+
+test('next question opens another loaded question', async ({ page }) => {
+  const firstQuestion = `Next first ${Date.now()}`
+  const secondQuestion = `Next second ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(firstQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('First answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(openedQuestion(page, firstQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(secondQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Second answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(openedQuestion(page, secondQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  await revealAnswer(page, 'Second answer')
+  await expect(page.getByRole('button', { name: 'Next question' })).toBeVisible()
+
+  const openedQuestionUrl = page.url()
+
+  await page.getByRole('button', { name: 'Next question' }).click()
+
+  await expect(page).not.toHaveURL(openedQuestionUrl)
+  await expect(openedQuestion(page, firstQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(page.getByRole('button', { name: 'Show answer' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show answer' })).toBeFocused()
+  await expect(page.getByText('Second answer')).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Next question' })).toHaveCount(0)
 })

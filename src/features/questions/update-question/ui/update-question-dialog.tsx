@@ -39,8 +39,8 @@ export const UpdateQuestion = reatomComponent(() => {
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
-        <DialogHeader>
+      <DialogContent className="flex h-[95vh] max-h-[95vh] min-h-0 min-w-[min(40vw,calc(100%-2rem))] w-[min(90vw,calc(100%-2rem))] flex-col overflow-clip [overflow-clip-margin:6px] sm:max-w-[90vw]">
+        <DialogHeader className="shrink-0">
           <DialogTitle className="text-xs uppercase tracking-[1.5px]">
             Update question
           </DialogTitle>
@@ -49,14 +49,17 @@ export const UpdateQuestion = reatomComponent(() => {
           </DialogDescription>
         </DialogHeader>
         {!isQuestionReady ? (
-          <div className="flex min-h-40 items-center justify-center">
+          <div className="flex min-h-0 flex-1 items-center justify-center">
             <Spinner className="size-6" />
             <span className="sr-only">loading</span>
           </div>
         ) : (
-          <Form onSubmit={submit}>
+          <Form
+            className="min-h-0 flex-1 overflow-clip [overflow-clip-margin:6px]"
+            onSubmit={submit}
+          >
             <QuestionFields question={fields.question} answer={fields.answer} />
-            <DialogFooter>
+            <DialogFooter className="shrink-0">
               <Button
                 type="button"
                 variant="outline"

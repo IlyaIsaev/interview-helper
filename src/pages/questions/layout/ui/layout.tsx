@@ -11,6 +11,7 @@ import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
 import { HOME_PATH, questionPath } from "@/shared/config";
 import {
+  Markdown,
   Sidebar,
   SidebarContent,
   SidebarGroup,
@@ -50,7 +51,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
           className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
         >
           <a aria-current={isQuestionOpened ? "page" : undefined} href={questionHref}>
-            <span>{question.question}</span>
+            <Markdown plain>{question.question}</Markdown>
           </a>
         </SidebarMenuButton>
         <UpdateQuestionButton className="right-7" questionId={question.id} />
@@ -60,7 +61,11 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
   }
 
   return (
-    <SidebarProvider open={isSidebarOpen()} onOpenChange={changeSidebarOpen}>
+    <SidebarProvider
+      className="h-svh overflow-hidden"
+      open={isSidebarOpen()}
+      onOpenChange={changeSidebarOpen}
+    >
       <Sidebar collapsible="offcanvas">
         <SidebarHeader className="h-12 flex-row items-center gap-3 border-b border-sidebar-border px-3 py-0">
           <p className="text-xs uppercase tracking-[2px] text-muted-foreground">Questions</p>
@@ -86,8 +91,8 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
       <CreateQuestion />
       <UpdateQuestion />
       <DeleteQuestion />
-      <SidebarInset>
-        <header className="flex h-12 items-center gap-3 border-b border-border px-3">
+      <SidebarInset className="min-h-0 overflow-hidden">
+        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
           <SidebarTrigger />
           <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
             Interview helper
@@ -97,7 +102,9 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
             <ThemeSwitcher />
           </div>
         </header>
-        <div className="min-w-0 flex-1">{children}</div>
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   );
