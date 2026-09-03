@@ -1,7 +1,7 @@
-@import '@fontsource/jetbrains-mono/400.css';
-@import '@fontsource/jetbrains-mono/500.css';
-@import '@fontsource/jetbrains-mono/600.css';
-@import 'tailwindcss';
+@import "@fontsource/jetbrains-mono/400.css";
+@import "@fontsource/jetbrains-mono/500.css";
+@import "@fontsource/jetbrains-mono/600.css";
+@import "tailwindcss";
 
 @custom-variant dark (&:is(.dark *));
 
@@ -86,8 +86,8 @@
 }
 
 @theme {
-  --font-mono: 'JetBrains Mono', ui-monospace, monospace;
-  --font-sans: 'JetBrains Mono', ui-monospace, monospace;
+  --font-mono: "JetBrains Mono", ui-monospace, monospace;
+  --font-sans: "JetBrains Mono", ui-monospace, monospace;
   --text-label: 11px;
   --text-ui: 13px;
   --text-heading: 22px;
@@ -145,6 +145,12 @@
 
 * {
   border-color: hsl(var(--border));
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+*::-webkit-scrollbar {
+  display: none;
 }
 
 body {
