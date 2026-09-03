@@ -7,6 +7,12 @@
       "skillPath": "feature-sliced-design/SKILL.md",
       "computedHash": "775a8ee42f32b12d33478eaf2416c0c1c394fac61b98805c6cf0f228cc2c9b34"
     },
+    "migrate-radix-to-base": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/migrate-radix-to-base/SKILL.md",
+      "computedHash": "e1f2030ee5059be3dff0812ca0e4b995ee9fa3132176f049ebe6c90346a6755e"
+    },
     "reatom": {
       "source": "reatom/reatom",
       "sourceType": "github",
@@ -30,6 +36,12 @@
       "sourceType": "github",
       "skillPath": "skills/reatom-review/SKILL.md",
       "computedHash": "0bcb4b58892d94667805bc4eb1a61391bfe8b0ff1f1a3b23329d24fa48d36cc7"
+    },
+    "shadcn": {
+      "source": "shadcn/ui",
+      "sourceType": "github",
+      "skillPath": "skills/shadcn/SKILL.md",
+      "computedHash": "a86630dd9b32722a4ea6846abc6756d5da8f06bdc2343dbc625923cc5c7a758b"
     }
   }
 }
