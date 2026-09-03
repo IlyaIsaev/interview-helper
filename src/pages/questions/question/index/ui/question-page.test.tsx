@@ -49,14 +49,21 @@ test('next question is hidden until the answer is visible', async () => {
     .not.toBeInTheDocument()
 })
 
-test('next question is visible after reveal when another question is loaded', async () => {
+test('next question is focused after reveal when another question is loaded', async () => {
   openQuestionPage('two')
 
   const screen = await render(<QuestionPage />)
 
   await userEvent.click(screen.getByRole('button', { name: 'Show answer' }))
 
-  await expect.element(screen.getByRole('button', { name: 'Next question' })).toBeVisible()
+  const nextQuestion = screen.getByRole('button', { name: 'Next question' })
+
+  await expect.element(nextQuestion).toBeVisible()
+  await expect.element(nextQuestion).toHaveFocus()
+
+  await userEvent.keyboard('{Enter}')
+
+  expect(urlAtom().pathname).toBe(questionPath(otherQuestionId))
 })
 
 test('next question is hidden when the list has only the current question', async () => {

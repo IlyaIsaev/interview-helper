@@ -1,10 +1,9 @@
 import { wrap } from '@reatom/core'
 import { reatomComponent } from '@reatom/react'
 
-import { Button } from '@/shared/ui'
-
 import { openNextQuestion, otherQuestions } from '../model/next-question'
 import { isAnswerVisible } from '../model/show-answer'
+import { QuestionActionButton } from './question-action-button'
 
 export const NextQuestion = reatomComponent(() => {
   if (!isAnswerVisible() || otherQuestions().length === 0) {
@@ -14,8 +13,8 @@ export const NextQuestion = reatomComponent(() => {
   const handleOpenNextQuestion = wrap(openNextQuestion)
 
   return (
-    <Button className="mt-auto shrink-0" type="button" onClick={handleOpenNextQuestion}>
+    <QuestionActionButton onClick={handleOpenNextQuestion}>
       Next question
-    </Button>
+    </QuestionActionButton>
   )
 }, 'NextQuestion')

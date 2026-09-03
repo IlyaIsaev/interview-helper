@@ -669,11 +669,14 @@ test('next question opens another loaded question', async ({ page }) => {
   })
 
   await revealAnswer(page, 'Second answer')
-  await expect(page.getByRole('button', { name: 'Next question' })).toBeVisible()
+  const nextQuestion = page.getByRole('button', { name: 'Next question' })
+
+  await expect(nextQuestion).toBeVisible()
+  await expect(nextQuestion).toBeFocused()
 
   const openedQuestionUrl = page.url()
 
-  await page.getByRole('button', { name: 'Next question' }).click()
+  await page.keyboard.press('Enter')
 
   await expect(page).not.toHaveURL(openedQuestionUrl)
   await expect(openedQuestion(page, firstQuestion)).toBeVisible({
