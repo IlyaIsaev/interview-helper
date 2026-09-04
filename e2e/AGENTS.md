@@ -1,6 +1,6 @@
 # End-to-end tests
 
-Playwright specs for the app. General style and naming come from the parent `AGENTS.md`. Unit tests live in `src/` (see `src/AGENTS.md`).
+Playwright specs for the app. General style and naming come from the parent `AGENTS.md`. Unit tests live in `src/**/tests/` (see `src/AGENTS.md`).
 
 Local skill: `.agents/skills/playwright-cli/SKILL.md`
 

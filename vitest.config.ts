@@ -18,7 +18,7 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['src/**/*.test.ts', 'src/**/*.test.tsx', 'worker/**/*.test.ts'],
+    include: ['src/**/tests/**/*.test.ts', 'src/**/tests/**/*.test.tsx', 'worker/**/*.test.ts'],
     browser: {
       enabled: true,
       headless: true,

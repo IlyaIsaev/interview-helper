@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-react'
 
 import { initQuestionList } from '@/entities/question'
 
-import QuestionsPage from './questions-page'
+import QuestionsPage from '../questions-page'
 
 test('empty questions page shows create question', async () => {
   initQuestionList([])

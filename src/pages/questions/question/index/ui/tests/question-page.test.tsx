@@ -6,8 +6,8 @@ import { render } from 'vitest-browser-react'
 import { initQuestion, initQuestionList } from '@/entities/question'
 import { questionPath } from '@/shared/config'
 
-import { isAnswerVisible } from '../model/show-answer'
-import QuestionPage from './question-page'
+import { isAnswerVisible } from '../../model/show-answer'
+import QuestionPage from '../question-page'
 
 const currentQuestionId = '11111111-1111-1111-1111-111111111111'
 const otherQuestionId = '22222222-2222-2222-2222-222222222222'

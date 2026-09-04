@@ -2,8 +2,8 @@ import { expect, test } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 
-import { isAnswerVisible } from '../model/show-answer'
-import { ShowAnswer } from './show-answer'
+import { isAnswerVisible } from '../../model/show-answer'
+import { ShowAnswer } from '../show-answer'
 
 test('show answer button is focused and enter reveals the answer', async () => {
   isAnswerVisible.setFalse()

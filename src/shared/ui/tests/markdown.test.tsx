@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { render } from 'vitest-browser-react'
 
-import { Markdown, markdownPlainText } from './markdown'
+import { Markdown, markdownPlainText } from '../markdown'
 
 test('renders markdown instead of raw syntax', async () => {
   const screen = await render(<Markdown>{'# Hello\n\n**bold**'}</Markdown>)

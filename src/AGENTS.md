@@ -286,7 +286,8 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ## Unit tests
 
-- Vitest Browser Mode (`pnpm test`). Tests live next to source as `*.test.ts(x)` and run in Chromium.
+- Vitest Browser Mode (`pnpm test`). Tests under `src/` live in a `tests/` folder next to the code they cover (`ui/tests/foo.test.tsx`, not `ui/foo.test.tsx`). Run in Chromium.
+- Screenshots and visual snapshots for those tests live in the same `tests/` folder (including Vitest `__screenshots__/`). Do not put `__screenshots__/` next to production source.
 - React components: `await render(...)` from `vitest-browser-react`, query with locators (`getByRole`, `getByText`), assert with `await expect.element(...).toBeVisible()`.
 - Do not use `createRoot`, `flushSync`, jsdom, Cypress, or Testing Library-in-Node.
 - Do not put Playwright specs in `src/` — those belong in `e2e/`.
