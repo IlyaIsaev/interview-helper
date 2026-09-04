@@ -30,3 +30,4 @@ blob-report
 Session.vim
 .playwright-mcp/*
 .vitest-attachments/
+lefthook-local.yml
