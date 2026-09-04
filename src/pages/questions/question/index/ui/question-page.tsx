@@ -4,12 +4,15 @@ import { question } from '@/entities/question'
 import { cn } from '@/shared/lib'
 import { Markdown } from '@/shared/ui'
 
+import { isAnswerVisible } from '../model/show-answer'
 import { NextQuestion } from './next-question'
 import { ShowAnswer } from './show-answer'
 
 const questionPageClassName = cn(
   'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
 )
+
+const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col')
 
 const QuestionPage = reatomComponent(() => {
   const openedQuestion = question()
@@ -26,11 +29,17 @@ const QuestionPage = reatomComponent(() => {
 
   return (
     <section className={questionPageClassName}>
-      <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
-      <ShowAnswer
-        key={openedQuestion.question}
-        answer={openedQuestion.answer}
-      />
+      <div className={questionAnswerColumnClassName}>
+        <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
+        <div
+          className={cn('shrink-0', isAnswerVisible() ? 'h-[3lh]' : 'h-4')}
+          aria-hidden="true"
+        />
+        <ShowAnswer
+          key={openedQuestion.question}
+          answer={openedQuestion.answer}
+        />
+      </div>
       <NextQuestion />
     </section>
   )
