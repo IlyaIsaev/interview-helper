@@ -1,26 +1,18 @@
-import { computed, reatomString } from '@reatom/core'
-import { filter, pipe } from 'es-toolkit/fp'
+import { action, reatomString, sleep, withAbort, wrap } from '@reatom/core'
 
-import { questionList, type QuestionListItem } from '@/entities/question'
-import { markdownPlainText } from '@/shared/ui'
+import { initQuestionList, questionListQuery } from '@/entities/question'
+import { clientApi } from '@/shared/api'
 
 export const questionSearch = reatomString('', 'questionSearch')
 
-const matchesQuestionSearch = (query: string) => (question: QuestionListItem) =>
-  markdownPlainText(question.question).toLowerCase().includes(query)
+export const searchQuestions = action(async () => {
+  await wrap(sleep(300))
 
-export const filteredQuestions = computed(() => {
-  const questions = questionList()
+  try {
+    const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()))
 
-  if (questions === null) {
-    return null
+    initQuestionList(questions)
+  } catch {
+    return
   }
-
-  const query = questionSearch().trim().toLowerCase()
-
-  if (query.length === 0) {
-    return questions
-  }
-
-  return pipe(questions, filter(matchesQuestionSearch(query)))
-}, 'filteredQuestions')
+}, 'searchQuestions').extend(withAbort())

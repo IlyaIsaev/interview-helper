@@ -1,4 +1,4 @@
-import { action, atom } from '@reatom/core'
+import { action, atom, reatomString } from '@reatom/core'
 import { filter, flatten, map, pick, pipe } from 'es-toolkit/fp'
 import type { DeepReadonly } from 'es-toolkit/types'
 
@@ -12,6 +12,8 @@ export const questionList = atom<Array<QuestionListItem> | null>(
   'questionList',
 )
 
+export const questionListQuery = reatomString('', 'questionListQuery')
+
 const questionListItem = (question: QuestionListItem) =>
   pipe(question, pick(['id', 'question']))
 
@@ -21,6 +23,7 @@ export const initQuestionList = action((questions: Array<QuestionListItem>) => {
 
 export const resetQuestionList = action(() => {
   questionList.set(null)
+  questionListQuery.set('')
 }, 'resetQuestionList')
 
 export const addQuestion = action((question: QuestionListItem) => {

@@ -4,6 +4,7 @@ export {
   addQuestion,
   initQuestionList,
   questionList,
+  questionListQuery,
   removeQuestion,
   resetQuestionList,
   restoreQuestion,

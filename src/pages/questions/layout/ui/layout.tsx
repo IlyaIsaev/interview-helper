@@ -2,7 +2,7 @@ import { reatomBoolean, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { type ChangeEvent, type ReactNode } from "react";
 
-import { questionList } from "@/entities/question";
+import { questionList, questionListQuery } from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion } from "@/features/questions/delete-question";
 import { UpdateQuestion } from "@/features/questions/update-question";
@@ -22,7 +22,7 @@ import {
   Spinner,
 } from "@/shared/ui";
 
-import { filteredQuestions, questionSearch } from "../model/question-search";
+import { questionSearch, searchQuestions } from "../model/question-search";
 import { QuestionList } from "./question-list";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
@@ -33,13 +33,16 @@ type LayoutProps = {
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const questions = questionList();
-  const visibleQuestions = filteredQuestions();
   const search = questionSearch();
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
   });
   const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
-    questionSearch.set(event.currentTarget.value);
+    const nextSearch = event.currentTarget.value;
+
+    questionSearch.set(nextSearch);
+    questionListQuery.set(nextSearch.trim());
+    searchQuestions();
   });
 
   return (
@@ -64,20 +67,20 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
                 onChange={changeQuestionSearch}
               />
             </div>
-            {questions === null || visibleQuestions === null ? (
+            {questions === null ? (
               <div className="flex min-h-0 flex-1 items-center justify-center">
                 <Spinner />
               </div>
-            ) : questions.length === 0 ? (
+            ) : questions.length === 0 && search.trim().length === 0 ? (
               <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
                 no questions
               </p>
-            ) : visibleQuestions.length === 0 ? (
+            ) : questions.length === 0 ? (
               <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
                 no matches
               </p>
             ) : (
-              <QuestionList questions={visibleQuestions} />
+              <QuestionList questions={questions} />
             )}
           </SidebarGroup>
         </SidebarContent>

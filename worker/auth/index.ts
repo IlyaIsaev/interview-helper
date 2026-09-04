@@ -2,8 +2,8 @@ import { betterAuth } from 'better-auth'
 import { drizzleAdapter } from 'better-auth/adapters/drizzle'
 import { Hono } from 'hono'
 
-import { createDatabase } from './db/client'
-import * as schema from './db/schema'
+import { createDatabase } from '../db/client'
+import * as schema from '../db/schema'
 
 export const createAuth = (env: Env) => {
   return betterAuth({

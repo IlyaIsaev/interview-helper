@@ -58,8 +58,12 @@ type DemoUserCredentials = InferResponseType<(typeof api.api)['demo-user']['$get
 type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json']
 
 export const clientApi = {
-  async loadQuestions(): Promise<QuestionsResponse> {
-    const response = await wrap(api.api.questions.$get())
+  async loadQuestions(query = ''): Promise<QuestionsResponse> {
+    const response = await wrap(
+      api.api.questions.$get({
+        query: query.length === 0 ? {} : { q: query },
+      }),
+    )
 
     return await readJson<QuestionsResponse>(response, 'GET /api/questions failed')
   },

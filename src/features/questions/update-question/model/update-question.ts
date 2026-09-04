@@ -16,6 +16,7 @@ import {
   initQuestionList,
   question as openedQuestionState,
   questionList,
+  questionListQuery,
   updateQuestion,
   type QuestionListItem,
 } from '@/entities/question'
@@ -105,7 +106,7 @@ export const updateQuestionForm = reatomForm(
         })
 
         try {
-          const { questions } = await wrap(clientApi.loadQuestions())
+          const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()))
 
           initQuestionList(questions)
         } catch {

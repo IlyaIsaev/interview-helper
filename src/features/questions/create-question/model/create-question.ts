@@ -1,6 +1,6 @@
 import { action, reatomBoolean, reatomForm, urlAtom, withCallHook, wrap } from '@reatom/core'
 
-import { addQuestion } from '@/entities/question'
+import { addQuestion, initQuestionList, questionListQuery } from '@/entities/question'
 import { clientApi } from '@/shared/api'
 import { questionPath } from '@/shared/config'
 
@@ -33,13 +33,32 @@ export const createQuestionForm = reatomForm(
   },
 )
 
-createQuestionForm.submit.onFulfill.extend(
-  withCallHook(({ payload: createdQuestion }) => {
+const syncCreatedQuestion = action(async (createdQuestion: {
+  id: string
+  question: string
+}) => {
+  if (questionListQuery().length === 0) {
     addQuestion({
       id: createdQuestion.id,
       question: createdQuestion.question,
     })
+
+    return
+  }
+
+  try {
+    const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()))
+
+    initQuestionList(questions)
+  } catch {
+    return
+  }
+}, 'syncCreatedQuestion')
+
+createQuestionForm.submit.onFulfill.extend(
+  withCallHook(({ payload: createdQuestion }) => {
     closeCreateQuestionDialog()
     urlAtom.go(questionPath(createdQuestion.id))
+    syncCreatedQuestion(createdQuestion)
   }),
 )

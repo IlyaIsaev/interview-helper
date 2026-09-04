@@ -18,7 +18,15 @@
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
-    "types": ["@cloudflare/workers-types"]
+    "types": ["@cloudflare/workers-types"],
+    "paths": {
+      "@/*": ["./src/*"],
+      "@/app/*": ["./src/app/*"],
+      "@/pages/*": ["./src/pages/*"],
+      "@/features/*": ["./src/features/*"],
+      "@/entities/*": ["./src/entities/*"],
+      "@/shared/*": ["./src/shared/*"]
+    }
   },
-  "include": ["worker", "worker-configuration.d.ts"]
+  "include": ["worker", "worker-configuration.d.ts", "src/shared/lib/markdown-plain-text.ts"]
 }

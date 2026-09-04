@@ -6,8 +6,10 @@ import {
   initQuestion,
   initQuestionList,
   questionList,
+  questionListQuery,
   resetQuestionList,
 } from "@/entities/question";
+import { questionSearch } from "@/pages/questions/layout/model/question-search";
 import { clientApi } from "@/shared/api";
 import { session } from "@/shared/auth";
 import {
@@ -97,6 +99,7 @@ export const protectedRoute = rootRoute.reatomRoute(
 
       if (!user && questionList() !== null) {
         resetQuestionList();
+        questionSearch.reset();
       }
 
       if (!user && !onAuthPage) {
@@ -119,7 +122,7 @@ export const protectedRoute = rootRoute.reatomRoute(
         return;
       }
 
-      const { questions } = await wrap(clientApi.loadQuestions());
+      const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()));
 
       initQuestionList(questions);
     },

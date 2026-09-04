@@ -725,4 +725,31 @@ test('sidebar search filters questions by visible text', async ({ page }) => {
   await questionSearch.fill('')
   await expect(page.getByRole('link', { name: firstQuestion })).toBeVisible()
   await expect(page.getByRole('link', { name: secondQuestion })).toBeVisible()
+
+  const gammaStamp = Date.now()
+  const gammaQuestion = `# Search gamma ${gammaStamp}`
+  const gammaVisible = `Search gamma ${gammaStamp}`
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(gammaQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Gamma answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page.getByRole('heading', { name: gammaVisible })).toBeVisible({
+    timeout: 15_000,
+  })
+
+  await questionSearch.fill('gamma')
+  await expect(page.getByRole('link', { name: gammaVisible })).toBeVisible()
+  await expect(page.getByRole('link', { name: firstQuestion })).toHaveCount(0)
+
+  await questionSearch.fill('#')
+  await expect(page.getByRole('link', { name: gammaVisible })).toHaveCount(0)
+  await expect(page.getByText('no matches')).toBeVisible()
+
+  await questionSearch.fill('')
+  await expect(page.getByRole('link', { name: firstQuestion })).toBeVisible()
+  await expect(page.getByRole('link', { name: secondQuestion })).toBeVisible()
+  await expect(page.getByRole('link', { name: gammaVisible })).toBeVisible()
 })

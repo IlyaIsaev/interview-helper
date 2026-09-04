@@ -4,9 +4,9 @@ import { Hono } from 'hono'
 import { deleteCookie, getCookie } from 'hono/cookie'
 import * as v from 'valibot'
 
-import { createAuth } from './auth'
-import { createDatabase } from './db/client'
-import { account, session, user } from './db/schema'
+import { createAuth } from '../auth'
+import { createDatabase } from '../db/client'
+import { account, session, user } from '../db/schema'
 
 const DEMO_USER_NAME = 'Demo user'
 

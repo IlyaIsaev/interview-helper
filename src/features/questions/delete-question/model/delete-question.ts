@@ -5,6 +5,7 @@ import {
   initQuestion,
   initQuestionList,
   questionList,
+  questionListQuery,
   removeQuestion,
   restoreQuestion,
   type QuestionListItem,
@@ -77,7 +78,7 @@ export const deleteQuestion = action(async () => {
   }
 
   try {
-    const { questions } = await wrap(clientApi.loadQuestions())
+    const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()))
 
     initQuestionList(questions)
   } catch {

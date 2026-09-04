@@ -3,9 +3,10 @@ import { and, eq } from 'drizzle-orm'
 import { Hono, type Context, type Next } from 'hono'
 import * as v from 'valibot'
 
-import { createAuth } from './auth'
-import { createDatabase } from './db/client'
-import { question } from './db/schema'
+import { createAuth } from '../auth'
+import { createDatabase } from '../db/client'
+import { question } from '../db/schema'
+import { questionsMatchingSearch } from './utils/question-search'
 
 type QuestionsContext = {
   Bindings: Env
@@ -37,6 +38,10 @@ const questionFieldsSchema = v.object({
 
 const questionIdSchema = v.object({
   id: v.pipe(v.string(), v.minLength(1)),
+})
+
+const questionSearchQuerySchema = v.object({
+  q: v.optional(v.pipe(v.string(), v.trim())),
 })
 
 const ownedQuestion = (questionId: string, userId: string) =>
@@ -71,14 +76,15 @@ const loadQuestion = async (
 
 export const questions = new Hono<QuestionsContext>()
   .use(requireSession)
-  .get('/', async (context) => {
+  .get('/', vValidator('query', questionSearchQuerySchema), async (context) => {
+    const { q = '' } = context.req.valid('query')
     const database = createDatabase(context.env.DB)
-    const questions = await database
+    const loadedQuestions = await database
       .select(questionRow)
       .from(question)
       .where(eq(question.userId, context.get('userId')))
 
-    return context.json({ questions }, 200)
+    return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200)
   })
   .get('/:id', vValidator('param', questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid('param')

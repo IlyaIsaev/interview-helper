@@ -3,7 +3,7 @@ import type { ComponentProps, ReactNode } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
 import rehypeHighlight from 'rehype-highlight'
 
-import { cn } from '@/shared/lib'
+import { cn, markdownPlainText } from '@/shared/lib'
 
 type MarkdownProps = {
   children: string
@@ -15,7 +15,11 @@ type MarkdownPlainNodeProps = {
   children?: ReactNode
 }
 
-const markdownHighlightPlugins = [
+type MarkdownRehypePlugins = NonNullable<
+  ComponentProps<typeof ReactMarkdown>['rehypePlugins']
+>
+
+const markdownHighlightPlugins: MarkdownRehypePlugins = [
   [
     rehypeHighlight,
     {
@@ -118,48 +122,6 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
     </div>
   )
 }
-
-const stripMarkdownImages = (markdown: string) =>
-  markdown.replace(/!\[([^\]]*)\]\([^)]*\)/g, '$1')
-
-const stripMarkdownLinks = (markdown: string) =>
-  markdown.replace(/\[([^\]]+)\]\([^)]*\)/g, '$1')
-
-const stripMarkdownHeadings = (markdown: string) =>
-  markdown.replace(/^#{1,6}\s+/gm, '')
-
-const stripMarkdownEmphasis = (markdown: string) =>
-  markdown
-    .replace(/\*\*([^*]+)\*\*/g, '$1')
-    .replace(/__([^_]+)__/g, '$1')
-    .replace(/\*([^*]+)\*/g, '$1')
-    .replace(/_([^_]+)_/g, '$1')
-
-const stripMarkdownFences = (markdown: string) =>
-  markdown.replace(/```[\w+-]*\n?/g, '').replaceAll('```', '')
-
-const stripMarkdownCode = (markdown: string) => markdown.replace(/`([^`]+)`/g, '$1')
-
-const stripMarkdownQuotesAndLists = (markdown: string) =>
-  markdown
-    .replace(/^>\s?/gm, '')
-    .replace(/^[-*+]\s+/gm, '')
-    .replace(/^\d+\.\s+/gm, '')
-
-const collapseWhitespace = (text: string) => text.replace(/\s+/g, ' ').trim()
-
-const markdownPlainText = (markdown: string) =>
-  pipe(
-    markdown,
-    stripMarkdownImages,
-    stripMarkdownLinks,
-    stripMarkdownHeadings,
-    stripMarkdownEmphasis,
-    stripMarkdownFences,
-    stripMarkdownCode,
-    stripMarkdownQuotesAndLists,
-    collapseWhitespace,
-  )
 
 export { Markdown, markdownPlainText }
 
