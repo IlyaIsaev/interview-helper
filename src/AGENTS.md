@@ -259,7 +259,7 @@ Form schemas use Valibot via `reatomForm` `schema` (Standard Schema). Do not add
 
 ## UI
 
-This project uses [SMUI](https://smui.statico.io) (a Nord-inspired shadcn/ui theme) with Tailwind CSS v4.
+This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / duskbox-dusk palettes) with Tailwind CSS v4.
 
 - For any visual UI, shadcn primitives and SMUI patterns are the first priority. Use existing components in `src/shared/ui`, follow `.agents/skills/smui/SKILL.md`, and add missing widgets with the shadcn CLI (`components.json` already points at `shared/ui`).
 - Write custom styles only when the desired appearance cannot be reached with shadcn and SMUI.

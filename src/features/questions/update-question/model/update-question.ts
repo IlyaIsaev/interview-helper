@@ -22,7 +22,7 @@ import {
 import { questionFieldsSchema } from '@/features/questions/create-question'
 import { clientApi } from '@/shared/api'
 import { questionPath } from '@/shared/config'
-import { toast } from '@/shared/ui'
+import { markdownPlainText, toast } from '@/shared/ui'
 
 export const questionBeingUpdated = atom<string | null>(
   null,
@@ -70,6 +70,8 @@ export const updateQuestionForm = reatomForm(
         ? openedQuestionState()
         : undefined
       const questionText = question?.question ?? openedQuestion?.question
+      const questionDescription =
+        questionText === undefined ? undefined : markdownPlainText(questionText)
 
       closeUpdateQuestionDialog()
       updateQuestion({ id: questionId, question: nextQuestion })
@@ -99,7 +101,7 @@ export const updateQuestionForm = reatomForm(
         }
 
         toast.success('Question updated.', {
-          description: questionText,
+          description: questionDescription,
         })
 
         try {
@@ -121,7 +123,7 @@ export const updateQuestionForm = reatomForm(
         }
 
         toast.error('Could not update the question. Try again later.', {
-          description: questionText,
+          description: questionDescription,
         })
       }
     },
@@ -140,8 +142,10 @@ export const openUpdateQuestion = action(async (questionId: string) => {
     return
   }
 
-  updateQuestionForm.fields.question.change(nextQuestion.question)
-  updateQuestionForm.fields.answer.change(nextQuestion.answer)
+  updateQuestionForm.reset({
+    question: nextQuestion.question,
+    answer: nextQuestion.answer,
+  })
 }, 'openUpdateQuestion').extend(withAsync(), withAbort())
 
 updateQuestionForm.submit.onFulfill.extend(

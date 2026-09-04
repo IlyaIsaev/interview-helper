@@ -39,4 +39,16 @@ test('markdownPlainText strips markup to visible text', () => {
   expect(markdownPlainText('**bold**')).toBe('bold')
   expect(markdownPlainText('[Hello](https://example.com)')).toBe('Hello')
   expect(markdownPlainText('# Hello field\n\n**bold**')).toBe('Hello field bold')
+  expect(markdownPlainText('# DDD\n## dddddd\n```tsx\nconst x = 1\n```')).toBe(
+    'DDD dddddd const x = 1',
+  )
+})
+
+test('fenced typescript is syntax highlighted', async () => {
+  const screen = await render(<Markdown>{'```ts\nconst x = 1\n```'}</Markdown>)
+  const keyword = screen.getByText('const')
+
+  await expect.element(keyword).toBeVisible()
+  await expect.element(keyword).toHaveClass('hljs-keyword')
+  await expect.element(screen.getByText('```ts')).not.toBeInTheDocument()
 })

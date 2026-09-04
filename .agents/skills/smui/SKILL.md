@@ -1,14 +1,17 @@
 ---
 name: smui
 description: >
-  smui theme — Nord-inspired terminal aesthetic for shadcn/ui with light and
-  dark modes. Use when building or restyling UI, adding shadcn components,
-  choosing colors/typography, or applying card/status/label patterns.
+  smui theme — terminal aesthetic for shadcn/ui with duskbox-day light and
+  duskbox-dusk dark palettes. Use when building or restyling UI, adding shadcn
+  components, choosing colors/typography, or applying card/status/label patterns.
 ---
 
 # smui -- Terminal Theme for shadcn/ui
 
-You are building a UI with the **smui** theme, a Nord-inspired terminal aesthetic for shadcn/ui with light and dark modes. Read this entire document before writing any code.
+You are building UI with the **smui** theme, a terminal aesthetic for shadcn/ui
+whose colors come from [duskbox](https://github.com/ih-hugh/duskbox)
+(`duskbox-day` light, `duskbox-dusk` dark). Read this entire document before
+writing any code.
 
 Source: https://smui.statico.io/skill.md
 
@@ -28,7 +31,7 @@ Toggle the `.dark` class on `<html>`. This project uses a Reatom `theme` atom (n
 
 ## Core Rules
 
-1. **Light + dark mode.** `:root` = light (Snow Storm), `.dark` = dark (Polar Night).
+1. **Light + dark mode.** `:root` = light (duskbox-day), `.dark` = dark (duskbox-dusk). Accents are overridden per theme.
 2. **Zero border radius.** `--radius: 0rem`. All components have sharp corners. The only `rounded-full` elements are status dots, toggle knobs, and avatars.
 3. **Monospace everything.** JetBrains Mono is the only font. No serif, no sans-serif.
 4. **No emoji.** Use [lucide-react](https://lucide.dev/) icons instead.
@@ -38,65 +41,65 @@ Toggle the `.dark` class on `<html>`. This project uses a Reatom `theme` atom (n
 
 ### Semantic Variables (shadcn)
 
-Dark mode (`.dark`):
+Dark mode (`.dark`, duskbox-dusk):
 
 | Variable | Hex | Usage |
 |---|---|---|
-| `--background` | `#1a1e24` | Page background |
-| `--foreground` | `#d8dee9` | Primary text |
-| `--card` | `#21262e` | Card/panel backgrounds |
-| `--primary` | `#88c0d0` | Primary accent (frost blue) |
-| `--muted-foreground` | `#8e99a8` | Secondary/muted text |
-| `--border` | `#3b4252` | Borders |
-| `--destructive` | `#d4737c` | Error/danger |
+| `--background` | `#232336` | Page background |
+| `--foreground` | `#ccd8ef` | Primary text |
+| `--card` | `#1d1d30` | Card/panel backgrounds |
+| `--primary` | `#79b3f7` | Primary accent (blue) |
+| `--muted-foreground` | `#a6b1c8` | Secondary/muted text |
+| `--border` | `#253a55` | Borders |
+| `--destructive` | `#f4514c` | Error/danger |
 
-Light mode (`:root`):
+Light mode (`:root`, duskbox-day):
 
 | Variable | Hex | Usage |
 |---|---|---|
-| `--background` | `#eceff4` | Page background (Snow Storm 3) |
-| `--foreground` | `#2e3440` | Primary text (Polar Night 1) |
-| `--card` | `#e5e9f0` | Card/panel backgrounds (Snow Storm 2) |
-| `--primary` | `#4c6d94` | Primary accent (darkened for contrast) |
-| `--muted-foreground` | `#48505c` | Secondary/muted text |
-| `--border` | `#c9cfda` | Borders |
-| `--destructive` | `#a3303d` | Error/danger |
+| `--background` | `#f9fafc` | Page background |
+| `--foreground` | `#252e40` | Primary text |
+| `--card` | `#f0f2f4` | Card/panel backgrounds |
+| `--primary` | `#33659d` | Primary accent (blue) |
+| `--muted-foreground` | `#444d61` | Secondary/muted text |
+| `--border` | `#dee0e3` | Borders |
+| `--destructive` | `#be2327` | Error/danger |
 
 ### Extended SMUI Colors
 
-These are raw HSL triplets. Use with `hsl()` and optional alpha: `text-[hsl(var(--smui-green))]`, `border-[hsl(var(--smui-yellow)/0.3)]`, `bg-[hsl(var(--smui-frost-2)/0.04)]`.
+These are raw HSL triplets, overridden per theme. Use with `hsl()` and optional alpha: `text-[hsl(var(--smui-green))]`, `border-[hsl(var(--smui-yellow)/0.3)]`, `bg-[hsl(var(--smui-frost-2)/0.04)]`.
 
-| Variable | Hex | Usage |
-|---|---|---|
-| `--smui-frost-1` | `#8fbcbb` | Teal accent |
-| `--smui-frost-2` | `#88c0d0` | Primary frost blue (= `--primary`) |
-| `--smui-frost-3` | `#81a1c1` | Steel blue |
-| `--smui-frost-4` | `#4c6d94` | Deep blue |
-| `--smui-green` | `#a3be8c` | Success, online, nominal |
-| `--smui-yellow` | `#ebcb8b` | Warning, standby, caution |
-| `--smui-orange` | `#d08770` | Alert, degraded |
-| `--smui-red` | `#d4737c` | Critical, error, danger |
-| `--smui-purple` | `#b48ead` | Info, special, rare |
+| Variable | Light | Dark | Usage |
+|---|---|---|---|
+| `--smui-frost-1` | `#027369` | `#45d0c0` | Teal accent |
+| `--smui-frost-2` | `#097687` | `#44d6f1` | Cyan |
+| `--smui-frost-3` | `#2769b7` | `#86bafe` | Heading blue |
+| `--smui-frost-4` | `#33659d` | `#79b3f7` | Chrome blue (= `--primary`) |
+| `--smui-green` | `#3e7232` | `#89cc7b` | Success, online, nominal |
+| `--smui-yellow` | `#8e6c02` | `#e7be62` | Warning, standby, caution |
+| `--smui-orange` | `#974c00` | `#f68c36` | Alert, degraded |
+| `--smui-red` | `#be2327` | `#f4514c` | Critical, error, danger |
+| `--smui-purple` | `#695890` | `#b19ee3` | Info, special, rare |
 
 ### Surface Hierarchy
 
-Dark (Polar Night):
+Dark (duskbox-dusk):
 
 | Variable | Hex | Usage |
 |---|---|---|
-| `--smui-surface-0` | `#1a1e24` | Page background |
-| `--smui-surface-1` | `#21262e` | Cards, panels |
-| `--smui-surface-2` | `#282e37` | Elevated elements |
-| `--smui-surface-3` | `#2f3640` | Highlights, active states |
+| `--smui-surface-0` | `#232336` | Page background |
+| `--smui-surface-1` | `#1d1d30` | Cards, panels |
+| `--smui-surface-2` | `#2d2d41` | Elevated elements |
+| `--smui-surface-3` | `#253a55` | Highlights, active states |
 
-Light (Snow Storm):
+Light (duskbox-day):
 
 | Variable | Hex | Usage |
 |---|---|---|
-| `--smui-surface-0` | `#eceff4` | Page background |
-| `--smui-surface-1` | `#e5e9f0` | Cards, panels |
-| `--smui-surface-2` | `#d8dee9` | Elevated elements |
-| `--smui-surface-3` | `#c8ced9` | Highlights, active states |
+| `--smui-surface-0` | `#f9fafc` | Page background |
+| `--smui-surface-1` | `#f0f2f4` | Cards, panels |
+| `--smui-surface-2` | `#ebedef` | Elevated elements |
+| `--smui-surface-3` | `#dee0e3` | Highlights, active states |
 
 ## Typography Patterns
 
@@ -158,8 +161,8 @@ export function cn(...inputs: ClassValue[]) {
 
 ## Quick Reference
 
-- Theme: light + dark, Nord-inspired, zero radius, monospace
-- Primary accent: dark `#88c0d0` / light `#4c6d94` (frost blue)
+- Theme: light (duskbox-day) + dark (duskbox-dusk), zero radius, monospace
+- Primary accent: dark `#79b3f7` / light `#33659d` (blue)
 - Status: green=success, yellow=warning, red=error, purple=info
 - Labels: always uppercase with wide tracking
 - Cards: use `card-glow` class, `py-2.5 px-3.5` header padding

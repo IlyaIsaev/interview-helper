@@ -6,40 +6,40 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: 220 27% 94%;
-  --foreground: 220 16% 22%;
-  --card: 220 27% 92%;
-  --card-foreground: 220 16% 22%;
-  --popover: 220 27% 92%;
-  --popover-foreground: 220 16% 22%;
-  --primary: 213 32% 44%;
-  --primary-foreground: 220 27% 94%;
-  --secondary: 220 18% 86%;
-  --secondary-foreground: 220 16% 22%;
-  --muted: 220 18% 86%;
-  --muted-foreground: 218 13% 32%;
-  --accent: 213 32% 44%;
-  --accent-foreground: 220 27% 94%;
-  --destructive: 353 54% 41%;
-  --destructive-foreground: 220 27% 94%;
-  --border: 218 18% 82%;
-  --input: 218 18% 82%;
-  --ring: 213 32% 44%;
+  --background: 220 33% 98%;
+  --foreground: 220 27% 20%;
+  --card: 210 15% 95%;
+  --card-foreground: 220 27% 20%;
+  --popover: 210 15% 95%;
+  --popover-foreground: 220 27% 20%;
+  --primary: 212 51% 41%;
+  --primary-foreground: 220 33% 98%;
+  --secondary: 210 11% 93%;
+  --secondary-foreground: 220 27% 20%;
+  --muted: 210 11% 93%;
+  --muted-foreground: 221 18% 32%;
+  --accent: 212 51% 41%;
+  --accent-foreground: 220 33% 98%;
+  --destructive: 358 69% 44%;
+  --destructive-foreground: 220 33% 98%;
+  --border: 216 8% 88%;
+  --input: 216 8% 88%;
+  --ring: 212 51% 41%;
   --radius: 0rem;
-  --smui-frost-1: 174 24% 65%;
-  --smui-frost-2: 193 44% 67%;
-  --smui-frost-3: 213 32% 63%;
-  --smui-frost-4: 213 32% 44%;
-  --smui-green: 92 28% 65%;
-  --smui-yellow: 40 71% 73%;
-  --smui-orange: 14 48% 63%;
-  --smui-red: 355 52% 64%;
-  --smui-purple: 311 24% 63%;
-  --smui-surface-0: 220 27% 94%;
-  --smui-surface-1: 220 27% 92%;
-  --smui-surface-2: 220 27% 88%;
-  --smui-surface-3: 220 16% 82%;
-  --smui-border-hover: 213 32% 44%;
+  --smui-frost-1: 175 97% 23%;
+  --smui-frost-2: 188 88% 28%;
+  --smui-frost-3: 213 65% 44%;
+  --smui-frost-4: 212 51% 41%;
+  --smui-green: 109 39% 32%;
+  --smui-yellow: 45 97% 28%;
+  --smui-orange: 30 100% 30%;
+  --smui-red: 358 69% 44%;
+  --smui-purple: 258 24% 45%;
+  --smui-surface-0: 220 33% 98%;
+  --smui-surface-1: 210 15% 95%;
+  --smui-surface-2: 210 11% 93%;
+  --smui-surface-3: 216 8% 88%;
+  --smui-border-hover: 212 51% 41%;
   --sidebar: hsl(var(--card));
   --sidebar-foreground: hsl(var(--card-foreground));
   --sidebar-primary: hsl(var(--primary));
@@ -51,30 +51,39 @@
 }
 
 .dark {
-  --background: 213 16% 12%;
-  --foreground: 220 27% 88%;
-  --card: 217 16% 15%;
-  --card-foreground: 220 27% 88%;
-  --popover: 217 16% 15%;
-  --popover-foreground: 220 27% 88%;
-  --primary: 193 44% 67%;
-  --primary-foreground: 213 16% 12%;
-  --secondary: 216 15% 19%;
-  --secondary-foreground: 220 27% 88%;
-  --muted: 216 15% 19%;
-  --muted-foreground: 213 14% 61%;
-  --accent: 193 10% 16%;
-  --accent-foreground: 193 44% 67%;
-  --destructive: 355 52% 64%;
-  --destructive-foreground: 219 28% 94%;
-  --border: 220 16% 28%;
-  --input: 220 16% 28%;
-  --ring: 193 44% 67%;
-  --smui-surface-0: 213 16% 12%;
-  --smui-surface-1: 217 16% 15%;
-  --smui-surface-2: 216 16% 19%;
-  --smui-surface-3: 216 15% 22%;
-  --smui-border-hover: 193 44% 67%;
+  --background: 240 21% 17%;
+  --foreground: 219 52% 87%;
+  --card: 240 25% 15%;
+  --card-foreground: 219 52% 87%;
+  --popover: 240 25% 15%;
+  --popover-foreground: 219 52% 87%;
+  --primary: 212 89% 72%;
+  --primary-foreground: 240 21% 17%;
+  --secondary: 240 18% 22%;
+  --secondary-foreground: 219 52% 87%;
+  --muted: 240 18% 22%;
+  --muted-foreground: 221 24% 72%;
+  --accent: 214 39% 24%;
+  --accent-foreground: 212 89% 72%;
+  --destructive: 2 88% 63%;
+  --destructive-foreground: 240 21% 17%;
+  --border: 214 39% 24%;
+  --input: 214 39% 24%;
+  --ring: 212 89% 72%;
+  --smui-frost-1: 173 60% 54%;
+  --smui-frost-2: 189 86% 61%;
+  --smui-frost-3: 214 98% 76%;
+  --smui-frost-4: 212 89% 72%;
+  --smui-green: 110 44% 64%;
+  --smui-yellow: 42 73% 65%;
+  --smui-orange: 27 91% 59%;
+  --smui-red: 2 88% 63%;
+  --smui-purple: 257 55% 75%;
+  --smui-surface-0: 240 21% 17%;
+  --smui-surface-1: 240 25% 15%;
+  --smui-surface-2: 240 18% 22%;
+  --smui-surface-3: 214 39% 24%;
+  --smui-border-hover: 212 89% 72%;
   --sidebar: hsl(var(--card));
   --sidebar-foreground: hsl(var(--card-foreground));
   --sidebar-primary: hsl(var(--primary));
@@ -170,6 +179,55 @@ body {
 }
 
 ::selection {
-  background: hsl(193 44% 67% / 0.2);
-  color: hsl(193 44% 67%);
+  background: hsl(var(--smui-surface-3));
+  color: hsl(var(--foreground));
+}
+
+.hljs {
+  color: hsl(var(--foreground));
+}
+
+.hljs-keyword,
+.hljs-selector-tag {
+  color: hsl(var(--smui-red));
+}
+
+.hljs-built_in,
+.hljs-class,
+.hljs-type {
+  color: hsl(var(--smui-orange));
+}
+
+.hljs-title,
+.hljs-title.function_,
+.hljs-title.class_ {
+  color: hsl(var(--smui-yellow));
+}
+
+.hljs-string,
+.hljs-regexp {
+  color: hsl(var(--smui-green));
+}
+
+.hljs-number {
+  color: hsl(var(--primary));
+}
+
+.hljs-literal {
+  color: hsl(var(--smui-purple));
+}
+
+.hljs-attr,
+.hljs-attribute,
+.hljs-property {
+  color: hsl(var(--smui-frost-1));
+}
+
+.hljs-operator {
+  color: hsl(var(--smui-frost-2));
+}
+
+.hljs-comment,
+.hljs-doctag {
+  color: hsl(var(--muted-foreground));
 }

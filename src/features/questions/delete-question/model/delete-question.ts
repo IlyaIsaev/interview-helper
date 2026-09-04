@@ -11,7 +11,7 @@ import {
 } from '@/entities/question'
 import { clientApi } from '@/shared/api'
 import { questionPath, QUESTIONS_PATH } from '@/shared/config'
-import { toast } from '@/shared/ui'
+import { markdownPlainText, toast } from '@/shared/ui'
 
 export const questionBeingDeleted = atom<string | null>(
   null,
@@ -48,6 +48,8 @@ export const deleteQuestion = action(async () => {
   const questions = questionList() ?? []
   const index = pipe(questions, findIndex(hasQuestionId(questionId)))
   const question = questions[index]
+  const questionDescription =
+    question === undefined ? undefined : markdownPlainText(question.question)
 
   closeDeleteQuestionDialog()
   removeQuestion(questionId)
@@ -59,14 +61,14 @@ export const deleteQuestion = action(async () => {
       restoreQuestion(question, index)
     }
     toast.error('Could not delete the question. Try again later.', {
-      description: question?.question,
+      description: questionDescription,
     })
 
     return
   }
 
   toast.success('Question deleted.', {
-    description: question?.question,
+    description: questionDescription,
   })
 
   if (urlAtom().pathname === questionPath(questionId)) {

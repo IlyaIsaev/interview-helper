@@ -1,6 +1,7 @@
 import { map, pipe } from 'es-toolkit/fp'
 import type { ComponentProps, ReactNode } from 'react'
 import ReactMarkdown, { type Components } from 'react-markdown'
+import rehypeHighlight from 'rehype-highlight'
 
 import { cn } from '@/shared/lib'
 
@@ -13,6 +14,18 @@ type MarkdownProps = {
 type MarkdownPlainNodeProps = {
   children?: ReactNode
 }
+
+const markdownHighlightPlugins = [
+  [
+    rehypeHighlight,
+    {
+      aliases: {
+        typescript: ['ts', 'tsx'],
+        javascript: ['js', 'jsx'],
+      },
+    },
+  ],
+]
 
 const markdownComponents: Components = {
   h1: ({ node, ...props }) => (
@@ -45,9 +58,11 @@ const markdownComponents: Components = {
   ol: ({ node, ...props }) => <ol className="list-decimal pl-4" {...props} />,
   li: ({ node, ...props }) => <li className="text-ui" {...props} />,
   a: ({ node, ...props }) => <a className="text-primary" {...props} />,
-  code: ({ node, ...props }) => <code className="text-foreground" {...props} />,
-  pre: ({ node, ...props }) => (
-    <pre className="overflow-x-auto text-foreground" {...props} />
+  code: ({ node, className, ...props }) => (
+    <code className={cn('text-foreground', className)} {...props} />
+  ),
+  pre: ({ node, className, ...props }) => (
+    <pre className={cn('overflow-x-auto bg-card p-3 text-ui', className)} {...props} />
   ),
   blockquote: ({ node, ...props }) => (
     <blockquote className="border-l-2 border-border pl-3" {...props} />
@@ -94,7 +109,12 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
 
   return (
     <div className={cn('space-y-2', className)}>
-      <ReactMarkdown components={markdownComponents}>{children}</ReactMarkdown>
+      <ReactMarkdown
+        components={markdownComponents}
+        rehypePlugins={markdownHighlightPlugins}
+      >
+        {children}
+      </ReactMarkdown>
     </div>
   )
 }
@@ -115,6 +135,9 @@ const stripMarkdownEmphasis = (markdown: string) =>
     .replace(/\*([^*]+)\*/g, '$1')
     .replace(/_([^_]+)_/g, '$1')
 
+const stripMarkdownFences = (markdown: string) =>
+  markdown.replace(/```[\w+-]*\n?/g, '').replaceAll('```', '')
+
 const stripMarkdownCode = (markdown: string) => markdown.replace(/`([^`]+)`/g, '$1')
 
 const stripMarkdownQuotesAndLists = (markdown: string) =>
@@ -132,6 +155,7 @@ const markdownPlainText = (markdown: string) =>
     stripMarkdownLinks,
     stripMarkdownHeadings,
     stripMarkdownEmphasis,
+    stripMarkdownFences,
     stripMarkdownCode,
     stripMarkdownQuotesAndLists,
     collapseWhitespace,

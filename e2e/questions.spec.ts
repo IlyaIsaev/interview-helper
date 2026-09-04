@@ -270,8 +270,10 @@ test('updating a question from the sidebar goes to the question page', async ({
   await expect(page.getByRole('textbox', { name: 'answer' })).toHaveValue(
     'Original answer',
   )
+  await expect(page.getByRole('button', { name: 'Update' })).toBeDisabled()
 
   await page.getByRole('textbox', { name: 'question' }).fill(updatedQuestionText)
+  await expect(page.getByRole('button', { name: 'Update' })).toBeEnabled()
   await page.getByRole('textbox', { name: 'answer' }).fill('Updated answer')
   await page.getByRole('button', { name: 'Update' }).click()
 
