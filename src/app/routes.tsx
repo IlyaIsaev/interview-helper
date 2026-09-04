@@ -6,7 +6,6 @@ import {
   initQuestion,
   initQuestionList,
   questionList,
-  questionListQuery,
   resetQuestionList,
 } from "@/entities/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
@@ -122,7 +121,7 @@ export const protectedRoute = rootRoute.reatomRoute(
         return;
       }
 
-      const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()));
+      const { questions } = await wrap(clientApi.loadQuestions());
 
       initQuestionList(questions);
     },
@@ -131,8 +130,12 @@ export const protectedRoute = rootRoute.reatomRoute(
         return <PageFallback />;
       }
 
-      if (session.data()?.user && (!self.loader.ready() || questionList() === null)) {
-        return <PageFallback />;
+      if (session.data()?.user) {
+        self.loader.ready();
+
+        if (questionList() === null) {
+          return <PageFallback />;
+        }
       }
 
       return <>{self.outlet()}</>;

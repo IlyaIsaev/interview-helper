@@ -721,7 +721,10 @@ test('sidebar search filters questions by visible text', async ({ page }) => {
 
   const questionSearch = page.getByRole('searchbox', { name: 'search' })
 
-  await questionSearch.fill('alpha')
+  await questionSearch.click()
+  await page.keyboard.type('alpha')
+  await expect(questionSearch).toHaveValue('alpha')
+  await expect(questionSearch).toBeFocused()
   await expect(page.getByRole('link', { name: firstQuestion })).toBeVisible()
   await expect(page.getByRole('link', { name: secondQuestion })).toHaveCount(0)
 
