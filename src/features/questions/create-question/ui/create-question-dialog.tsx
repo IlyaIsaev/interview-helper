@@ -25,6 +25,7 @@ export const CreateQuestion = reatomComponent(() => {
   const { fields, submit, validation } = createQuestionForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
+  const { dirty } = createQuestionForm.focus()
   const submitError = submit.error()
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) {
@@ -63,7 +64,7 @@ export const CreateQuestion = reatomComponent(() => {
             </Button>
             <Button
               type="submit"
-              disabled={!isSubmitReady || hasValidationErrors}
+              disabled={!isSubmitReady || hasValidationErrors || !dirty}
             >
               Create
             </Button>

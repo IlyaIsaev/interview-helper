@@ -132,6 +132,7 @@ test('sidebar plus and empty-state button open the create question form', async 
   await expect(
     page.getByRole('heading', { name: 'Create question' }),
   ).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Create' })).toBeDisabled()
 
   await page.getByRole('button', { name: 'Cancel' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -154,9 +155,11 @@ test('creating a question from the sidebar goes to the new question page', async
 
   await sidebarCreateQuestion(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Create' })).toBeDisabled()
 
   await page.getByRole('textbox', { name: 'question' }).fill(questionText)
   await page.getByRole('textbox', { name: 'answer' }).fill('Feature-Sliced Design')
+  await expect(page.getByRole('button', { name: 'Create' })).toBeEnabled()
   await page.getByRole('button', { name: 'Create' }).click()
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
