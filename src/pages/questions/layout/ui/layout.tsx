@@ -24,6 +24,7 @@ import {
 
 import { questionSearch, searchQuestions } from "../model/question-search";
 import { QuestionList } from "./question-list";
+import { QuestionPreview } from "./question-preview-dialog";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
 
@@ -86,6 +87,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         </SidebarContent>
       </Sidebar>
       <CreateQuestion />
+      <QuestionPreview />
       <UpdateQuestion />
       <DeleteQuestion />
       <SidebarInset className="min-h-0 overflow-hidden">
