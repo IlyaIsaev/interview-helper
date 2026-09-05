@@ -20,9 +20,13 @@ type QuestionsContext = {
   }
 }
 
-const questionRow = {
+const questionListRow = {
   id: question.id,
   question: question.question,
+}
+
+const questionRow = {
+  ...questionListRow,
   answer: question.answer,
 }
 
@@ -93,7 +97,7 @@ export const questions = new Hono<QuestionsContext>()
     const { q = '' } = context.req.valid('query')
     const database = createDatabase(context.env.DB)
     const loadedQuestions = await database
-      .select(questionRow)
+      .select(questionListRow)
       .from(question)
       .where(eq(question.userId, context.get('userId')))
 
