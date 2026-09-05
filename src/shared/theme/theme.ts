@@ -10,7 +10,7 @@ export const ThemeMode = {
 
 export type ThemeMode = ValueOf<typeof ThemeMode>
 
-export const theme = atom<ThemeMode>(ThemeMode.dark, 'theme').extend(
+export const theme = atom<ThemeMode>(ThemeMode.light, 'theme').extend(
   withLocalStorage(THEME_STORAGE_KEY),
 )
 
