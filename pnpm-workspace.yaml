@@ -1,4 +1,12 @@
+packages:
+  - '.'
+
 allowBuilds:
   esbuild: true
   lefthook: true
   workerd: true
+
+onlyBuiltDependencies:
+  - esbuild
+  - lefthook
+  - workerd
