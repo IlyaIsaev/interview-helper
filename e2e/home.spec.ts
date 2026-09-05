@@ -11,15 +11,15 @@ const notifications = (page: Page) =>
   page.getByRole('region', { name: /Notifications/i })
 
 const createDemoAccount = async (page: Page) => {
-  await page.goto('/sign-up')
+  await page.goto('/sign-in')
 
   await expect(page.getByLabel('email')).toHaveValue(demoEmail)
 
   const email = await page.getByLabel('email').inputValue()
   const password = await page.getByLabel('password').inputValue()
 
-  await expect(page.getByRole('button', { name: 'Create account' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Sign in' }).click()
 
   await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
@@ -29,11 +29,18 @@ const createDemoAccount = async (page: Page) => {
 
 test('opening the app redirects guests to sign-in', async ({ page }) => {
   const demoUserGets: string[] = []
+  const demoUserPosts: string[] = []
   const signUpRequests: string[] = []
 
-  page.on('request', (request) => {
+  page.on('requestfinished', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
       demoUserGets.push(request.url())
+    }
+  })
+
+  page.on('request', (request) => {
+    if (request.url().includes('/api/demo-user') && request.method() === 'POST') {
+      demoUserPosts.push(request.url())
     }
 
     if (request.url().includes('/api/auth/sign-up/email')) {
@@ -45,15 +52,19 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
-  await expect(page.getByLabel('email')).toHaveValue('')
-  await expect(page.getByLabel('password')).toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
+  await expect(page.getByLabel('password')).not.toHaveValue('')
   await expect(page.getByRole('heading', { name: 'We use cookies' })).toBeVisible()
   await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
-  expect(demoUserGets).toEqual([])
+  await expect(page.getByRole('link', { name: 'Sign up' })).toHaveCount(0)
+  expect(demoUserGets).toHaveLength(1)
+  expect(demoUserPosts).toEqual([])
   expect(signUpRequests).toEqual([])
 })
 
-test('signing up lands on questions with the demo user', async ({ page }) => {
+test('signing in creates the demo user and lands on questions', async ({
+  page,
+}) => {
   await createDemoAccount(page)
 
   if (isQuestionsListPath(page.url())) {
@@ -163,9 +174,8 @@ test('cancelling account deletion stays on profile', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 })
 
-test('deleting the account lands on empty sign-in', async ({ page }) => {
-  const { email: deletedEmail, password: deletedPassword } =
-    await createDemoAccount(page)
+test('deleting the account prefills a new demo user', async ({ page }) => {
+  const { email: deletedEmail } = await createDemoAccount(page)
 
   await page.getByRole('button', { name: 'Demo user' }).click()
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -176,8 +186,9 @@ test('deleting the account lands on empty sign-in', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/, { timeout: 15_000 })
-  await expect(page.getByLabel('email')).toHaveValue('')
-  await expect(page.getByLabel('password')).toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
+  await expect(page.getByLabel('email')).not.toHaveValue(deletedEmail)
+  await expect(page.getByLabel('password')).not.toHaveValue('')
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
 
   const demoUserPosts: string[] = []
@@ -188,19 +199,29 @@ test('deleting the account lands on empty sign-in', async ({ page }) => {
     }
   })
 
-  await page.getByLabel('email').fill(deletedEmail)
-  await page.getByLabel('password').fill(deletedPassword)
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(
-    notifications(page).getByText("This user doesn't exist anymore."),
-  ).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toHaveCount(0)
-  expect(demoUserPosts).toEqual([])
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  expect(demoUserPosts.length).toBeGreaterThan(0)
+})
 
-  await page.getByRole('link', { name: 'Sign up' }).click()
+test('sign-up stays empty and does not fetch demo credentials', async ({
+  page,
+}) => {
+  const demoUserGets: string[] = []
 
-  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
-  await expect(page.getByLabel('email')).not.toHaveValue(deletedEmail)
+  page.on('request', (request) => {
+    if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
+      demoUserGets.push(request.url())
+    }
+  })
+
+  await page.goto('/sign-up')
+
+  await expect(page.getByRole('heading', { name: 'Sign up' })).toBeVisible()
+  await expect(page.getByLabel('name')).toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
+  expect(demoUserGets).toEqual([])
 })

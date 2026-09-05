@@ -8,7 +8,7 @@
     "enabled": true,
   },
   "vars": {
-    "BETTER_AUTH_URL": "http://127.0.0.1:5173",
+    "BETTER_AUTH_URL": "https://interview-helper.iaisaev.workers.dev",
   },
   "assets": {
     "not_found_handling": "single-page-application",
@@ -18,7 +18,7 @@
     {
       "binding": "DB",
       "database_name": "interview-helper",
-      "database_id": "00000000-0000-0000-0000-000000000001",
+      "database_id": "712823a4-6f17-4c24-b340-b42ae8c318df",
       "migrations_dir": "drizzle/migrations",
     },
   ],

@@ -11,13 +11,11 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PageFallback,
 } from '@/shared/ui'
 
-import { signUp, signUpForm } from '../model/sign-up'
+import { signUpForm } from '../model/sign-up'
 
 const SignUpPage = reatomComponent(() => {
-  const signUpScreen = signUp()
   const { fields, submit, validation } = signUpForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
@@ -25,10 +23,6 @@ const SignUpPage = reatomComponent(() => {
   const nameField = bindFormControl(fields.name)
   const emailField = bindFormControl(fields.email)
   const passwordField = bindFormControl(fields.password)
-
-  if (signUpScreen.kind === 'loading') {
-    return <PageFallback />
-  }
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">

@@ -7,7 +7,7 @@ General style, naming, and kebab-case come from the parent `AGENTS.md`. Frontend
 ```text
 index.ts             ← mount auth, demo-user, questions, health
 auth/                ← Better Auth Hono app
-demo-user/           ← generate or reuse demo credentials, create on Sign up, delete
+demo-user/           ← generate or reuse demo credentials, create on Sign in, delete
 questions/           ← questions Hono app
   utils/             ← question search matching
 db/                  ← Drizzle schema + D1 client
@@ -31,7 +31,7 @@ Authentication is [Better Auth](https://better-auth.com) with email and password
 
 - Server: `createAuth(env)` in `auth/` — create per request, never as a Worker singleton.
 - Handler: dedicated Hono `auth` app in `auth/`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`.
-- `GET /api/demo-user` returns the `createdDemoUser` cookie when it holds a valid demo email and password; otherwise it invents `demo-user-{8 hex}@demo.com` credentials. It does not insert a row. Called from `/sign-up`, not `/sign-in`. `POST /api/demo-user` creates the account (or signs in if it already exists) and sets session cookies. The client stores `{ email, password }` in `createdDemoUser` when credentials are generated on `/sign-up`.
+- `GET /api/demo-user` returns the `createdDemoUser` cookie when it holds a valid demo email and password; otherwise it invents `demo-user-{8 hex}@demo.com` credentials. It does not insert a row. Called from `/sign-in`, not `/sign-up`. `POST /api/demo-user` creates the account (or signs in if it already exists) and sets session cookies. The client stores `{ email, password }` in `createdDemoUser` when credentials are generated on `/sign-in`.
 - `DELETE /api/demo-user` deletes the signed-in user (any email). Questions cascade. It expires `createdDemoUser` so the next `GET` invents new demo credentials.
 - Cookie consent is only on `/sign-in`: Accept sets the `cookieConsent=true` cookie; Decline redirects to `https://www.google.com` (do not delete the user).
 - Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.

@@ -1,7 +1,6 @@
 import { reatomComponent } from '@reatom/react'
 
 import { CookieConsent } from './cookie-consent'
-import { SIGN_UP_PATH } from '@/shared/config'
 import {
   bindFormControl,
   Button,
@@ -12,18 +11,28 @@ import {
   FormLabel,
   FormMessage,
   Input,
+  PageFallback,
 } from '@/shared/ui'
 
 import { signIn, signInForm } from '../model/sign-in'
 
 const SignInPage = reatomComponent(() => {
-  signIn()
+  const signInScreen = signIn()
   const { fields, submit, validation } = signInForm
   const isSubmitReady = submit.ready()
   const hasValidationErrors = validation().errors.length > 0
   const submitError = submit.error()
   const emailField = bindFormControl(fields.email)
   const passwordField = bindFormControl(fields.password)
+
+  if (signInScreen.kind === 'loading') {
+    return (
+      <>
+        <PageFallback />
+        <CookieConsent />
+      </>
+    )
+  }
 
   return (
     <>
@@ -62,15 +71,6 @@ const SignInPage = reatomComponent(() => {
             Sign in
           </Button>
         </Form>
-        <p className="text-ui text-muted-foreground">
-          Need an account?{' '}
-          <a
-            className="text-primary underline-offset-4 hover:underline"
-            href={SIGN_UP_PATH}
-          >
-            Sign up
-          </a>
-        </p>
       </section>
       <CookieConsent />
     </>

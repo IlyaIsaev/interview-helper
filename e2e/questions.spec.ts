@@ -32,13 +32,13 @@ const emptyCreateQuestion = (page: Page) =>
     .filter({ hasText: 'Create question' })
 
 const signIn = async (page: Page) => {
-  await page.goto('/sign-up')
+  await page.goto('/sign-in')
 
   await expect(page.getByLabel('email')).toHaveValue(
     /demo-user-[a-f0-9]{8}@demo\.com/,
   )
-  await expect(page.getByRole('button', { name: 'Create account' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Create account' }).click()
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
+  await page.getByRole('button', { name: 'Sign in' }).click()
 
   await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()

@@ -1,8 +1,30 @@
-import { computed, effect, reatomForm, withConnectHook, wrap } from '@reatom/core'
+import {
+  computed,
+  effect,
+  peek,
+  reatomForm,
+  withConnectHook,
+  wrap,
+} from '@reatom/core'
 import * as v from 'valibot'
 
-import { authClient, createdDemoUser, session, type DemoCredentials } from '@/shared/auth'
+import type { DeepReadonly } from 'es-toolkit/types'
+
+import { clientApi } from '@/shared/api'
+import {
+  authClient,
+  createdDemoUser,
+  demoCredentials,
+  session,
+  type DemoCredentials,
+} from '@/shared/auth'
 import { toast } from '@/shared/ui'
+
+type SignInScreen = DeepReadonly<{ kind: 'loading' } | { kind: 'form' }>
+
+const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/
+
+const isDemoEmail = (email: string) => DEMO_USER_EMAIL_PATTERN.test(email)
 
 const signInSchema = v.object({
   email: v.pipe(
@@ -28,6 +50,13 @@ export const signInForm = reatomForm(
     validateOnChange: true,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
+      if (isDemoEmail(email)) {
+        await wrap(clientApi.createDemoUser({ email, password }))
+        await wrap(session.retry())
+
+        return
+      }
+
       const { error } = await wrap(
         authClient.signIn.email({
           email,
@@ -51,20 +80,45 @@ const fillSignInForm = (credentials: DemoCredentials) => {
   signInForm.fields.password.change(credentials.password)
 }
 
-export const signIn = computed(() => true, 'signIn').extend(
+export const signIn = computed((): SignInScreen => {
+  if (createdDemoUser()) {
+    return { kind: 'form' }
+  }
+
+  demoCredentials.data()
+
+  if (!demoCredentials.ready() || !demoCredentials.data()) {
+    return { kind: 'loading' }
+  }
+
+  return { kind: 'form' }
+}, 'signIn').extend(
   withConnectHook(() => {
     effect(() => {
-      const credentials = createdDemoUser()
+      const storedCredentials = createdDemoUser()
 
-      if (!credentials) {
-        signInForm.reset()
-        signInForm.validation.triggerSchemaValidation()
+      if (storedCredentials) {
+        fillSignInForm(storedCredentials)
 
         return
       }
 
+      if (!demoCredentials.ready()) {
+        return
+      }
+
+      const credentials = demoCredentials.data()
+
+      if (!credentials) {
+        return
+      }
+
+      if (peek(createdDemoUser)?.email !== credentials.email) {
+        createdDemoUser.set(credentials)
+      }
+
       fillSignInForm(credentials)
-    }, 'signIn.prefillCreatedDemoUser')
+    }, 'signIn.prefillDemoCredentials')
   }),
 )
 
