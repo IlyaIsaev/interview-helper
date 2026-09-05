@@ -44,6 +44,25 @@ test('markdownPlainText strips markup to visible text', () => {
   )
 })
 
+test('markdown links keep https hrefs with rel and referrer policy', async () => {
+  const screen = await render(<Markdown>{'[Hello](https://example.com)'}</Markdown>)
+  const link = screen.getByRole('link', { name: 'Hello' })
+
+  await expect.element(link).toBeVisible()
+  await expect.element(link).toHaveAttribute('href', 'https://example.com')
+  await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer nofollow')
+  await expect.element(link).toHaveAttribute('referrerpolicy', 'no-referrer')
+})
+
+test('markdown drops javascript urls and does not render images', async () => {
+  const screen = await render(
+    <Markdown>{'[bad](javascript:alert(1))\n\n![](https://example.com/pixel.png)'}</Markdown>,
+  )
+
+  await expect.element(screen.getByRole('link', { name: 'bad' })).not.toBeInTheDocument()
+  await expect.element(screen.getByRole('img')).not.toBeInTheDocument()
+})
+
 test('fenced typescript is syntax highlighted', async () => {
   const screen = await render(<Markdown>{'```ts\nconst x = 1\n```'}</Markdown>)
   const keyword = screen.getByText('const')

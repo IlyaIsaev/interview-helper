@@ -1,10 +1,11 @@
 import { vValidator } from '@hono/valibot-validator'
 import { eq } from 'drizzle-orm'
-import { Hono } from 'hono'
-import { deleteCookie, getCookie } from 'hono/cookie'
+import { Hono, type Context } from 'hono'
+import { deleteCookie, generateCookie, getCookie, setCookie } from 'hono/cookie'
+import { csrf } from 'hono/csrf'
 import * as v from 'valibot'
 
-import { createAuth } from '../auth'
+import { createAuth, isTrustedAuthOrigin } from '../auth'
 import { createDatabase } from '../db/client'
 import { account, session, user } from '../db/schema'
 
@@ -12,10 +13,16 @@ const DEMO_USER_NAME = 'Demo user'
 
 const CREATED_DEMO_USER_COOKIE_KEY = 'createdDemoUser'
 
+const BETTER_AUTH_SESSION_TOKEN_COOKIE = 'better-auth.session_token'
+
+const DEMO_CREDENTIALS_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60
+
 const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/
 
 const PASSWORD_CHARACTERS =
   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%'
+
+const PRIVATE_NO_STORE = 'private, no-store'
 
 const demoSignInSchema = v.object({
   email: v.pipe(
@@ -25,6 +32,10 @@ const demoSignInSchema = v.object({
   ),
   password: v.pipe(v.string(), v.minLength(8, 'Password is too short')),
 })
+
+type DemoCredentials = v.InferOutput<typeof demoSignInSchema>
+
+type DemoUserContext = Context<{ Bindings: Env }>
 
 const selectRandomPasswordCharacter = (): string => {
   const characterIndex =
@@ -47,9 +58,27 @@ const createDemoEmail = (): string => {
   return `demo-user-${shortId}@demo.com`
 }
 
+const isHttpsRequest = (context: DemoUserContext): boolean =>
+  new URL(context.req.url).protocol === 'https:'
+
+const demoCredentialsCookieOptions = (context: DemoUserContext) => ({
+  path: '/',
+  httpOnly: true,
+  sameSite: 'Lax' as const,
+  secure: isHttpsRequest(context),
+  maxAge: DEMO_CREDENTIALS_COOKIE_MAX_AGE_SECONDS,
+})
+
+const sessionCookieOptions = (context: DemoUserContext) => ({
+  path: '/',
+  httpOnly: true,
+  sameSite: 'Lax' as const,
+  secure: isHttpsRequest(context),
+})
+
 const readStoredDemoCredentials = (
   snapshot: string | undefined,
-): v.InferOutput<typeof demoSignInSchema> | null => {
+): DemoCredentials | null => {
   if (!snapshot) {
     return null
   }
@@ -66,19 +95,72 @@ const readStoredDemoCredentials = (
   }
 }
 
+const persistDemoCredentials = (
+  context: DemoUserContext,
+  credentials: DemoCredentials,
+) => {
+  setCookie(
+    context,
+    CREATED_DEMO_USER_COOKIE_KEY,
+    JSON.stringify(credentials),
+    demoCredentialsCookieOptions(context),
+  )
+  context.header('Cache-Control', PRIVATE_NO_STORE)
+}
+
+const responseWithDemoCredentials = (
+  context: DemoUserContext,
+  response: Response,
+  credentials: DemoCredentials,
+): Response => {
+  const headers = new Headers(response.headers)
+
+  headers.append(
+    'Set-Cookie',
+    generateCookie(
+      CREATED_DEMO_USER_COOKIE_KEY,
+      JSON.stringify(credentials),
+      demoCredentialsCookieOptions(context),
+    ),
+  )
+  headers.set('Cache-Control', PRIVATE_NO_STORE)
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  })
+}
+
+const expireSessionCookies = (context: DemoUserContext) => {
+  const cookieOptions = sessionCookieOptions(context)
+
+  deleteCookie(context, BETTER_AUTH_SESSION_TOKEN_COOKIE, cookieOptions)
+  deleteCookie(context, BETTER_AUTH_SESSION_TOKEN_COOKIE, {
+    ...cookieOptions,
+    prefix: 'secure',
+  })
+}
+
 export const demoUser = new Hono<{ Bindings: Env }>()
+  .use(
+    csrf({
+      origin: (origin, context) =>
+        isTrustedAuthOrigin(origin, context.env.BETTER_AUTH_URL),
+    }),
+  )
   .get('/', (context) => {
     const storedDemoCredentials = readStoredDemoCredentials(
       getCookie(context, CREATED_DEMO_USER_COOKIE_KEY),
     )
+    const demoCredentials = storedDemoCredentials ?? {
+      email: createDemoEmail(),
+      password: createDemoPassword(),
+    }
 
-    return context.json(
-      storedDemoCredentials ?? {
-        email: createDemoEmail(),
-        password: createDemoPassword(),
-      },
-      200,
-    )
+    persistDemoCredentials(context, demoCredentials)
+
+    return context.json(demoCredentials, 200)
   })
   .post('/', vValidator('json', demoSignInSchema), async (context) => {
     const demoSignIn = context.req.valid('json')
@@ -95,7 +177,11 @@ export const demoUser = new Hono<{ Bindings: Env }>()
         asResponse: true,
       })
 
-      if (signUpResponse.ok || signUpResponse.status !== 422) {
+      if (signUpResponse.ok) {
+        return responseWithDemoCredentials(context, signUpResponse, demoSignIn)
+      }
+
+      if (signUpResponse.status !== 422) {
         return signUpResponse
       }
     } catch (error) {
@@ -109,7 +195,7 @@ export const demoUser = new Hono<{ Bindings: Env }>()
       }
     }
 
-    return auth.api.signInEmail({
+    const signInResponse = await auth.api.signInEmail({
       body: {
         email: demoSignIn.email,
         password: demoSignIn.password,
@@ -117,6 +203,10 @@ export const demoUser = new Hono<{ Bindings: Env }>()
       headers: context.req.raw.headers,
       asResponse: true,
     })
+
+    return signInResponse.ok
+      ? responseWithDemoCredentials(context, signInResponse, demoSignIn)
+      : signInResponse
   })
   .delete('/', async (context) => {
     const currentSession = await createAuth(context.env).api.getSession({
@@ -134,7 +224,12 @@ export const demoUser = new Hono<{ Bindings: Env }>()
     await database.delete(account).where(eq(account.userId, userId))
     await database.delete(user).where(eq(user.id, userId))
 
-    deleteCookie(context, CREATED_DEMO_USER_COOKIE_KEY, { path: '/' })
+    deleteCookie(
+      context,
+      CREATED_DEMO_USER_COOKIE_KEY,
+      demoCredentialsCookieOptions(context),
+    )
+    expireSessionCookies(context)
 
     return context.body(null, 204)
   })

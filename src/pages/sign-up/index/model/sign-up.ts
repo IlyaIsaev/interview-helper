@@ -38,7 +38,9 @@ export const signUpForm = reatomForm(
       )
 
       if (error) {
-        throw new Error(error.message)
+        throw new Error(
+          'Could not create the account. Try a different email or sign in.',
+        )
       }
 
       await wrap(session.retry())

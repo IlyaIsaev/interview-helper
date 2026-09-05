@@ -57,6 +57,9 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
   await expect(page.getByRole('heading', { name: 'We use cookies' })).toBeVisible()
   await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Sign up' })).toHaveCount(0)
+  await expect(page.evaluate(() => document.cookie)).resolves.not.toContain(
+    'createdDemoUser',
+  )
   expect(demoUserGets).toHaveLength(1)
   expect(demoUserPosts).toEqual([])
   expect(signUpRequests).toEqual([])

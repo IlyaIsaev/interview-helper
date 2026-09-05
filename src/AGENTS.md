@@ -272,15 +272,15 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
 - Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
-- On `/sign-in`, `GET /api/demo-user` reuses `createdDemoUser` or generates credentials; the form is prefilled and the session stays empty. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is no link to `/sign-up`.
+- On `/sign-in`, `GET /api/demo-user` reuses the HttpOnly `createdDemoUser` cookie or generates credentials and sets that cookie; the form is prefilled from the JSON body and the session stays empty. The client keeps credentials only in memory (`createdDemoUser` atom), not in `document.cookie`. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is no link to `/sign-up`.
 - On `/sign-up`, the form is empty. Do not call `GET`/`POST /api/demo-user` there. Create account uses `authClient.signUp.email`.
 - Auth gates and landing live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.
   - Signed-in users on `/` or auth URLs: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
   - `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
-- Sign-out returns to `/sign-in` with the same demo credentials from the cookie.
-- Delete account on `/profile` removes the signed-in user and their questions, clears `createdDemoUser`, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.
+- Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
+- Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.
 

@@ -19,6 +19,28 @@ type MarkdownRehypePlugins = NonNullable<
   ComponentProps<typeof ReactMarkdown>['rehypePlugins']
 >
 
+const isAllowedMarkdownUrl = (url: string): boolean => {
+  const trimmedUrl = url.trim()
+
+  if (trimmedUrl.length === 0) {
+    return false
+  }
+
+  if (trimmedUrl.startsWith('#') || trimmedUrl.startsWith('/')) {
+    return !trimmedUrl.startsWith('//')
+  }
+
+  try {
+    const protocol = new URL(trimmedUrl).protocol
+
+    return protocol === 'https:' || protocol === 'http:'
+  } catch {
+    return !trimmedUrl.includes(':')
+  }
+}
+
+const markdownUrl = (url: string): string => (isAllowedMarkdownUrl(url) ? url : '')
+
 const markdownHighlightPlugins: MarkdownRehypePlugins = [
   [
     rehypeHighlight,
@@ -61,7 +83,19 @@ const markdownComponents: Components = {
   ul: ({ node, ...props }) => <ul className="list-disc pl-4" {...props} />,
   ol: ({ node, ...props }) => <ol className="list-decimal pl-4" {...props} />,
   li: ({ node, ...props }) => <li className="text-ui" {...props} />,
-  a: ({ node, ...props }) => <a className="text-primary" {...props} />,
+  a: ({ node, href, ...props }) =>
+    href ? (
+      <a
+        className="text-primary"
+        {...props}
+        href={href}
+        rel="noopener noreferrer nofollow"
+        referrerPolicy="no-referrer"
+      />
+    ) : (
+      <span>{props.children}</span>
+    ),
+  img: () => null,
   code: ({ node, className, ...props }) => (
     <code className={cn('text-foreground', className)} {...props} />
   ),
@@ -106,7 +140,12 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
   if (plain) {
     return (
       <p className={cn('min-w-0 flex-1 truncate', className)}>
-        <ReactMarkdown components={markdownPlainComponents}>{children}</ReactMarkdown>
+        <ReactMarkdown
+          components={markdownPlainComponents}
+          urlTransform={markdownUrl}
+        >
+          {children}
+        </ReactMarkdown>
       </p>
     )
   }
@@ -116,6 +155,7 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
       <ReactMarkdown
         components={markdownComponents}
         rehypePlugins={markdownHighlightPlugins}
+        urlTransform={markdownUrl}
       >
         {children}
       </ReactMarkdown>

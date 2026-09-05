@@ -1,12 +1,17 @@
 import { vValidator } from '@hono/valibot-validator'
-import { and, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { Hono, type Context, type Next } from 'hono'
+import { csrf } from 'hono/csrf'
 import * as v from 'valibot'
 
-import { createAuth } from '../auth'
+import { createAuth, isTrustedAuthOrigin } from '../auth'
 import { createDatabase } from '../db/client'
 import { question } from '../db/schema'
 import { questionsMatchingSearch } from './utils/question-search'
+
+const QUESTION_FIELD_MAX_LENGTH = 20_000
+
+const MAX_QUESTIONS_PER_USER = 200
 
 type QuestionsContext = {
   Bindings: Env
@@ -28,11 +33,13 @@ const questionFieldsSchema = v.object({
     v.string('Question must be a string'),
     v.trim(),
     v.minLength(1, 'Question is required'),
+    v.maxLength(QUESTION_FIELD_MAX_LENGTH, 'Question is too long'),
   ),
   answer: v.pipe(
     v.string('Answer must be a string'),
     v.trim(),
     v.minLength(1, 'Answer is required'),
+    v.maxLength(QUESTION_FIELD_MAX_LENGTH, 'Answer is too long'),
   ),
 })
 
@@ -75,6 +82,12 @@ const loadQuestion = async (
 }
 
 export const questions = new Hono<QuestionsContext>()
+  .use(
+    csrf({
+      origin: (origin, context) =>
+        isTrustedAuthOrigin(origin, context.env.BETTER_AUTH_URL),
+    }),
+  )
   .use(requireSession)
   .get('/', vValidator('query', questionSearchQuerySchema), async (context) => {
     const { q = '' } = context.req.valid('query')
@@ -104,13 +117,23 @@ export const questions = new Hono<QuestionsContext>()
   .post('/', vValidator('json', questionFieldsSchema), async (context) => {
     const questionFields = context.req.valid('json')
     const database = createDatabase(context.env.DB)
+    const userId = context.get('userId')
+    const [questionTotal] = await database
+      .select({ questionCount: count() })
+      .from(question)
+      .where(eq(question.userId, userId))
+
+    if ((questionTotal?.questionCount ?? 0) >= MAX_QUESTIONS_PER_USER) {
+      return context.json({ message: 'Question limit reached' }, 400)
+    }
+
     const [createdQuestion] = await database
       .insert(question)
       .values({
         id: crypto.randomUUID(),
         question: questionFields.question,
         answer: questionFields.answer,
-        userId: context.get('userId'),
+        userId,
       })
       .returning(questionRow)
 
