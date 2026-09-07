@@ -9,7 +9,7 @@ import {
 } from '@reatom/core';
 import { pick, pipe } from 'es-toolkit/fp';
 
-import { removeQuestion, type Question } from '@/entities/question';
+import { removeFromQuestions, type OpenedQuestion } from '@/entities/question';
 import { clientApi } from '@/shared/api';
 
 export const previewedQuestionId = atom<string | null>(
@@ -17,7 +17,7 @@ export const previewedQuestionId = atom<string | null>(
   'previewedQuestionId',
 );
 
-export const previewedQuestion = atom<Question | null>(
+export const previewedQuestion = atom<OpenedQuestion | null>(
   null,
   'previewedQuestion',
 );
@@ -54,7 +54,7 @@ export const openQuestionPreview = action(async (questionId: string) => {
   previewedQuestion.set(pipe(nextQuestion, pick(['question', 'answer'])));
 }, 'openQuestionPreview').extend(withAsync(), withAbort());
 
-removeQuestion.extend(
+removeFromQuestions.extend(
   withCallHook((_payload, [questionId]: [string]) => {
     if (previewedQuestionId() === questionId) {
       closeQuestionPreview();

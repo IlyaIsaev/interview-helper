@@ -4,7 +4,7 @@ const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
 const demoEmail = /demo-user-[a-f0-9]{8}@demo\.com/
 
-const isQuestionsListPath = (url: string) =>
+const isQuestionsPath = (url: string) =>
   new URL(url).pathname === '/questions'
 
 const notifications = (page: Page) =>
@@ -70,7 +70,7 @@ test('signing in creates the demo user and lands on questions', async ({
 }) => {
   await createDemoAccount(page)
 
-  if (isQuestionsListPath(page.url())) {
+  if (isQuestionsPath(page.url())) {
     await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
     await expect(page.getByText('the questions list is empty')).toBeVisible()
   }
@@ -130,7 +130,7 @@ test('user menu name opens the profile page without a sidebar', async ({
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 
-  const questionListGets: string[] = []
+  const loadQuestionsRequests: string[] = []
 
   page.on('request', (request) => {
     if (request.method() !== 'GET') {
@@ -138,7 +138,7 @@ test('user menu name opens the profile page without a sidebar', async ({
     }
 
     if (new URL(request.url()).pathname === '/api/questions') {
-      questionListGets.push(request.url())
+      loadQuestionsRequests.push(request.url())
     }
   })
 
@@ -146,7 +146,7 @@ test('user menu name opens the profile page without a sidebar', async ({
 
   await expect(page).toHaveURL(/\/profile$/)
   await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
-  expect(questionListGets).toEqual([])
+  expect(loadQuestionsRequests).toEqual([])
 
   await page.getByRole('link', { name: 'Interview helper' }).click()
 

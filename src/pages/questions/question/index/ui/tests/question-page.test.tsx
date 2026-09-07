@@ -3,7 +3,7 @@ import { expect, test } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 
-import { initQuestion, initQuestionList } from '@/entities/question'
+import { initQuestion, initQuestions } from '@/entities/question'
 import { questionPath } from '@/shared/config'
 
 import { isAnswerVisible } from '../../model/show-answer'
@@ -19,7 +19,7 @@ const openQuestionPage = (questionCount: 'one' | 'two') => {
     question: '# Hello',
     answer: 'hidden answer',
   })
-  initQuestionList(
+  initQuestions(
     questionCount === 'two'
       ? [
           { id: currentQuestionId, question: '# Hello' },

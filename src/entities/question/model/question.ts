@@ -2,14 +2,14 @@ import { action, atom } from '@reatom/core';
 import { pick, pipe } from 'es-toolkit/fp';
 import type { DeepReadonly } from 'es-toolkit/types';
 
-export type Question = DeepReadonly<{
+export type OpenedQuestion = DeepReadonly<{
   question: string;
   answer: string;
 }>;
 
-export const question = atom<Question | null>(null, 'question');
+export const question = atom<OpenedQuestion | null>(null, 'question');
 
-export const initQuestion = action((nextQuestion: Question | null) => {
+export const initQuestion = action((nextQuestion: OpenedQuestion | null) => {
   if (!nextQuestion) {
     question.set(null);
 

@@ -1,7 +1,7 @@
 import { action, computed, urlAtom } from '@reatom/core';
 import { filter, pipe, sample } from 'es-toolkit/fp';
 
-import { questionList, type QuestionListItem } from '@/entities/question';
+import { questions, type Question } from '@/entities/question';
 import { QUESTIONS_PATH, questionPath } from '@/shared/config';
 
 const openedQuestionId = computed(() => {
@@ -15,15 +15,14 @@ const openedQuestionId = computed(() => {
   return questionId;
 }, 'openedQuestionId');
 
-const isOtherQuestion = (currentQuestionId: string) => (row: QuestionListItem) =>
-  row.id !== currentQuestionId;
+const isOtherQuestion = (currentQuestionId: string) => (question: Question) =>
+  question.id !== currentQuestionId;
 
 export const otherQuestions = computed(() => {
   const currentQuestionId = openedQuestionId();
-  const questions = questionList() ?? [];
   if (!currentQuestionId) return [];
 
-  return pipe(questions, filter(isOtherQuestion(currentQuestionId)));
+  return pipe(questions() ?? [], filter(isOtherQuestion(currentQuestionId)));
 }, 'otherQuestions');
 
 export const openNextQuestion = action(() => {

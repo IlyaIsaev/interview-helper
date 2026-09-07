@@ -3,9 +3,9 @@ import { reatomComponent } from "@reatom/react";
 import { type ChangeEvent, type ReactNode } from "react";
 
 import {
-  questionList,
-  questionListQuery,
-  type QuestionListItem,
+  questions,
+  questionsQuery,
+  type Question,
 } from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion } from "@/features/questions/delete-question";
@@ -37,7 +37,7 @@ type LayoutProps = {
 };
 
 type QuestionSidebarProps = {
-  questions: Array<QuestionListItem> | null;
+  questions: Array<Question> | null;
   search: string;
 };
 
@@ -70,7 +70,6 @@ function QuestionSidebar({ questions, search }: QuestionSidebarProps) {
 }
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
-  const questions = questionList();
   const search = questionSearch();
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
@@ -80,7 +79,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
 
     questionSearch.set(nextSearch);
 
-    questionListQuery.set(nextSearch.trim());
+    questionsQuery.set(nextSearch.trim());
 
     searchQuestions();
   });
@@ -107,7 +106,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
                 onChange={changeQuestionSearch}
               />
             </div>
-            <QuestionSidebar questions={questions} search={search} />
+            <QuestionSidebar questions={questions()} search={search} />
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>

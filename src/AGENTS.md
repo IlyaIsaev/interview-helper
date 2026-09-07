@@ -51,7 +51,7 @@ features/questions/update-question/ ← dialog form to update a question + answe
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: profile link + log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/question/   ← current question + question list (model only)
+entities/question/   ← current question + questions (model only)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
@@ -77,7 +77,7 @@ Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from 
 
 If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
 
-The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestionList`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
+The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestions`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
 
 The `init*` action performs **all** mapping and derivation that slice needs, then writes the atom. It does not fetch. Keep `.map`, field picking, and domain defaults out of the loader.
 
@@ -86,37 +86,36 @@ UI reads the atom, not `route.loader.data()` from inside entities or features. M
 ```ts
 import { map, pick, pipe } from 'es-toolkit/fp';
 
-const questionListItem = (question: Question) =>
-  pipe(question, pick(['id', 'question']));
+export const questions = atom<Array<Question>>([], 'questions');
 
-export const questionList = atom<Array<QuestionListItem>>([], 'questionList');
-
-export const initQuestionList = action((questions: Array<Question>) => {
-  questionList.set(pipe(questions, map(questionListItem)));
-}, 'initQuestionList');
+export const initQuestions = action((nextQuestions: Array<Question>) => {
+  questions.set(pipe(nextQuestions, map(pick(['id', 'question']))));
+}, 'initQuestions');
 
 async loader() {
   if (!session.data()?.user) return;
 
-  const { questions } = await wrap(clientApi.loadQuestions());
+  const { questions: nextQuestions } = await wrap(
+    clientApi.loadQuestions(questionsQuery()),
+  );
 
-  initQuestionList(questions);
+  initQuestions(nextQuestions);
 
   openSignedInDestination();
 }
 
 // Forbidden — entity/feature fetches a route-level resource
-export const loadQuestionList = action(async () => {
-  const { questions } = await wrap(clientApi.loadQuestions());
+export const loadQuestions = action(async () => {
+  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions());
 
-  questionList.set(questions);
-}, 'loadQuestionList');
+  questions.set(nextQuestions);
+}, 'loadQuestions');
 
 // Forbidden — loader maps into the entity/feature shape
 async loader() {
-  const { questions } = await wrap(clientApi.loadQuestions());
+  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions());
 
-  initQuestionList(pipe(questions, map(questionListItem)));
+  initQuestions(pipe(nextQuestions, map(pick(['id', 'question']))));
 }
 ```
 
@@ -148,8 +147,8 @@ const protectedRoute = layoutRoute.reatomRoute(
 
       const user = session.data()?.user;
 
-      if (!user && questionList() !== null) {
-        resetQuestionList();
+      if (!user && questions() !== null) {
+        resetQuestions();
 
         questionSearch.reset();
       }
@@ -306,7 +305,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.
-  - Signed-in users on `/` or auth URLs go to `questionsRoute`. The question list loads in that route's `loader`; empty list stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
+  - Signed-in users on `/` or auth URLs go to `questionsRoute`. Questions load in that route's `loader`; empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
   - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
 - Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.

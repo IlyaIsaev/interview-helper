@@ -4,7 +4,7 @@ import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { map, pipe } from 'es-toolkit/fp';
 import { useRef } from 'react';
 
-import { type QuestionListItem } from '@/entities/question';
+import { type Question } from '@/entities/question';
 import { DeleteQuestionButton } from '@/features/questions/delete-question';
 import { UpdateQuestionButton } from '@/features/questions/update-question';
 import { questionPath } from '@/shared/config';
@@ -24,19 +24,19 @@ import {
 const questionRowSize = 36;
 
 type QuestionListProps = {
-  questions: Array<QuestionListItem>;
+  questions: Array<Question>;
 };
 
 export const QuestionList = reatomComponent(({ questions }: QuestionListProps) => {
   const currentPath = urlAtom().pathname;
   const isPreviewOpen = isQuestionPreviewOpen();
   const previewedId = previewedQuestionId();
-  const questionListScroller = useRef<HTMLDivElement>(null);
-  const questionListVirtualizer = useVirtualizer({
+  const questionsScroller = useRef<HTMLDivElement>(null);
+  const questionsVirtualizer = useVirtualizer({
     count: questions.length,
     estimateSize: () => questionRowSize,
     getItemKey: (index) => questions[index]?.id ?? index,
-    getScrollElement: () => questionListScroller.current,
+    getScrollElement: () => questionsScroller.current,
     overscan: 8,
   });
 
@@ -76,12 +76,12 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
   }
 
   return (
-    <div ref={questionListScroller} className="min-h-0 flex-1 overflow-y-auto">
+    <div ref={questionsScroller} className="min-h-0 flex-1 overflow-y-auto">
       <SidebarMenu
         className="relative gap-0"
-        style={{ height: questionListVirtualizer.getTotalSize() }}
+        style={{ height: questionsVirtualizer.getTotalSize() }}
       >
-        {pipe(questionListVirtualizer.getVirtualItems(), map(questionMenuItem))}
+        {pipe(questionsVirtualizer.getVirtualItems(), map(questionMenuItem))}
       </SidebarMenu>
     </div>
   );

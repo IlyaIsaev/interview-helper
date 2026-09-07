@@ -1,12 +1,12 @@
 import { expect, test } from 'vitest'
 import { render } from 'vitest-browser-react'
 
-import { initQuestionList } from '@/entities/question'
+import { initQuestions } from '@/entities/question'
 
 import QuestionsPage from '../questions-page'
 
 test('empty questions page shows create question', async () => {
-  initQuestionList([])
+  initQuestions([])
 
   const screen = await render(<QuestionsPage />)
 

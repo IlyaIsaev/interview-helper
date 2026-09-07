@@ -3,12 +3,12 @@ import { findIndex, pipe } from 'es-toolkit/fp';
 
 import {
   initQuestion,
-  questionList,
-  questionListQuery,
-  refetchQuestionList,
-  removeQuestion,
-  restoreQuestion,
-  type QuestionListItem,
+  questions,
+  questionsQuery,
+  refetchQuestions,
+  removeFromQuestions,
+  restoreToQuestions,
+  type Question,
 } from '@/entities/question';
 import { clientApi } from '@/shared/api';
 import { questionPath, QUESTIONS_PATH } from '@/shared/config';
@@ -23,7 +23,7 @@ export const isDeleteQuestionDialogOpen = reatomBoolean(
 
 const hasQuestionId =
   (questionId: string) =>
-  (question: QuestionListItem): boolean =>
+  (question: Question): boolean =>
     question.id === questionId;
 
 export const closeDeleteQuestionDialog = action(() => {
@@ -42,24 +42,23 @@ export const deleteQuestion = action(async () => {
   const questionId = deletedQuestionId();
   if (!questionId) return;
 
-  const questions = questionList() ?? [];
-  const index = pipe(questions, findIndex(hasQuestionId(questionId)));
-  const question = questions[index];
+  const index = pipe(questions() ?? [], findIndex(hasQuestionId(questionId)));
+  const question = (questions() ?? [])[index];
   const questionDescription =
     question === undefined ? undefined : markdownPlainText(question.question);
-  const isSearchEmpty = questionListQuery().length === 0;
+  const isSearchEmpty = questionsQuery().length === 0;
 
   closeDeleteQuestionDialog();
 
   if (isSearchEmpty) {
-    removeQuestion(questionId);
+    removeFromQuestions(questionId);
   }
 
   try {
     await wrap(clientApi.deleteQuestion(questionId));
   } catch {
     if (isSearchEmpty && question !== undefined) {
-      restoreQuestion(question, index);
+      restoreToQuestions(question, index);
     }
 
     toast.error('Could not delete the question. Try again later.', {
@@ -79,5 +78,5 @@ export const deleteQuestion = action(async () => {
     urlAtom.go(QUESTIONS_PATH);
   }
 
-  await wrap(refetchQuestionList());
+  await wrap(refetchQuestions());
 }, 'deleteQuestion').extend(withAsync());

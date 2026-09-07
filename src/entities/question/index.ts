@@ -1,14 +1,14 @@
-export { initQuestion, question, type Question } from './model/question';
+export { initQuestion, question, type OpenedQuestion } from './model/question';
 
 export {
-  addQuestion,
-  initQuestionList,
-  questionList,
-  questionListQuery,
-  refetchQuestionList,
-  removeQuestion,
-  resetQuestionList,
-  restoreQuestion,
-  updateQuestion,
-  type QuestionListItem,
-} from './model/question-list';
+  addToQuestions,
+  initQuestions,
+  questions,
+  questionsQuery,
+  refetchQuestions,
+  removeFromQuestions,
+  resetQuestions,
+  restoreToQuestions,
+  updateInQuestions,
+  type Question,
+} from './model/questions';

@@ -2,7 +2,7 @@ import { expect, test, type Page, type Request } from '@playwright/test'
 
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
-const isQuestionsListPath = (url: string) =>
+const isQuestionsPath = (url: string) =>
   new URL(url).pathname === '/questions'
 
 const revealAnswer = async (page: Page, answer: string) => {
@@ -126,15 +126,15 @@ const holdCreateQuestion = async (page: Page) => {
   }
 }
 
-const isQuestionListGet = (request: Request) => {
+const isLoadQuestions = (request: Request) => {
   if (request.method() !== 'GET') return false
 
   return new URL(request.url()).pathname === '/api/questions'
 }
 
-const failQuestionListGet = async (page: Page) => {
+const failLoadQuestions = async (page: Page) => {
   await page.route('**/api/questions', async (route) => {
-    if (isQuestionListGet(route.request())) {
+    if (isLoadQuestions(route.request())) {
       await route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -148,7 +148,7 @@ const failQuestionListGet = async (page: Page) => {
   })
 }
 
-const holdQuestionListGet = async (page: Page) => {
+const holdLoadQuestions = async (page: Page) => {
   let releaseLoad = () => {}
   const loadHeld = new Promise<void>((resolve) => {
     releaseLoad = resolve
@@ -215,7 +215,7 @@ test('signed-in users land on questions and can open a missing question', async 
 }) => {
   await signIn(page)
 
-  if (isQuestionsListPath(page.url())) {
+  if (isQuestionsPath(page.url())) {
     await expect(page.getByText('the questions list is empty')).toBeVisible()
     await expect(emptyCreateQuestion(page)).toBeVisible()
   }
@@ -251,7 +251,7 @@ test('sidebar plus and empty-state button open the create question form', async 
   await page.getByRole('button', { name: 'Cancel' }).click()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
-  if (isQuestionsListPath(page.url())) {
+  if (isQuestionsPath(page.url())) {
     await emptyCreateQuestion(page).click()
     await expect(page.getByRole('dialog')).toBeVisible()
     await expect(
@@ -491,7 +491,7 @@ test('a failed list refetch after create keeps the new question', async ({
   const questionText = `Create refetch fail ${Date.now()}`
 
   await signIn(page)
-  await failQuestionListGet(page)
+  await failLoadQuestions(page)
 
   await sidebarCreateQuestion(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
@@ -528,7 +528,7 @@ test('creating while search is active waits for the filtered list refetch', asyn
   await expect(questionSearch).toHaveValue('other')
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
 
-  const releaseMatchingListGet = await holdQuestionListGet(page)
+  const releaseMatchingLoadQuestions = await holdLoadQuestions(page)
 
   await sidebarCreateQuestion(page).click()
   await expect(page.getByRole('dialog')).toBeVisible()
@@ -541,7 +541,7 @@ test('creating while search is active waits for the filtered list refetch', asyn
   await expect(sidebarQuestion(page, matchingQuestion)).toHaveCount(0)
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
 
-  releaseMatchingListGet()
+  releaseMatchingLoadQuestions()
 
   await expect(sidebarQuestion(page, matchingQuestion)).toBeVisible()
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
@@ -643,12 +643,12 @@ test('updating a question from the sidebar goes to the question page', async ({
   await expect(sidebarQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
-  const questionItem = page
+  const question = page
     .getByRole('listitem')
     .filter({ hasText: questionText })
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Update question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
 
   await expect(
     page.getByRole('heading', { name: 'Update question' }),
@@ -699,13 +699,13 @@ test('updating a question shows a spinner while the question loads', async ({
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
   const releaseQuestionGet = await holdQuestionGet(page)
-  const questionItem = page
+  const question = page
     .getByRole('listitem')
     .filter({ hasText: questionText })
   const updateDialog = page.getByRole('dialog')
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Update question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
 
   await expect(
     updateDialog.getByRole('heading', { name: 'Update question' }),
@@ -747,12 +747,12 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await expect(sidebarQuestion(page, questionText)).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
 
-  const questionItem = page
+  const question = page
     .getByRole('listitem')
     .filter({ hasText: questionText })
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Delete question' }).click()
 
   await expect(
     page.getByRole('heading', { name: 'Delete question' }),
@@ -762,8 +762,8 @@ test('deleting a question from the sidebar removes it', async ({ page }) => {
   await expect(sidebarQuestion(page, questionText)).toBeVisible()
   await expect(openedQuestion(page, questionText)).toBeVisible()
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Delete question' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(sidebarQuestion(page, questionText)).toHaveCount(0)
@@ -794,12 +794,12 @@ test('a failed delete restores the question and shows a toast', async ({
 
   await failQuestionMutation(page, 'DELETE')
 
-  const questionItem = page
+  const question = page
     .getByRole('listitem')
     .filter({ hasText: questionText })
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Delete question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Delete question' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page.getByRole('dialog')).toHaveCount(0)
@@ -834,12 +834,12 @@ test('a failed update restores the question and shows a toast', async ({
 
   await failQuestionMutation(page, 'PUT')
 
-  const questionItem = page
+  const question = page
     .getByRole('listitem')
     .filter({ hasText: questionText })
 
-  await questionItem.hover()
-  await questionItem.getByRole('button', { name: 'Update question' }).click()
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
 
   await expect(
     page.getByRole('heading', { name: 'Update question' }),

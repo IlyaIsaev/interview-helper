@@ -13,12 +13,12 @@ import { find, pipe } from 'es-toolkit/fp';
 
 import {
   initQuestion,
-  question as openedQuestionState,
-  questionList,
-  questionListQuery,
-  refetchQuestionList,
-  updateQuestion,
-  type QuestionListItem,
+  question as openedQuestion,
+  questions,
+  questionsQuery,
+  refetchQuestions,
+  updateInQuestions,
+  type Question,
 } from '@/entities/question';
 import { questionFieldsSchema } from '@/features/questions/create-question';
 import { clientApi } from '@/shared/api';
@@ -34,7 +34,7 @@ export const isUpdateQuestionDialogOpen = reatomBoolean(
 
 const hasQuestionId =
   (questionId: string) =>
-  (question: QuestionListItem): boolean =>
+  (question: Question): boolean =>
     question.id === questionId;
 
 export const closeUpdateQuestionDialog = action(() => {
@@ -61,21 +61,18 @@ export const updateQuestionForm = reatomForm(
       const questionId = updatedQuestionId();
       if (!questionId) return;
 
-      const questions = questionList() ?? [];
-      const question = pipe(questions, find(hasQuestionId(questionId)));
+      const question = pipe(questions() ?? [], find(hasQuestionId(questionId)));
       const isQuestionOpened = urlAtom().pathname === questionPath(questionId);
-      const openedQuestion = isQuestionOpened
-        ? openedQuestionState()
-        : undefined;
-      const questionText = question?.question ?? openedQuestion?.question;
+      const questionOnPage = isQuestionOpened ? openedQuestion() : undefined;
+      const questionText = question?.question ?? questionOnPage?.question;
       const questionDescription =
         questionText === undefined ? undefined : markdownPlainText(questionText);
-      const isSearchEmpty = questionListQuery().length === 0;
+      const isSearchEmpty = questionsQuery().length === 0;
 
       closeUpdateQuestionDialog();
 
       if (isSearchEmpty) {
-        updateQuestion({ id: questionId, question: nextQuestion });
+        updateInQuestions({ id: questionId, question: nextQuestion });
       }
 
       if (isQuestionOpened) {
@@ -91,7 +88,7 @@ export const updateQuestionForm = reatomForm(
         );
 
         if (isSearchEmpty) {
-          updateQuestion({
+          updateInQuestions({
             id: updatedQuestion.id,
             question: updatedQuestion.question,
           });
@@ -108,16 +105,16 @@ export const updateQuestionForm = reatomForm(
           description: questionDescription,
         });
 
-        await wrap(refetchQuestionList());
+        await wrap(refetchQuestions());
 
         return updatedQuestion;
       } catch {
         if (isSearchEmpty && question) {
-          updateQuestion(question);
+          updateInQuestions(question);
         }
 
         if (isQuestionOpened) {
-          initQuestion(openedQuestion ?? null);
+          initQuestion(questionOnPage ?? null);
         }
 
         toast.error('Could not update the question. Try again later.', {

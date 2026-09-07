@@ -1,6 +1,10 @@
 import { action, reatomBoolean, reatomForm, urlAtom, withCallHook, wrap } from '@reatom/core';
 
-import { addQuestion, questionListQuery, refetchQuestionList } from '@/entities/question';
+import {
+  addToQuestions,
+  questionsQuery,
+  refetchQuestions,
+} from '@/entities/question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
 
@@ -38,14 +42,14 @@ const syncCreatedQuestion = action(async (createdQuestion: {
   id: string;
   question: string;
 }) => {
-  if (questionListQuery().length === 0) {
-    addQuestion({
+  if (questionsQuery().length === 0) {
+    addToQuestions({
       id: createdQuestion.id,
       question: createdQuestion.question,
     });
   }
 
-  await wrap(refetchQuestionList());
+  await wrap(refetchQuestions());
 }, 'syncCreatedQuestion');
 
 createQuestionForm.submit.onFulfill.extend(

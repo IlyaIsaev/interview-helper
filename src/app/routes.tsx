@@ -4,10 +4,10 @@ import { lazy, Suspense } from "react";
 
 import {
   initQuestion,
-  initQuestionList,
-  questionList,
-  questionListQuery,
-  resetQuestionList,
+  initQuestions,
+  questions,
+  questionsQuery,
+  resetQuestions,
 } from "@/entities/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
 import { initSignIn } from "@/pages/sign-in/index/model/sign-in";
@@ -37,15 +37,14 @@ const ProfilePage = lazy(() => import("@/pages/profile/index/ui/profile-page"));
 const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
 
 const openSignedInDestination = action(() => {
-  const questions = questionList();
-  if (questions === null) return;
+  if (questions() === null) return;
 
   const { pathname } = urlAtom();
   if (QUESTION_PAGE_PATH.test(pathname)) return;
 
-  if (questions.length === 0) return;
+  if (questions()?.length === 0) return;
 
-  const question = pipe(questions, sample());
+  const question = pipe(questions() ?? [], sample());
   if (!question) return;
 
   questionRoute.go({ id: question.id }, true);
@@ -74,8 +73,8 @@ export const protectedRoute = rootRoute.reatomRoute(
 
       const user = session.data()?.user;
 
-      if (!user && questionList() !== null) {
-        resetQuestionList();
+      if (!user && questions() !== null) {
+        resetQuestions();
 
         questionSearch.reset();
       }
@@ -117,16 +116,18 @@ export const questionsRoute = protectedRoute.reatomRoute(
     async loader() {
       if (!session.data()?.user) return;
 
-      const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()));
+      const { questions: nextQuestions } = await wrap(
+        clientApi.loadQuestions(questionsQuery()),
+      );
 
-      initQuestionList(questions);
+      initQuestions(nextQuestions);
 
       openSignedInDestination();
     },
     render(self) {
       self.loader.ready();
 
-      if (questionList() === null) return <PageFallback />;
+      if (questions() === null) return <PageFallback />;
 
       const child = self.outlet();
 
