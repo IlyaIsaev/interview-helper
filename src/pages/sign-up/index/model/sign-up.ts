@@ -1,7 +1,7 @@
-import { reatomForm, wrap } from '@reatom/core';
+import { computed, reatomForm } from '@reatom/core';
 import * as v from 'valibot';
 
-import { authClient, session } from '@/shared/auth';
+import { toast } from '@/shared/ui';
 
 const signUpSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
@@ -26,25 +26,20 @@ export const signUpForm = reatomForm(
   {
     name: 'signUpForm',
     validateOnBlur: true,
-    validateOnChange: true,
+    validateOnChange: false,
     schema: signUpSchema,
-    onSubmit: async ({ name, email, password }) => {
-      const { error } = await wrap(
-        authClient.signUp.email({
-          name,
-          email,
-          password,
-        }),
-      );
-      if (error) {
-        throw new Error(
-          'Could not create the account. Try a different email or sign in.',
-        );
-      }
-
-      await wrap(session.retry());
+    onSubmit: () => {
+      toast.error('Sign-up temporarily unavailable.');
     },
   },
 );
 
-signUpForm.validation.triggerSchemaValidation();
+export const isSignUpValid = computed(() => {
+  const parsedSignUp = v.safeParse(signUpSchema, {
+    name: signUpForm.fields.name(),
+    email: signUpForm.fields.email(),
+    password: signUpForm.fields.password(),
+  });
+
+  return parsedSignUp.success;
+}, 'isSignUpValid');

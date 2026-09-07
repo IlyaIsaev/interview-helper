@@ -7,16 +7,22 @@ import * as v from 'valibot';
 import { createAuth, isTrustedAuthOrigin } from '../auth';
 import { createDatabase } from '../db/client';
 import { question } from '../db/schema';
+import {
+  deleteUserById,
+  isDemoUserEmail,
+  isDemoUserExpired,
+  maxQuestionsForEmail,
+  questionLimitMessage,
+} from '../demo-user/demo-users';
 import { questionsMatchingSearch } from './utils/question-search';
 
 const QUESTION_FIELD_MAX_LENGTH = 20_000;
-
-const MAX_QUESTIONS_PER_USER = 200;
 
 type QuestionsContext = {
   Bindings: Env;
   Variables: {
     userId: string;
+    email: string;
   };
 };
 
@@ -60,7 +66,17 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
   });
   if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
 
-  context.set('userId', currentSession.user.id);
+  const { id: userId, email, createdAt } = currentSession.user;
+  const createdAtDate = createdAt instanceof Date ? createdAt : new Date(createdAt);
+
+  if (isDemoUserEmail(email) && isDemoUserExpired(createdAtDate)) {
+    await deleteUserById(createDatabase(context.env.DB), userId);
+
+    return context.json({ message: 'Unauthorized' }, 401);
+  }
+
+  context.set('userId', userId);
+  context.set('email', email);
 
   await next();
 };
@@ -123,7 +139,10 @@ export const questions = new Hono<QuestionsContext>()
       .select({ questionCount: count() })
       .from(question)
       .where(eq(question.userId, userId));
-    if ((questionTotal?.questionCount ?? 0) >= MAX_QUESTIONS_PER_USER) return context.json({ message: 'Question limit reached' }, 400);
+    const email = context.get('email');
+    if ((questionTotal?.questionCount ?? 0) >= maxQuestionsForEmail(email)) {
+      return context.json({ message: questionLimitMessage(email) }, 400);
+    }
 
     const [createdQuestion] = await database
       .insert(question)

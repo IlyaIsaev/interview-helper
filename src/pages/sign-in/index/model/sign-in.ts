@@ -35,13 +35,15 @@ export const signInForm = reatomForm(
   {
     name: 'signInForm',
     validateOnBlur: true,
-    validateOnChange: true,
+    validateOnChange: false,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
       if (isDemoEmail(email)) {
         await wrap(clientApi.createDemoUser({ email, password }));
 
         await wrap(session.retry());
+
+        toast.info('Demo accounts are deleted after 24 hours.');
 
         return;
       }
@@ -71,5 +73,3 @@ export const initSignIn = action((credentials: DemoCredentials) => {
 
   signInForm.fields.password.change(credentials.password);
 }, 'initSignIn');
-
-signInForm.validation.triggerSchemaValidation();

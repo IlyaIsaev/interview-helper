@@ -3,6 +3,8 @@ import { toMerged } from 'es-toolkit';
 import { hc } from 'hono/client';
 import type { InferRequestType, InferResponseType } from 'hono/client';
 
+import { session } from '@/shared/auth';
+
 import type { AppType } from '../../../worker';
 
 const api = hc<AppType>('/', {
@@ -25,10 +27,38 @@ const api = hc<AppType>('/', {
   },
 });
 
+const retrySessionIfUnauthorized = async (response: Response): Promise<void> => {
+  if (response.status !== 401) return;
+
+  await wrap(session.retry());
+};
+
+const failedRequestMessage = async (
+  response: Response,
+  failedMessage: string,
+): Promise<string> => {
+  try {
+    const body: unknown = await wrap(response.json());
+    if (
+      typeof body === 'object' &&
+      body !== null &&
+      'message' in body &&
+      typeof body.message === 'string'
+    ) {
+      return body.message;
+    }
+  } catch {
+    return `${failedMessage}: ${response.status}`;
+  }
+
+  return `${failedMessage}: ${response.status}`;
+};
+
 const readJson = async <T>(
   response: Response,
   failedMessage: string,
 ): Promise<T> => {
+  await retrySessionIfUnauthorized(response);
   if (!response.ok) throw new Error(`${failedMessage}: ${response.status}`);
 
   return await wrap(response.json());
@@ -85,7 +115,12 @@ export const clientApi = {
       }),
     );
 
-    return await readJson<CreatedQuestion>(response, 'POST /api/questions failed');
+    await retrySessionIfUnauthorized(response);
+    if (!response.ok) {
+      throw new Error(await failedRequestMessage(response, 'POST /api/questions failed'));
+    }
+
+    return await wrap(response.json());
   },
 
   async updateQuestion(
@@ -111,6 +146,8 @@ export const clientApi = {
         param: { id },
       }),
     );
+
+    await retrySessionIfUnauthorized(response);
     if (!response.ok) throw new Error(`DELETE /api/questions/:id failed: ${response.status}`);
   },
 

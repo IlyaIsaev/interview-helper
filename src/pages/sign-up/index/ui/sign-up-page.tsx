@@ -13,12 +13,11 @@ import {
   Input,
 } from '@/shared/ui';
 
-import { signUpForm } from '../model/sign-up';
+import { isSignUpValid, signUpForm } from '../model/sign-up';
 
 const SignUpPage = reatomComponent(() => {
-  const { fields, submit, validation } = signUpForm;
+  const { fields, submit } = signUpForm;
   const isSubmitReady = submit.ready();
-  const hasValidationErrors = validation().errors.length > 0;
   const submitError = submit.error();
   const nameField = bindFormControl(fields.name);
   const emailField = bindFormControl(fields.email);
@@ -65,7 +64,7 @@ const SignUpPage = reatomComponent(() => {
           </FormItem>
         </FormField>
         <FormMessage>{submitError?.message}</FormMessage>
-        <Button type="submit" disabled={!isSubmitReady || hasValidationErrors}>
+        <Button type="submit" disabled={!isSubmitReady || !isSignUpValid()}>
           Create account
         </Button>
       </Form>

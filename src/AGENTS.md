@@ -299,9 +299,9 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 ## Auth
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
-- Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
-- On `/sign-in`, `GET /api/demo-user` reuses the HttpOnly `createdDemoUser` cookie or generates credentials and sets that cookie; the form is prefilled from the JSON body and the session stays empty. The client keeps credentials only in memory (`createdDemoUser` atom), not in `document.cookie`. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is no link to `/sign-up`.
-- On `/sign-up`, the form is empty. Do not call `GET`/`POST /api/demo-user` there. Create account uses `authClient.signUp.email`.
+- Sign-in forms use `reatomForm`. After success, `session.retry()`.
+- On `/sign-in`, `GET /api/demo-user` reuses the HttpOnly `createdDemoUser` cookie or generates credentials and sets that cookie; the form is prefilled from the JSON body and the session stays empty. The client keeps credentials only in memory (`createdDemoUser` atom), not in `document.cookie`. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). After demo Sign in, toast that demo accounts are deleted after 24 hours. Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is a link to `/sign-up`.
+- On `/sign-up`, the form is empty. Do not call `GET`/`POST /api/demo-user` there. Create account toasts that sign-up is temporarily unavailable and does not call `authClient.signUp.email`.
 - Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.

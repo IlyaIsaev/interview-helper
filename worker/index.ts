@@ -6,6 +6,7 @@ import { secureHeaders } from 'hono/secure-headers';
 import { auth } from './auth';
 import { createDatabase } from './db/client';
 import { demoUser } from './demo-user';
+import { deleteExpiredDemoUsers } from './demo-user/demo-users';
 import { questions } from './questions';
 
 const JSON_BODY_LIMIT_BYTES = 128 * 1024;
@@ -71,4 +72,23 @@ const app = new Hono<{ Bindings: Env }>()
 
 export type AppType = typeof app;
 
-export default app;
+const isLocalHost = (hostname: string): boolean =>
+  hostname === '127.0.0.1' || hostname === 'localhost';
+
+export default {
+  async fetch(
+    request: Request,
+    env: Env,
+    ctx: ExecutionContext,
+  ): Promise<Response> {
+    const { hostname, pathname } = new URL(request.url);
+    if (pathname === '/__scheduled' && !isLocalHost(hostname)) {
+      return new Response(null, { status: 404 });
+    }
+
+    return app.fetch(request, env, ctx);
+  },
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    await deleteExpiredDemoUsers(createDatabase(env.DB));
+  },
+};

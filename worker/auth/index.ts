@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { Hono } from 'hono';
+import { Hono, type Context, type Next } from 'hono';
 
 import { createDatabase } from '../db/client';
 import * as schema from '../db/schema';
@@ -44,8 +44,24 @@ export const createAuth = (env: Env) =>
     },
   });
 
-export const auth = new Hono<{ Bindings: Env }>();
+const isPublicEmailSignUp = (method: string, pathname: string): boolean =>
+  method === 'POST' && pathname.endsWith('/sign-up/email');
 
-auth.on(['GET', 'POST'], '/*', (context) =>
-  createAuth(context.env).handler(context.req.raw),
-);
+const rejectPublicEmailSignUp = async (
+  context: Context<{ Bindings: Env }>,
+  next: Next,
+) => {
+  if (!isPublicEmailSignUp(context.req.method, new URL(context.req.url).pathname)) {
+    await next();
+
+    return;
+  }
+
+  return context.json({ message: 'Sign-up temporarily unavailable' }, 403);
+};
+
+export const auth = new Hono<{ Bindings: Env }>()
+  .use(rejectPublicEmailSignUp)
+  .on(['GET', 'POST'], '/*', (context) =>
+    createAuth(context.env).handler(context.req.raw),
+  );

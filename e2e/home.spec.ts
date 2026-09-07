@@ -56,7 +56,7 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
   await expect(page.getByLabel('password')).not.toHaveValue('')
   await expect(page.getByRole('heading', { name: 'We use cookies' })).toBeVisible()
   await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
-  await expect(page.getByRole('link', { name: 'Sign up' })).toHaveCount(0)
+  await expect(page.getByRole('link', { name: 'Sign up' })).toBeVisible()
   await expect(page.evaluate(() => document.cookie)).resolves.not.toContain(
     'createdDemoUser',
   )
@@ -69,6 +69,10 @@ test('signing in creates the demo user and lands on questions', async ({
   page,
 }) => {
   await createDemoAccount(page)
+
+  await expect(
+    notifications(page).getByText('Demo accounts are deleted after 24 hours.'),
+  ).toBeVisible()
 
   if (isQuestionsPath(page.url())) {
     await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
@@ -227,14 +231,20 @@ test('deleting the account prefills a new demo user', async ({ page }) => {
   expect(demoUserPosts.length).toBeGreaterThan(0)
 })
 
-test('sign-up stays empty and does not fetch demo credentials', async ({
+test('sign-up stays empty, toasts that it is unavailable, and does not register', async ({
   page,
+  request,
 }) => {
   const demoUserGets: string[] = []
+  const signUpRequests: string[] = []
 
   page.on('request', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
       demoUserGets.push(request.url())
+    }
+
+    if (request.url().includes('/api/auth/sign-up/email')) {
+      signUpRequests.push(request.url())
     }
   })
 
@@ -245,4 +255,30 @@ test('sign-up stays empty and does not fetch demo credentials', async ({
   await expect(page.getByLabel('email')).toHaveValue('')
   await expect(page.getByLabel('password')).toHaveValue('')
   expect(demoUserGets).toEqual([])
+
+  await expect(page.getByRole('button', { name: 'Create account' })).toBeDisabled()
+
+  await page.getByLabel('name').fill('Ada')
+  await page.getByLabel('email').fill('ada@example.com')
+  await page.getByLabel('password').fill('password1')
+  await page.getByRole('button', { name: 'Create account' }).click()
+
+  await expect(page).toHaveURL(/\/sign-up$/)
+  await expect(
+    notifications(page).getByText('Sign-up temporarily unavailable.'),
+  ).toBeVisible()
+  expect(signUpRequests).toEqual([])
+
+  const signUpResponse = await request.post('/api/auth/sign-up/email', {
+    data: {
+      name: 'Ada',
+      email: 'ada@example.com',
+      password: 'password1',
+    },
+  })
+
+  expect(signUpResponse.status()).toBe(403)
+  await expect(signUpResponse.json()).resolves.toEqual({
+    message: 'Sign-up temporarily unavailable',
+  })
 })

@@ -7,7 +7,13 @@ import * as v from 'valibot';
 
 import { createAuth, isTrustedAuthOrigin } from '../auth';
 import { createDatabase } from '../db/client';
-import { account, session, user } from '../db/schema';
+import { user } from '../db/schema';
+import {
+  deleteUserById,
+  DEMO_USER_EMAIL_PATTERN,
+  isDemoUserEmail,
+  isDemoUserExpired,
+} from './demo-users';
 
 const DEMO_USER_NAME = 'Demo user';
 
@@ -16,8 +22,6 @@ const CREATED_DEMO_USER_COOKIE_KEY = 'createdDemoUser';
 const BETTER_AUTH_SESSION_TOKEN_COOKIE = 'better-auth.session_token';
 
 const DEMO_CREDENTIALS_COOKIE_MAX_AGE_SECONDS = 7 * 24 * 60 * 60;
-
-const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/;
 
 const PASSWORD_CHARACTERS =
   'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%';
@@ -165,6 +169,25 @@ export const demoUser = new Hono<{ Bindings: Env }>()
   })
   .post('/', vValidator('json', demoSignInSchema), async (context) => {
     const demoSignIn = context.req.valid('json');
+    const database = createDatabase(context.env.DB);
+    const [existingUser] = await database
+      .select({
+        id: user.id,
+        email: user.email,
+        createdAt: user.createdAt,
+      })
+      .from(user)
+      .where(eq(user.email, demoSignIn.email))
+      .limit(1);
+
+    if (
+      existingUser &&
+      isDemoUserEmail(existingUser.email) &&
+      isDemoUserExpired(existingUser.createdAt)
+    ) {
+      await deleteUserById(database, existingUser.id);
+    }
+
     const auth = createAuth(context.env);
 
     try {
@@ -209,13 +232,8 @@ export const demoUser = new Hono<{ Bindings: Env }>()
     if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
 
     const database = createDatabase(context.env.DB);
-    const userId = currentSession.user.id;
 
-    await database.delete(session).where(eq(session.userId, userId));
-
-    await database.delete(account).where(eq(account.userId, userId));
-
-    await database.delete(user).where(eq(user.id, userId));
+    await deleteUserById(database, currentSession.user.id);
 
     deleteCookie(
       context,
