@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Page, type Request } from '@playwright/test'
 
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
@@ -81,6 +81,117 @@ const holdQuestionGet = async (page: Page) => {
     releaseLoad()
   }
 }
+
+const isCreateQuestionPost = (request: Request) => {
+  if (request.method() !== 'POST') return false
+
+  return new URL(request.url()).pathname === '/api/questions'
+}
+
+const failCreateQuestion = async (page: Page) => {
+  await page.route('**/api/questions', async (route) => {
+    if (isCreateQuestionPost(route.request())) {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{}',
+      })
+
+      return
+    }
+
+    await route.continue()
+  })
+}
+
+const holdCreateQuestion = async (page: Page) => {
+  let releaseCreate = () => {}
+  const createHeld = new Promise<void>((resolve) => {
+    releaseCreate = resolve
+  })
+
+  await page.route('**/api/questions', async (route) => {
+    if (!isCreateQuestionPost(route.request())) {
+      await route.continue()
+
+      return
+    }
+
+    await createHeld
+    await route.continue()
+  })
+
+  return () => {
+    releaseCreate()
+  }
+}
+
+const isQuestionListGet = (request: Request) => {
+  if (request.method() !== 'GET') return false
+
+  return new URL(request.url()).pathname === '/api/questions'
+}
+
+const failQuestionListGet = async (page: Page) => {
+  await page.route('**/api/questions', async (route) => {
+    if (isQuestionListGet(route.request())) {
+      await route.fulfill({
+        status: 500,
+        contentType: 'application/json',
+        body: '{}',
+      })
+
+      return
+    }
+
+    await route.continue()
+  })
+}
+
+const holdQuestionListGet = async (page: Page) => {
+  let releaseLoad = () => {}
+  const loadHeld = new Promise<void>((resolve) => {
+    releaseLoad = resolve
+  })
+
+  await page.route(
+    (url) => {
+      const pathname = url.pathname.endsWith('/')
+        ? url.pathname.slice(0, -1)
+        : url.pathname
+
+      return pathname === '/api/questions'
+    },
+    async (route) => {
+      if (route.request().method() !== 'GET') {
+        await route.continue()
+
+        return
+      }
+
+      await loadHeld
+      await route.continue()
+    },
+  )
+
+  return () => {
+    releaseLoad()
+  }
+}
+
+const fillCreateQuestion = async (
+  page: Page,
+  questionText: string,
+  answerText: string,
+) => {
+  const dialog = page.getByRole('dialog')
+
+  await dialog.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await dialog.getByRole('textbox', { name: 'answer' }).fill(answerText)
+}
+
+const createSubmit = (page: Page) =>
+  page.getByRole('dialog').getByRole('button', { name: 'Create', exact: true })
 
 const notifications = (page: Page) =>
   page.getByRole('region', { name: /Notifications/i })
@@ -174,6 +285,278 @@ test('creating a question from the sidebar goes to the new question page', async
     page.getByRole('button', { name: questionText, current: 'page' }),
   ).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('create stays disabled until both fields have non-empty text', async ({
+  page,
+}) => {
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+
+  const dialog = page.getByRole('dialog')
+  const questionField = dialog.getByRole('textbox', { name: 'question' })
+  const answerField = dialog.getByRole('textbox', { name: 'answer' })
+
+  await expect(dialog).toBeVisible()
+  await expect(createSubmit(page)).toBeDisabled()
+
+  await questionField.fill('Only a question')
+  await expect(createSubmit(page)).toBeDisabled()
+
+  await questionField.fill('   ')
+  await answerField.fill('   ')
+  await expect(createSubmit(page)).toBeDisabled()
+  await expect(dialog.getByText('Enter a question')).toBeVisible()
+  await expect(dialog.getByText('Enter an answer')).toBeVisible()
+
+  await fillCreateQuestion(page, 'A real question', 'A real answer')
+  await expect(createSubmit(page)).toBeEnabled()
+})
+
+test('cancelling create resets the form', async ({ page }) => {
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, 'Draft question', 'Draft answer')
+  await expect(createSubmit(page)).toBeEnabled()
+  await page.getByRole('button', { name: 'Cancel' }).click()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByRole('textbox', { name: 'question' })).toHaveValue('')
+  await expect(page.getByRole('textbox', { name: 'answer' })).toHaveValue('')
+  await expect(createSubmit(page)).toBeDisabled()
+})
+
+test('creating a markdown question previews it and renders it after save', async ({
+  page,
+}) => {
+  const stamp = Date.now()
+  const headingText = `Create heading ${stamp}`
+  const answerText = `bold answer ${stamp}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+
+  const dialog = page.getByRole('dialog')
+
+  await expect(dialog).toBeVisible()
+  await fillCreateQuestion(page, `# ${headingText}`, `**${answerText}**`)
+  await expect(dialog.getByRole('heading', { name: headingText })).toBeVisible()
+  await expect(dialog.locator('strong').filter({ hasText: answerText })).toBeVisible()
+  await createSubmit(page).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(page.getByRole('heading', { name: headingText })).toBeVisible()
+  await expect(sidebarQuestion(page, headingText)).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: headingText, current: 'page' }),
+  ).toBeVisible()
+  await revealAnswer(page, answerText)
+  await expect(
+    page.getByRole('main').locator('strong').filter({ hasText: answerText }),
+  ).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('a failed create keeps the dialog and shows an error', async ({ page }) => {
+  const questionText = `Create fail ${Date.now()}`
+
+  await signIn(page)
+
+  const listUrl = page.url()
+
+  await failCreateQuestion(page)
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, questionText, 'Should not save')
+  await createSubmit(page).click()
+
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(page.getByText('POST /api/questions failed: 500')).toBeVisible()
+  await expect(page).toHaveURL(listUrl)
+  await expect(sidebarQuestion(page, questionText)).toHaveCount(0)
+})
+
+test('create is disabled while the question is saving', async ({ page }) => {
+  const questionText = `Create pending ${Date.now()}`
+
+  await signIn(page)
+
+  const releaseCreate = await holdCreateQuestion(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, questionText, 'Pending answer')
+  await expect(createSubmit(page)).toBeEnabled()
+  await createSubmit(page).click()
+  await expect(createSubmit(page)).toBeDisabled()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await expect(openedQuestion(page, questionText)).toHaveCount(0)
+
+  releaseCreate()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(openedQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('creating a question from the empty state goes to the new question page', async ({
+  page,
+}) => {
+  const questionText = `Empty create ${Date.now()}`
+
+  await signIn(page)
+
+  await expect(page).toHaveURL(/\/questions$/)
+  await expect(page.getByText('the questions list is empty')).toBeVisible()
+
+  await emptyCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, questionText, 'Empty answer')
+  await createSubmit(page).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(openedQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByText('the questions list is empty')).toHaveCount(0)
+  await expect(sidebarQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('creating a second question keeps the first in the sidebar', async ({
+  page,
+}) => {
+  const firstQuestion = `First keep ${Date.now()}`
+  const secondQuestion = `Second keep ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, firstQuestion, 'First answer')
+  await createSubmit(page).click()
+
+  await expect(openedQuestion(page, firstQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  const firstUrl = page.url()
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, secondQuestion, 'Second answer')
+  await createSubmit(page).click()
+
+  await expect(openedQuestion(page, secondQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(page).not.toHaveURL(firstUrl)
+  await expect(sidebarQuestion(page, firstQuestion)).toBeVisible()
+  await expect(sidebarQuestion(page, secondQuestion)).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: secondQuestion, current: 'page' }),
+  ).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('creating a question trims leading and trailing whitespace', async ({
+  page,
+}) => {
+  const stamp = Date.now()
+  const questionText = `Trimmed Q ${stamp}`
+  const answerText = `Trimmed A ${stamp}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, `  ${questionText}  `, `  ${answerText}  `)
+  await createSubmit(page).click()
+
+  await expect(openedQuestion(page, questionText)).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(sidebarQuestion(page, questionText)).toBeVisible()
+  await revealAnswer(page, answerText)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('a failed list refetch after create keeps the new question', async ({
+  page,
+}) => {
+  const questionText = `Create refetch fail ${Date.now()}`
+
+  await signIn(page)
+  await failQuestionListGet(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, questionText, 'Kept after refetch fail')
+  await createSubmit(page).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(openedQuestion(page, questionText)).toBeVisible()
+  await expect(sidebarQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+})
+
+test('creating while search is active waits for the filtered list refetch', async ({
+  page,
+}) => {
+  const stamp = Date.now()
+  const otherQuestion = `Search other ${stamp}`
+  const nonMatchingQuestion = `Search nomatch ${stamp}`
+  const matchingQuestion = `other match ${stamp}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, otherQuestion, 'Other answer')
+  await createSubmit(page).click()
+  await expect(openedQuestion(page, otherQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+
+  const questionSearch = page.getByRole('searchbox', { name: 'search' })
+
+  await questionSearch.fill('other')
+  await expect(questionSearch).toHaveValue('other')
+  await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
+
+  const releaseMatchingListGet = await holdQuestionListGet(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, matchingQuestion, 'Match answer')
+  await createSubmit(page).click()
+
+  await expect(openedQuestion(page, matchingQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(sidebarQuestion(page, matchingQuestion)).toHaveCount(0)
+  await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
+
+  releaseMatchingListGet()
+
+  await expect(sidebarQuestion(page, matchingQuestion)).toBeVisible()
+  await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await fillCreateQuestion(page, nonMatchingQuestion, 'Nomatch answer')
+  await createSubmit(page).click()
+
+  await expect(openedQuestion(page, nonMatchingQuestion)).toBeVisible({
+    timeout: 15_000,
+  })
+  await expect(sidebarQuestion(page, nonMatchingQuestion)).toHaveCount(0)
+  await expect(sidebarQuestion(page, matchingQuestion)).toBeVisible()
+  await expect(sidebarQuestion(page, otherQuestion)).toBeVisible()
 })
 
 test('questions belong only to the user who created them', async ({

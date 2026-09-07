@@ -1,63 +1,58 @@
-import { urlAtom, wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual'
-import { map, pipe } from 'es-toolkit/fp'
-import { useRef } from 'react'
+import { urlAtom, wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
+import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
+import { map, pipe } from 'es-toolkit/fp';
+import { useRef } from 'react';
 
-import { type QuestionListItem } from '@/entities/question'
-import { DeleteQuestionButton } from '@/features/questions/delete-question'
-import { UpdateQuestionButton } from '@/features/questions/update-question'
-import { questionPath } from '@/shared/config'
+import { type QuestionListItem } from '@/entities/question';
+import { DeleteQuestionButton } from '@/features/questions/delete-question';
+import { UpdateQuestionButton } from '@/features/questions/update-question';
+import { questionPath } from '@/shared/config';
 import {
   Markdown,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
 import {
   isQuestionPreviewOpen,
   openQuestionPreview,
   previewedQuestionId,
-} from '../model/question-preview'
+} from '../model/question-preview';
 
-const questionRowSize = 36
+const questionRowSize = 36;
 
 type QuestionListProps = {
-  questions: Array<QuestionListItem>
-}
+  questions: Array<QuestionListItem>;
+};
 
 export const QuestionList = reatomComponent(({ questions }: QuestionListProps) => {
-  const currentPath = urlAtom().pathname
-  const isPreviewOpen = isQuestionPreviewOpen()
-  const previewedId = previewedQuestionId()
-  const questionListScroller = useRef<HTMLDivElement>(null)
+  const currentPath = urlAtom().pathname;
+  const isPreviewOpen = isQuestionPreviewOpen();
+  const previewedId = previewedQuestionId();
+  const questionListScroller = useRef<HTMLDivElement>(null);
   const questionListVirtualizer = useVirtualizer({
     count: questions.length,
     estimateSize: () => questionRowSize,
     getItemKey: (index) => questions[index]?.id ?? index,
     getScrollElement: () => questionListScroller.current,
     overscan: 8,
-  })
+  });
 
   function questionMenuItem(row: VirtualItem) {
-    const question = questions[row.index]
+    const question = questions[row.index];
+    if (!question) return null;
 
-    if (!question) {
-      return null
-    }
-
-    const isQuestionOpened = currentPath === questionPath(question.id)
-    const isQuestionPreviewed = previewedId === question.id
-    const isQuestionActive = isPreviewOpen ? isQuestionPreviewed : isQuestionOpened
-    const questionAriaCurrent = isPreviewOpen
-      ? isQuestionPreviewed || undefined
-      : isQuestionOpened
-        ? 'page'
-        : undefined
+    const isQuestionOpened = currentPath === questionPath(question.id);
+    const isQuestionPreviewed = previewedId === question.id;
+    const isQuestionActive = isPreviewOpen ? isQuestionPreviewed : isQuestionOpened;
+    const previewAriaCurrent = isPreviewOpen && isQuestionPreviewed ? true : undefined;
+    const pageAriaCurrent = !isPreviewOpen && isQuestionOpened ? 'page' : undefined;
+    const questionAriaCurrent = previewAriaCurrent ?? pageAriaCurrent;
     const handleOpenQuestionPreview = wrap(() => {
-      openQuestionPreview(question.id)
-    })
+      openQuestionPreview(question.id);
+    });
 
     return (
       <SidebarMenuItem
@@ -77,7 +72,7 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
         <UpdateQuestionButton className="right-7" questionId={question.id} />
         <DeleteQuestionButton questionId={question.id} />
       </SidebarMenuItem>
-    )
+    );
   }
 
   return (
@@ -89,5 +84,5 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
         {pipe(questionListVirtualizer.getVirtualItems(), map(questionMenuItem))}
       </SidebarMenu>
     </div>
-  )
-}, 'QuestionList')
+  );
+}, 'QuestionList');

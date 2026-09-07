@@ -1,8 +1,8 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 
-import { signOut } from '@/shared/auth'
-import { PROFILE_PATH } from '@/shared/config'
+import { signOut } from '@/shared/auth';
+import { PROFILE_PATH } from '@/shared/config';
 import {
   Avatar,
   AvatarFallback,
@@ -10,17 +10,15 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
-import { user } from '../model/user'
+import { user } from '../model/user';
 
 export const UserMenu = reatomComponent(() => {
-  const { name, initials } = user() ?? { name: '', initials: '' }
-  const handleLogOut = wrap(signOut)
+  const { name, initials } = user() ?? { name: '', initials: '' };
+  if (!name) return null;
 
-  if (!name) {
-    return null
-  }
+  const handleLogOut = wrap(signOut);
 
   return (
     <DropdownMenu>
@@ -39,5 +37,5 @@ export const UserMenu = reatomComponent(() => {
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>
-  )
-}, 'UserMenu')
+  );
+}, 'UserMenu');

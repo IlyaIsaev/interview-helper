@@ -1,5 +1,5 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 
 import {
   Button,
@@ -11,31 +11,31 @@ import {
   DialogTitle,
   Form,
   FormMessage,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
 import {
   closeCreateQuestionDialog,
   createQuestionForm,
   isCreateQuestionDialogOpen,
-} from '../model/create-question'
-import { QuestionFields } from './question-fields'
+} from '../model/create-question';
+import { QuestionFields } from './question-fields';
 
 export const CreateQuestion = reatomComponent(() => {
-  const isDialogOpen = isCreateQuestionDialogOpen()
-  const { fields, submit, validation } = createQuestionForm
-  const isSubmitReady = submit.ready()
-  const hasValidationErrors = validation().errors.length > 0
-  const { dirty } = createQuestionForm.focus()
-  const submitError = submit.error()
+  const isDialogOpen = isCreateQuestionDialogOpen();
+  const { fields, submit, validation } = createQuestionForm;
+  const isSubmitReady = submit.ready();
+  const hasValidationErrors = validation().errors.length > 0;
+  const { dirty } = createQuestionForm.focus();
+  const submitError = submit.error();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) {
-      isCreateQuestionDialogOpen.setTrue()
+      isCreateQuestionDialogOpen.setTrue();
 
-      return
+      return;
     }
 
-    closeCreateQuestionDialog()
-  })
+    closeCreateQuestionDialog();
+  });
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -72,5 +72,5 @@ export const CreateQuestion = reatomComponent(() => {
         </Form>
       </DialogContent>
     </Dialog>
-  )
-}, 'CreateQuestion')
+  );
+}, 'CreateQuestion');

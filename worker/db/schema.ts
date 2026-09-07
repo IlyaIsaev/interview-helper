@@ -1,4 +1,4 @@
-import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { index, integer, sqliteTable, text } from 'drizzle-orm/sqlite-core';
 
 export const user = sqliteTable('user', {
   id: text('id').primaryKey(),
@@ -10,7 +10,7 @@ export const user = sqliteTable('user', {
   image: text('image'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
-})
+});
 
 export const session = sqliteTable('session', {
   id: text('id').primaryKey(),
@@ -23,7 +23,7 @@ export const session = sqliteTable('session', {
   userId: text('userId')
     .notNull()
     .references(() => user.id, { onDelete: 'cascade' }),
-})
+});
 
 export const account = sqliteTable('account', {
   id: text('id').primaryKey(),
@@ -43,7 +43,7 @@ export const account = sqliteTable('account', {
   password: text('password'),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
-})
+});
 
 export const verification = sqliteTable('verification', {
   id: text('id').primaryKey(),
@@ -52,7 +52,7 @@ export const verification = sqliteTable('verification', {
   expiresAt: integer('expiresAt', { mode: 'timestamp' }).notNull(),
   createdAt: integer('createdAt', { mode: 'timestamp' }).notNull(),
   updatedAt: integer('updatedAt', { mode: 'timestamp' }).notNull(),
-})
+});
 
 export const question = sqliteTable(
   'question',
@@ -65,5 +65,4 @@ export const question = sqliteTable(
       .references(() => user.id, { onDelete: 'cascade' }),
   },
   (table) => [index('question_userId_idx').on(table.userId)],
-)
-
+);

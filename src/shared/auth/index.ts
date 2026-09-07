@@ -1,9 +1,5 @@
-export { authClient } from './auth-client'
+export { authClient } from './auth-client';
 
-export {
-  createdDemoUser,
-  demoCredentials,
-  type DemoCredentials,
-} from './created-demo-user'
+export { createdDemoUser, type DemoCredentials } from './created-demo-user';
 
-export { session, signOut } from './session'
+export { session, signOut } from './session';

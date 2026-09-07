@@ -5,4 +5,4 @@ export {
   QUESTIONS_PATH,
   SIGN_IN_PATH,
   SIGN_UP_PATH,
-} from './routes'
+} from './routes';

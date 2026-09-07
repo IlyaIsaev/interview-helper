@@ -1,6 +1,6 @@
-import { reatomComponent } from '@reatom/react'
+import { reatomComponent } from '@reatom/react';
 
-import { SIGN_IN_PATH } from '@/shared/config'
+import { SIGN_IN_PATH } from '@/shared/config';
 import {
   bindFormControl,
   Button,
@@ -11,18 +11,18 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
-import { signUpForm } from '../model/sign-up'
+import { signUpForm } from '../model/sign-up';
 
 const SignUpPage = reatomComponent(() => {
-  const { fields, submit, validation } = signUpForm
-  const isSubmitReady = submit.ready()
-  const hasValidationErrors = validation().errors.length > 0
-  const submitError = submit.error()
-  const nameField = bindFormControl(fields.name)
-  const emailField = bindFormControl(fields.email)
-  const passwordField = bindFormControl(fields.password)
+  const { fields, submit, validation } = signUpForm;
+  const isSubmitReady = submit.ready();
+  const hasValidationErrors = validation().errors.length > 0;
+  const submitError = submit.error();
+  const nameField = bindFormControl(fields.name);
+  const emailField = bindFormControl(fields.email);
+  const passwordField = bindFormControl(fields.password);
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
@@ -76,7 +76,7 @@ const SignUpPage = reatomComponent(() => {
         </a>
       </p>
     </section>
-  )
-}, 'SignUpPage')
+  );
+}, 'SignUpPage');
 
-export default SignUpPage
+export default SignUpPage;

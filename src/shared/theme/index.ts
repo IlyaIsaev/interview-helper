@@ -1,1 +1,1 @@
-export { theme, ThemeMode } from './theme'
+export { theme, ThemeMode } from './theme';

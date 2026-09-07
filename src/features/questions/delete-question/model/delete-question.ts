@@ -1,87 +1,83 @@
-import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core'
-import { findIndex, pipe } from 'es-toolkit/fp'
+import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core';
+import { findIndex, pipe } from 'es-toolkit/fp';
 
 import {
   initQuestion,
-  initQuestionList,
   questionList,
   questionListQuery,
+  refetchQuestionList,
   removeQuestion,
   restoreQuestion,
   type QuestionListItem,
-} from '@/entities/question'
-import { clientApi } from '@/shared/api'
-import { questionPath, QUESTIONS_PATH } from '@/shared/config'
-import { markdownPlainText, toast } from '@/shared/ui'
+} from '@/entities/question';
+import { clientApi } from '@/shared/api';
+import { questionPath, QUESTIONS_PATH } from '@/shared/config';
+import { markdownPlainText, toast } from '@/shared/ui';
 
-export const questionBeingDeleted = atom<string | null>(
-  null,
-  'questionBeingDeleted',
-)
+export const deletedQuestionId = atom<string | null>(null, 'deletedQuestionId');
 
 export const isDeleteQuestionDialogOpen = reatomBoolean(
   false,
   'isDeleteQuestionDialogOpen',
-)
+);
 
 const hasQuestionId =
   (questionId: string) =>
   (question: QuestionListItem): boolean =>
-    question.id === questionId
+    question.id === questionId;
 
 export const closeDeleteQuestionDialog = action(() => {
-  isDeleteQuestionDialogOpen.setFalse()
-  questionBeingDeleted.set(null)
-}, 'closeDeleteQuestionDialog')
+  isDeleteQuestionDialogOpen.setFalse();
+
+  deletedQuestionId.set(null);
+}, 'closeDeleteQuestionDialog');
 
 export const openDeleteQuestion = action((questionId: string) => {
-  questionBeingDeleted.set(questionId)
-  isDeleteQuestionDialogOpen.setTrue()
-}, 'openDeleteQuestion')
+  deletedQuestionId.set(questionId);
+
+  isDeleteQuestionDialogOpen.setTrue();
+}, 'openDeleteQuestion');
 
 export const deleteQuestion = action(async () => {
-  const questionId = questionBeingDeleted()
+  const questionId = deletedQuestionId();
+  if (!questionId) return;
 
-  if (!questionId) {
-    return
+  const questions = questionList() ?? [];
+  const index = pipe(questions, findIndex(hasQuestionId(questionId)));
+  const question = questions[index];
+  const questionDescription =
+    question === undefined ? undefined : markdownPlainText(question.question);
+  const isSearchEmpty = questionListQuery().length === 0;
+
+  closeDeleteQuestionDialog();
+
+  if (isSearchEmpty) {
+    removeQuestion(questionId);
   }
 
-  const questions = questionList() ?? []
-  const index = pipe(questions, findIndex(hasQuestionId(questionId)))
-  const question = questions[index]
-  const questionDescription =
-    question === undefined ? undefined : markdownPlainText(question.question)
-
-  closeDeleteQuestionDialog()
-  removeQuestion(questionId)
-
   try {
-    await wrap(clientApi.deleteQuestion(questionId))
+    await wrap(clientApi.deleteQuestion(questionId));
   } catch {
-    if (question !== undefined) {
-      restoreQuestion(question, index)
+    if (isSearchEmpty && question !== undefined) {
+      restoreQuestion(question, index);
     }
+
     toast.error('Could not delete the question. Try again later.', {
       description: questionDescription,
-    })
+    });
 
-    return
+    return;
   }
 
   toast.success('Question deleted.', {
     description: questionDescription,
-  })
+  });
 
   if (urlAtom().pathname === questionPath(questionId)) {
-    initQuestion(null)
-    urlAtom.go(QUESTIONS_PATH)
+    initQuestion(null);
+
+    urlAtom.go(QUESTIONS_PATH);
   }
 
-  try {
-    const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()))
-
-    initQuestionList(questions)
-  } catch {
-    return
-  }
-}, 'deleteQuestion').extend(withAsync())
+  await wrap(refetchQuestionList());
+}, 'deleteQuestion').extend(withAsync());

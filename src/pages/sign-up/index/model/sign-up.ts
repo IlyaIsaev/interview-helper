@@ -1,7 +1,7 @@
-import { reatomForm, wrap } from '@reatom/core'
-import * as v from 'valibot'
+import { reatomForm, wrap } from '@reatom/core';
+import * as v from 'valibot';
 
-import { authClient, session } from '@/shared/auth'
+import { authClient, session } from '@/shared/auth';
 
 const signUpSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
@@ -15,7 +15,7 @@ const signUpSchema = v.object({
     v.nonEmpty('Enter a password'),
     v.minLength(8, 'Use at least 8 characters'),
   ),
-})
+});
 
 export const signUpForm = reatomForm(
   {
@@ -35,17 +35,16 @@ export const signUpForm = reatomForm(
           email,
           password,
         }),
-      )
-
+      );
       if (error) {
         throw new Error(
           'Could not create the account. Try a different email or sign in.',
-        )
+        );
       }
 
-      await wrap(session.retry())
+      await wrap(session.retry());
     },
   },
-)
+);
 
-signUpForm.validation.triggerSchemaValidation()
+signUpForm.validation.triggerSchemaValidation();

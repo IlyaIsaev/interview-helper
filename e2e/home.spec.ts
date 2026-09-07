@@ -130,6 +130,24 @@ test('user menu name opens the profile page without a sidebar', async ({
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 
+  const questionListGets: string[] = []
+
+  page.on('request', (request) => {
+    if (request.method() !== 'GET') {
+      return
+    }
+
+    if (new URL(request.url()).pathname === '/api/questions') {
+      questionListGets.push(request.url())
+    }
+  })
+
+  await page.reload()
+
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
+  expect(questionListGets).toEqual([])
+
   await page.getByRole('link', { name: 'Interview helper' }).click()
 
   await expect(page).toHaveURL(signedInPath)

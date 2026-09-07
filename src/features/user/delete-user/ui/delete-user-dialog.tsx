@@ -1,5 +1,5 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 
 import {
   Button,
@@ -9,27 +9,27 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
 import {
   closeDeleteUserDialog,
   deleteUser,
   isDeleteUserDialogOpen,
-} from '../model/delete-user'
+} from '../model/delete-user';
 
 export const DeleteUser = reatomComponent(() => {
-  const isDialogOpen = isDeleteUserDialogOpen()
-  const isDeleteReady = deleteUser.ready()
+  const isDialogOpen = isDeleteUserDialogOpen();
+  const isDeleteReady = deleteUser.ready();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) {
-      isDeleteUserDialogOpen.setTrue()
+      isDeleteUserDialogOpen.setTrue();
 
-      return
+      return;
     }
 
-    closeDeleteUserDialog()
-  })
-  const handleDeleteUser = wrap(deleteUser)
+    closeDeleteUserDialog();
+  });
+  const handleDeleteUser = wrap(deleteUser);
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -62,5 +62,5 @@ export const DeleteUser = reatomComponent(() => {
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}, 'DeleteUser')
+  );
+}, 'DeleteUser');

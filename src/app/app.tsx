@@ -1,9 +1,9 @@
-import { reatomComponent } from '@reatom/react'
+import { reatomComponent } from '@reatom/react';
 
-import { theme } from '@/shared/theme'
-import { Toaster } from '@/shared/ui'
+import { theme } from '@/shared/theme';
+import { Toaster } from '@/shared/ui';
 
-import { appRoutes } from './routes'
+import { appRoutes } from './routes';
 
 export const App = reatomComponent(() => {
   return (
@@ -11,5 +11,5 @@ export const App = reatomComponent(() => {
       {appRoutes.root.render()}
       <Toaster theme={theme()} />
     </>
-  )
-}, 'App')
+  );
+}, 'App');

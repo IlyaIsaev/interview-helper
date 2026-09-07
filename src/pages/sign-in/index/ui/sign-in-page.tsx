@@ -1,6 +1,6 @@
-import { reatomComponent } from '@reatom/react'
+import { reatomComponent } from '@reatom/react';
 
-import { CookieConsent } from './cookie-consent'
+import { CookieConsent } from './cookie-consent';
 import {
   bindFormControl,
   Button,
@@ -11,28 +11,17 @@ import {
   FormLabel,
   FormMessage,
   Input,
-  PageFallback,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
-import { signIn, signInForm } from '../model/sign-in'
+import { signInForm } from '../model/sign-in';
 
 const SignInPage = reatomComponent(() => {
-  const signInScreen = signIn()
-  const { fields, submit, validation } = signInForm
-  const isSubmitReady = submit.ready()
-  const hasValidationErrors = validation().errors.length > 0
-  const submitError = submit.error()
-  const emailField = bindFormControl(fields.email)
-  const passwordField = bindFormControl(fields.password)
-
-  if (signInScreen.kind === 'loading') {
-    return (
-      <>
-        <PageFallback />
-        <CookieConsent />
-      </>
-    )
-  }
+  const { fields, submit, validation } = signInForm;
+  const isSubmitReady = submit.ready();
+  const hasValidationErrors = validation().errors.length > 0;
+  const submitError = submit.error();
+  const emailField = bindFormControl(fields.email);
+  const passwordField = bindFormControl(fields.password);
 
   return (
     <>
@@ -74,7 +63,7 @@ const SignInPage = reatomComponent(() => {
       </section>
       <CookieConsent />
     </>
-  )
-}, 'SignInPage')
+  );
+}, 'SignInPage');
 
-export default SignInPage
+export default SignInPage;

@@ -6,12 +6,15 @@ import {
   initQuestion,
   initQuestionList,
   questionList,
+  questionListQuery,
   resetQuestionList,
 } from "@/entities/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
+import { initSignIn } from "@/pages/sign-in/index/model/sign-in";
 import { clientApi } from "@/shared/api";
 import { session } from "@/shared/auth";
 import {
+  HOME_PATH,
   PROFILE_PATH,
   QUESTIONS_PATH,
   SIGN_IN_PATH,
@@ -35,36 +38,15 @@ const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
 
 const openSignedInDestination = action(() => {
   const questions = questionList();
-
-  if (questions === null) {
-    return;
-  }
+  if (questions === null) return;
 
   const { pathname } = urlAtom();
+  if (QUESTION_PAGE_PATH.test(pathname)) return;
 
-  if (pathname === PROFILE_PATH) {
-    return;
-  }
-
-  if (QUESTION_PAGE_PATH.test(pathname)) {
-    return;
-  }
-
-  if (questions.length === 0 && pathname !== QUESTIONS_PATH) {
-    questionsRoute.go(undefined, true);
-
-    return;
-  }
-
-  if (questions.length === 0 && pathname === QUESTIONS_PATH) {
-    return;
-  }
+  if (questions.length === 0) return;
 
   const question = pipe(questions, sample());
-
-  if (!question) {
-    return;
-  }
+  if (!question) return;
 
   questionRoute.go({ id: question.id }, true);
 }, "openSignedInDestination");
@@ -86,18 +68,15 @@ export const protectedRoute = rootRoute.reatomRoute(
       const { pathname } = urlAtom();
       const onAuthPage = pathname === SIGN_IN_PATH || pathname === SIGN_UP_PATH;
 
-      if (!session.ready() && onAuthPage) {
-        return null;
-      }
+      if (!session.ready() && onAuthPage) return null;
 
-      if (!session.ready() && !onAuthPage) {
-        return {};
-      }
+      if (!session.ready() && !onAuthPage) return {};
 
       const user = session.data()?.user;
 
       if (!user && questionList() !== null) {
         resetQuestionList();
+
         questionSearch.reset();
       }
 
@@ -107,36 +86,18 @@ export const protectedRoute = rootRoute.reatomRoute(
         return null;
       }
 
-      if (!user && onAuthPage) {
+      if (!user && onAuthPage) return null;
+
+      if (pathname === HOME_PATH || onAuthPage) {
+        questionsRoute.go(undefined, true);
+
         return null;
       }
 
-      questionList();
-      openSignedInDestination();
-
       return {};
     },
-    async loader() {
-      if (!session.data()?.user) {
-        return;
-      }
-
-      const { questions } = await wrap(clientApi.loadQuestions());
-
-      initQuestionList(questions);
-    },
     render(self) {
-      if (!session.ready()) {
-        return <PageFallback />;
-      }
-
-      if (session.data()?.user) {
-        self.loader.ready();
-
-        if (questionList() === null) {
-          return <PageFallback />;
-        }
-      }
+      if (!session.ready()) return <PageFallback />;
 
       return <>{self.outlet()}</>;
     },
@@ -148,8 +109,26 @@ export const questionsRoute = protectedRoute.reatomRoute(
   {
     layout: true,
     path: QUESTIONS_PATH.slice(1),
-    render({ outlet }) {
-      const child = outlet();
+    params() {
+      openSignedInDestination();
+
+      return {};
+    },
+    async loader() {
+      if (!session.data()?.user) return;
+
+      const { questions } = await wrap(clientApi.loadQuestions(questionListQuery()));
+
+      initQuestionList(questions);
+
+      openSignedInDestination();
+    },
+    render(self) {
+      self.loader.ready();
+
+      if (questionList() === null) return <PageFallback />;
+
+      const child = self.outlet();
 
       return (
         <QuestionsLayout>
@@ -167,9 +146,7 @@ export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ":id",
     params({ id }) {
-      if (!session.ready() || !session.data()?.user) {
-        return null;
-      }
+      if (!session.ready() || !session.data()?.user) return null;
 
       return { id };
     },
@@ -179,9 +156,7 @@ export const questionRoute = questionsRoute.reatomRoute(
       initQuestion(question);
     },
     render(self) {
-      if (!self.loader.ready()) {
-        return <PageFallback />;
-      }
+      if (!self.loader.ready()) return <PageFallback />;
 
       return <QuestionPage />;
     },
@@ -194,10 +169,7 @@ export const profileRoute = protectedRoute.reatomRoute(
     path: PROFILE_PATH.slice(1),
     async loader() {
       const user = session.data()?.user;
-
-      if (!user) {
-        return null;
-      }
+      if (!user) return null;
 
       return {
         name: user.name,
@@ -205,15 +177,10 @@ export const profileRoute = protectedRoute.reatomRoute(
       };
     },
     render(self) {
-      if (!self.loader.ready()) {
-        return <PageFallback />;
-      }
+      if (!self.loader.ready()) return <PageFallback />;
 
       const user = self.loader.data();
-
-      if (!user) {
-        return <PageFallback />;
-      }
+      if (!user) return <PageFallback />;
 
       return <ProfilePage user={user} />;
     },
@@ -225,17 +192,22 @@ export const signInRoute = rootRoute.reatomRoute(
   {
     path: SIGN_IN_PATH.slice(1),
     params() {
-      if (!session.ready()) {
-        return {};
-      }
+      if (!session.ready()) return {};
 
-      if (session.data()?.user) {
-        return null;
-      }
+      if (session.data()?.user) return null;
 
       return {};
     },
-    render() {
+    async loader() {
+      if (session.data()?.user) return;
+
+      const credentials = await wrap(clientApi.loadDemoUser());
+
+      initSignIn(credentials);
+    },
+    render(self) {
+      if (!self.loader.ready()) return <PageFallback />;
+
       return <SignInPage />;
     },
   },
@@ -246,13 +218,9 @@ export const signUpRoute = rootRoute.reatomRoute(
   {
     path: SIGN_UP_PATH.slice(1),
     params() {
-      if (!session.ready()) {
-        return {};
-      }
+      if (!session.ready()) return {};
 
-      if (session.data()?.user) {
-        return null;
-      }
+      if (session.data()?.user) return null;
 
       return {};
     },

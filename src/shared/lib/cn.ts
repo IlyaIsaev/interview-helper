@@ -1,5 +1,5 @@
-import { clsx, type ClassValue } from 'clsx'
-import { extendTailwindMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from 'clsx';
+import { extendTailwindMerge } from 'tailwind-merge';
 
 const mergeClassNames = extendTailwindMerge({
   extend: {
@@ -13,7 +13,7 @@ const mergeClassNames = extendTailwindMerge({
       ],
     },
   },
-})
+});
 
 export const cn = (...classNames: ClassValue[]): string =>
-  mergeClassNames(clsx(classNames))
+  mergeClassNames(clsx(classNames));

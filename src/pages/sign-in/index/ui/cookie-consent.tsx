@@ -1,18 +1,16 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
-import { Cookie } from 'lucide-react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
+import { Cookie } from 'lucide-react';
 
-import { Button } from '@/shared/ui'
+import { Button } from '@/shared/ui';
 
-import { cookieConsent } from '../model/cookie-consent'
+import { cookieConsent } from '../model/cookie-consent';
 
 export const CookieConsent = reatomComponent(() => {
-  if (!cookieConsent.shouldShowBanner()) {
-    return null
-  }
+  if (!cookieConsent.shouldShowBanner()) return null;
 
-  const handleAccept = wrap(cookieConsent.accept)
-  const handleDecline = wrap(cookieConsent.decline)
+  const handleAccept = wrap(cookieConsent.accept);
+  const handleDecline = wrap(cookieConsent.decline);
 
   return (
     <div className="fixed bottom-0 left-0 right-0 z-[200] w-full p-4 sm:bottom-4 sm:left-4 sm:right-auto sm:max-w-md sm:p-0">
@@ -46,5 +44,5 @@ export const CookieConsent = reatomComponent(() => {
         </div>
       </div>
     </div>
-  )
-}, 'CookieConsent')
+  );
+}, 'CookieConsent');

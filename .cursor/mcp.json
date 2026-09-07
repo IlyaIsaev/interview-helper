@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "lightpanda": {
+      "command": "node",
+      "args": ["./scripts/lightpanda-mcp.mjs"],
+      "env": {
+        "LIGHTPANDA_DISABLE_TELEMETRY": "true"
+      }
+    }
+  }
+}

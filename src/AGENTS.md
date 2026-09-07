@@ -1,6 +1,6 @@
 # Frontend
 
-General style, immutability, domain naming, kebab-case, `es-toolkit/fp` pipelines, and `es-toolkit/types` come from the parent `AGENTS.md`. This file adds architecture, React, Reatom, UI, and unit-test conventions.
+General style, semicolons, one-line guards, immutability, domain naming, and kebab-case come from user-level `~/.cursor/AGENTS.md`. Parent `AGENTS.md` adds `es-toolkit/fp` pipelines and `es-toolkit/types`. This file adds architecture, React, Reatom, UI, and unit-test conventions.
 
 ## Architecture
 
@@ -33,9 +33,9 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 
 ```text
 app/                 ← entrypoint, Reatom logger, routes, composition
-                         protectedRoute: signed-in gate + landing (no page folder)
+                         protectedRoute: signed-in gate (no page folder)
 pages/questions/     ← questions route group (under protectedRoute)
-  layout/            ← questionsRoute chrome (sidebar + toggle + header)
+  layout/            ← questionsRoute chrome + list loader (sidebar + toggle + header)
   index/             ← questions list / empty state (/questions)
   question/
     index/           ← signed-in question detail + show-answer (/questions/:id)
@@ -84,34 +84,39 @@ The `init*` action performs **all** mapping and derivation that slice needs, the
 UI reads the atom, not `route.loader.data()` from inside entities or features. Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
 
 ```ts
-import { map, pick, pipe } from 'es-toolkit/fp'
+import { map, pick, pipe } from 'es-toolkit/fp';
 
 const questionListItem = (question: Question) =>
-  pipe(question, pick(['id', 'question']))
+  pipe(question, pick(['id', 'question']));
 
-export const questionList = atom<Array<QuestionListItem>>([], 'questionList')
+export const questionList = atom<Array<QuestionListItem>>([], 'questionList');
 
 export const initQuestionList = action((questions: Array<Question>) => {
-  questionList.set(pipe(questions, map(questionListItem)))
-}, 'initQuestionList')
+  questionList.set(pipe(questions, map(questionListItem)));
+}, 'initQuestionList');
 
 async loader() {
-  const { questions } = await wrap(clientApi.loadQuestions())
+  if (!session.data()?.user) return;
 
-  initQuestionList(questions)
+  const { questions } = await wrap(clientApi.loadQuestions());
+
+  initQuestionList(questions);
+
+  openSignedInDestination();
 }
 
 // Forbidden — entity/feature fetches a route-level resource
 export const loadQuestionList = action(async () => {
-  const { questions } = await wrap(clientApi.loadQuestions())
-  questionList.set(questions)
-}, 'loadQuestionList')
+  const { questions } = await wrap(clientApi.loadQuestions());
+
+  questionList.set(questions);
+}, 'loadQuestionList');
 
 // Forbidden — loader maps into the entity/feature shape
 async loader() {
-  const { questions } = await wrap(clientApi.loadQuestions())
+  const { questions } = await wrap(clientApi.loadQuestions());
 
-  initQuestionList(pipe(questions, map(questionListItem)))
+  initQuestionList(pipe(questions, map(questionListItem)));
 }
 ```
 
@@ -134,26 +139,46 @@ const protectedRoute = layoutRoute.reatomRoute(
   {
     layout: true,
     params() {
-      const userData = user.data();
+      const { pathname } = urlAtom();
+      const onAuthPage = pathname === SIGN_IN_PATH || pathname === SIGN_UP_PATH;
 
-      if (!userData) {
-        if (user.ready() && !signInRoute.match()) {
-          signInRoute.go(undefined, true);
-        }
+      if (!session.ready() && onAuthPage) return null;
+
+      if (!session.ready() && !onAuthPage) return {};
+
+      const user = session.data()?.user;
+
+      if (!user && questionList() !== null) {
+        resetQuestionList();
+
+        questionSearch.reset();
+      }
+
+      if (!user && !onAuthPage) {
+        signInRoute.go(undefined, true);
+
         return null;
       }
 
-      if (signInRoute.match() || signUpRoute.match()) {
+      if (!user && onAuthPage) return null;
+
+      if (pathname === HOME_PATH || onAuthPage) {
         questionsRoute.go(undefined, true);
+
+        return null;
       }
 
-      return { rights: userData.rights };
+      return {};
     },
     render(self) {
-      return self.outlet();
+      if (!session.ready()) {
+        return <PageFallback />;
+      }
+
+      return <>{self.outlet()}</>;
     },
   },
-  "protectedRoute",
+  'protectedRoute',
 );
 ```
 
@@ -161,12 +186,14 @@ Use `loader` when the decision needs fetched data (missing resource, API 403/404
 
 ```ts
 async loader({ id }) {
-  const res = await wrap(clientApi.loadQuestion({ id }))
-  if (!res.question) {
-    questionsRoute.go(undefined, true)
-    return
+  const question = await wrap(clientApi.loadQuestion(id));
+  if (!question) {
+    questionsRoute.go(undefined, true);
+
+    return;
   }
-  initQuestion(res.question)
+
+  initQuestion(question);
 }
 ```
 
@@ -218,30 +245,32 @@ Local skills: `.agents/skills/reatom/SKILL.md`, `.agents/skills/reatom-async/SKI
 ```ts
 export const QuestionDialog = reatomComponent(({ questionId }: { questionId: string }) => {
   // ...
-}, 'QuestionDialog')
+}, 'QuestionDialog');
 
 // Preferred — logic lives in the model
 const closeCreateQuestionDialog = action((questionId: string) => {
-  createQuestionDialogOpen.setFalse()
-  createQuestionForm.reset()
-}, 'closeCreateQuestionDialog')
+  createQuestionDialogOpen.setFalse();
+
+  createQuestionForm.reset();
+}, 'closeCreateQuestionDialog');
 
 // In component — no extra values needed
 onClick={wrap(closeCreateQuestionDialog)}
 
 // In component — pass a prop value
-const handleClose = wrap(() => closeCreateQuestionDialog(questionId))
+const handleClose = wrap(() => closeCreateQuestionDialog(questionId));
 
 return (
   <button onClick={handleClose}>
     Close
   </button>
-)
+);
 
 // Avoid — inline side effects in JSX
 onClick={wrap(() => {
-  createQuestionDialogOpen.setFalse()
-  createQuestionForm.reset()
+  createQuestionDialogOpen.setFalse();
+
+  createQuestionForm.reset();
 })}
 ```
 
@@ -274,11 +303,11 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - Sign-in/up forms use `reatomForm`. After success, `session.retry()`.
 - On `/sign-in`, `GET /api/demo-user` reuses the HttpOnly `createdDemoUser` cookie or generates credentials and sets that cookie; the form is prefilled from the JSON body and the session stays empty. The client keeps credentials only in memory (`createdDemoUser` atom), not in `document.cookie`. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is no link to `/sign-up`.
 - On `/sign-up`, the form is empty. Do not call `GET`/`POST /api/demo-user` there. Create account uses `authClient.signUp.email`.
-- Auth gates and landing live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
+- Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.
-  - Signed-in users on `/` or auth URLs: empty list → `/questions`, otherwise a random `/questions/:id` unless already on a question page.
-  - `/profile` is behind `protectedRoute` for auth only; it does not follow question landing.
+  - Signed-in users on `/` or auth URLs go to `questionsRoute`. The question list loads in that route's `loader`; empty list stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
+  - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
 - Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
@@ -307,15 +336,15 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ```ts
 // Values — business intent
-export const cartItems = atom<CartItem[]>([], 'cartItems')
-export const user = atom<User | null>(null, 'user')
-export const checkout = action(async () => { ... }, 'checkout')
-export const applyDiscount = action((code: string) => { ... }, 'applyDiscount')
-export const isCheckoutReady = computed(() => ..., 'isCheckoutReady')
+export const cartItems = atom<CartItem[]>([], 'cartItems');
+export const user = atom<User | null>(null, 'user');
+export const checkout = action(async () => { ... }, 'checkout');
+export const applyDiscount = action((code: string) => { ... }, 'applyDiscount');
+export const isCheckoutReady = computed(() => ..., 'isCheckoutReady');
 
 // Values — technical noise
-export const cartItemsArrayAtom = atom([], 'cartItemsArrayAtom')
-export const handleCheckoutButtonClick = action(async () => { ... }, 'handleCheckoutButtonClick')
-export const discountCodeProcessorFn = action((code: string) => { ... }, 'discountCodeProcessorFn')
-export const userDataAtom = atom(null, 'userDataAtom')
+export const cartItemsArrayAtom = atom([], 'cartItemsArrayAtom');
+export const handleCheckoutButtonClick = action(async () => { ... }, 'handleCheckoutButtonClick');
+export const discountCodeProcessorFn = action((code: string) => { ... }, 'discountCodeProcessorFn');
+export const userDataAtom = atom(null, 'userDataAtom');
 ```

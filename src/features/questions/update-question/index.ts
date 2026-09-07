@@ -1,3 +1,3 @@
-export { UpdateQuestion } from './ui/update-question-dialog'
+export { UpdateQuestion } from './ui/update-question-dialog';
 
-export { UpdateQuestionButton } from './ui/update-question-button'
+export { UpdateQuestionButton } from './ui/update-question-button';

@@ -1,28 +1,28 @@
-import { betterAuth } from 'better-auth'
-import { drizzleAdapter } from 'better-auth/adapters/drizzle'
-import { Hono } from 'hono'
+import { betterAuth } from 'better-auth';
+import { drizzleAdapter } from 'better-auth/adapters/drizzle';
+import { Hono } from 'hono';
 
-import { createDatabase } from '../db/client'
-import * as schema from '../db/schema'
+import { createDatabase } from '../db/client';
+import * as schema from '../db/schema';
 
 const LOCAL_DEV_ORIGINS = [
   'http://127.0.0.1:5173',
   'http://localhost:5173',
-] as const
+] as const;
 
 export const trustedOriginsFor = (betterAuthUrl: string): Array<string> => {
-  const origin = new URL(betterAuthUrl).origin
+  const origin = new URL(betterAuthUrl).origin;
 
   return origin === LOCAL_DEV_ORIGINS[0] || origin === LOCAL_DEV_ORIGINS[1]
     ? [...LOCAL_DEV_ORIGINS]
-    : [origin]
-}
+    : [origin];
+};
 
 export const isTrustedAuthOrigin = (origin: string, betterAuthUrl: string): boolean =>
-  trustedOriginsFor(betterAuthUrl).includes(origin)
+  trustedOriginsFor(betterAuthUrl).includes(origin);
 
-export const createAuth = (env: Env) => {
-  return betterAuth({
+export const createAuth = (env: Env) =>
+  betterAuth({
     appName: 'interview-helper',
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
@@ -42,11 +42,10 @@ export const createAuth = (env: Env) => {
         ipAddressHeaders: ['cf-connecting-ip'],
       },
     },
-  })
-}
+  });
 
-export const auth = new Hono<{ Bindings: Env }>()
+export const auth = new Hono<{ Bindings: Env }>();
 
-auth.on(['GET', 'POST'], '/*', (context) => {
-  return createAuth(context.env).handler(context.req.raw)
-})
+auth.on(['GET', 'POST'], '/*', (context) =>
+  createAuth(context.env).handler(context.req.raw),
+);

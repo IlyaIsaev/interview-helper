@@ -1,4 +1,4 @@
-import removeMarkdown from 'remove-markdown'
+import removeMarkdown from 'remove-markdown';
 
-export const markdownPlainText = (markdown: string) =>
-  removeMarkdown(markdown).replace(/\s+/g, ' ').trim()
+export const markdownPlainText = (markdown: string): string =>
+  removeMarkdown(markdown).replace(/\s+/g, ' ').trim();

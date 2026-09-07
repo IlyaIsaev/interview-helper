@@ -1,6 +1,6 @@
-import * as v from 'valibot'
+import * as v from 'valibot';
 
-const QUESTION_FIELD_MAX_LENGTH = 20_000
+const QUESTION_FIELD_MAX_LENGTH = 20_000;
 
 export const questionFieldsSchema = v.object({
   question: v.pipe(
@@ -15,4 +15,4 @@ export const questionFieldsSchema = v.object({
     v.nonEmpty('Enter an answer'),
     v.maxLength(QUESTION_FIELD_MAX_LENGTH, 'Answer is too long'),
   ),
-})
+});

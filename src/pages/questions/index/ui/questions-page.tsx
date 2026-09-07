@@ -1,11 +1,11 @@
-import { reatomComponent } from '@reatom/react'
+import { reatomComponent } from '@reatom/react';
 
-import { questionList } from '@/entities/question'
-import { CreateQuestionEmptyButton } from '@/features/questions/create-question'
-import { Spinner } from '@/shared/ui'
+import { questionList } from '@/entities/question';
+import { CreateQuestionEmptyButton } from '@/features/questions/create-question';
+import { Spinner } from '@/shared/ui';
 
 const QuestionsPage = reatomComponent(() => {
-  const questions = questionList()
+  const questions = questionList();
 
   if (questions === null) {
     return (
@@ -13,7 +13,7 @@ const QuestionsPage = reatomComponent(() => {
         <Spinner className="size-6" />
         <span className="sr-only">loading</span>
       </section>
-    )
+    );
   }
 
   if (questions.length === 0) {
@@ -28,7 +28,7 @@ const QuestionsPage = reatomComponent(() => {
         </p>
         <CreateQuestionEmptyButton />
       </section>
-    )
+    );
   }
 
   return (
@@ -38,7 +38,7 @@ const QuestionsPage = reatomComponent(() => {
       </p>
       <h1 className="text-heading font-medium tracking-tight">Questions</h1>
     </section>
-  )
-}, 'QuestionsPage')
+  );
+}, 'QuestionsPage');
 
-export default QuestionsPage
+export default QuestionsPage;

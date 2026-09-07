@@ -1,19 +1,19 @@
-import { reatomComponent } from '@reatom/react'
-import type { DeepReadonly } from 'es-toolkit/types'
-import { House } from 'lucide-react'
+import { reatomComponent } from '@reatom/react';
+import type { DeepReadonly } from 'es-toolkit/types';
+import { House } from 'lucide-react';
 
-import { ThemeSwitcher } from '@/features/theme-switcher'
-import { DeleteUser, DeleteUserButton } from '@/features/user/delete-user'
-import { UserMenu } from '@/features/user/user-menu'
-import { HOME_PATH } from '@/shared/config'
-import { Button } from '@/shared/ui'
+import { ThemeSwitcher } from '@/features/theme-switcher';
+import { DeleteUser, DeleteUserButton } from '@/features/user/delete-user';
+import { UserMenu } from '@/features/user/user-menu';
+import { HOME_PATH } from '@/shared/config';
+import { Button } from '@/shared/ui';
 
 type ProfilePageProps = {
   user: DeepReadonly<{
-    name: string
-    email: string
-  }>
-}
+    name: string;
+    email: string;
+  }>;
+};
 
 const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
   return (
@@ -45,7 +45,7 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
       </section>
       <DeleteUser />
     </>
-  )
-}, 'ProfilePage')
+  );
+}, 'ProfilePage');
 
-export default ProfilePage
+export default ProfilePage;

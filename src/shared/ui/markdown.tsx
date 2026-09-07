@@ -1,45 +1,40 @@
-import { map, pipe } from 'es-toolkit/fp'
-import type { ComponentProps, ReactNode } from 'react'
-import ReactMarkdown, { type Components } from 'react-markdown'
-import rehypeHighlight from 'rehype-highlight'
+import { map, pipe } from 'es-toolkit/fp';
+import type { ComponentProps, ReactNode } from 'react';
+import ReactMarkdown, { type Components } from 'react-markdown';
+import rehypeHighlight from 'rehype-highlight';
 
-import { cn, markdownPlainText } from '@/shared/lib'
+import { cn, markdownPlainText } from '@/shared/lib';
 
 type MarkdownProps = {
-  children: string
-  className?: ComponentProps<'div'>['className']
-  plain?: boolean
-}
+  children: string;
+  className?: ComponentProps<'div'>['className'];
+  plain?: boolean;
+};
 
 type MarkdownPlainNodeProps = {
-  children?: ReactNode
-}
+  children?: ReactNode;
+};
 
 type MarkdownRehypePlugins = NonNullable<
   ComponentProps<typeof ReactMarkdown>['rehypePlugins']
->
+>;
 
 const isAllowedMarkdownUrl = (url: string): boolean => {
-  const trimmedUrl = url.trim()
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.length === 0) return false;
 
-  if (trimmedUrl.length === 0) {
-    return false
-  }
-
-  if (trimmedUrl.startsWith('#') || trimmedUrl.startsWith('/')) {
-    return !trimmedUrl.startsWith('//')
-  }
+  if (trimmedUrl.startsWith('#') || trimmedUrl.startsWith('/')) return !trimmedUrl.startsWith('//');
 
   try {
-    const protocol = new URL(trimmedUrl).protocol
+    const protocol = new URL(trimmedUrl).protocol;
 
-    return protocol === 'https:' || protocol === 'http:'
+    return protocol === 'https:' || protocol === 'http:';
   } catch {
-    return !trimmedUrl.includes(':')
+    return !trimmedUrl.includes(':');
   }
-}
+};
 
-const markdownUrl = (url: string): string => (isAllowedMarkdownUrl(url) ? url : '')
+const markdownUrl = (url: string): string => (isAllowedMarkdownUrl(url) ? url : '');
 
 const markdownHighlightPlugins: MarkdownRehypePlugins = [
   [
@@ -51,7 +46,7 @@ const markdownHighlightPlugins: MarkdownRehypePlugins = [
       },
     },
   ],
-]
+];
 
 const markdownComponents: Components = {
   h1: ({ node, ...props }) => (
@@ -105,7 +100,7 @@ const markdownComponents: Components = {
   blockquote: ({ node, ...props }) => (
     <blockquote className="border-l-2 border-border pl-3" {...props} />
   ),
-}
+};
 
 const markdownPlainTags = [
   'a',
@@ -124,17 +119,18 @@ const markdownPlainTags = [
   'pre',
   'strong',
   'ul',
-] as const satisfies ReadonlyArray<keyof Components>
+] as const satisfies ReadonlyArray<keyof Components>;
 
 function MarkdownPlainNode({ children }: MarkdownPlainNodeProps) {
-  return <>{children} </>
+  return <>{children} </>;
 }
 
+// Object.fromEntries widens keys; the tag list is a Components key union.
 const markdownPlainComponents = pipe(
   markdownPlainTags,
   map((tag) => [tag, MarkdownPlainNode] as const),
   Object.fromEntries,
-) as Components
+) as Components;
 
 function Markdown({ children, className, plain = false }: MarkdownProps) {
   if (plain) {
@@ -147,7 +143,7 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
           {children}
         </ReactMarkdown>
       </p>
-    )
+    );
   }
 
   return (
@@ -160,9 +156,9 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
         {children}
       </ReactMarkdown>
     </div>
-  )
+  );
 }
 
-export { Markdown, markdownPlainText }
+export { Markdown, markdownPlainText };
 
-export type { MarkdownProps }
+export type { MarkdownProps };

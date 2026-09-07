@@ -1,19 +1,19 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
-import { Pencil } from 'lucide-react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
+import { Pencil } from 'lucide-react';
 
-import { SidebarMenuAction } from '@/shared/ui'
+import { SidebarMenuAction } from '@/shared/ui';
 
-import { openUpdateQuestion } from '../model/update-question'
+import { openUpdateQuestion } from '../model/update-question';
 
 type UpdateQuestionButtonProps = {
-  className?: string
-  questionId: string
-}
+  className?: string;
+  questionId: string;
+};
 
 export const UpdateQuestionButton = reatomComponent(
   ({ className, questionId }: UpdateQuestionButtonProps) => {
-    const handleOpenUpdateQuestion = wrap(() => openUpdateQuestion(questionId))
+    const handleOpenUpdateQuestion = wrap(() => openUpdateQuestion(questionId));
 
     return (
       <SidebarMenuAction
@@ -25,7 +25,7 @@ export const UpdateQuestionButton = reatomComponent(
       >
         <Pencil />
       </SidebarMenuAction>
-    )
+    );
   },
   'UpdateQuestionButton',
-)
+);

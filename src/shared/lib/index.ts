@@ -1,3 +1,3 @@
-export { cn } from './cn'
+export { cn } from './cn';
 
-export { markdownPlainText } from './markdown-plain-text'
+export { markdownPlainText } from './markdown-plain-text';

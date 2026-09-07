@@ -1,4 +1,4 @@
-import { Spinner } from "./spinner"
+import { Spinner } from './spinner';
 
 function PageFallback() {
   return (
@@ -6,7 +6,7 @@ function PageFallback() {
       <Spinner className="size-6" />
       <span className="sr-only">loading</span>
     </section>
-  )
+  );
 }
 
-export { PageFallback }
+export { PageFallback };

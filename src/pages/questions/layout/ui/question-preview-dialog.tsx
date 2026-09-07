@@ -1,7 +1,7 @@
-import { wrap } from '@reatom/core'
-import { reatomComponent } from '@reatom/react'
+import { wrap } from '@reatom/core';
+import { reatomComponent } from '@reatom/react';
 
-import { cn } from '@/shared/lib'
+import { cn } from '@/shared/lib';
 import {
   Dialog,
   DialogContent,
@@ -10,34 +10,34 @@ import {
   DialogTitle,
   Markdown,
   Spinner,
-} from '@/shared/ui'
+} from '@/shared/ui';
 
 import {
   closeQuestionPreview,
   isQuestionPreviewOpen,
   openQuestionPreview,
   previewedQuestion,
-} from '../model/question-preview'
+} from '../model/question-preview';
 
 const questionPreviewClassName = cn(
   'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
-)
+);
 
-const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col')
+const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col');
 
 export const QuestionPreview = reatomComponent(() => {
-  const isDialogOpen = isQuestionPreviewOpen()
-  const isQuestionReady = openQuestionPreview.ready()
-  const question = previewedQuestion()
+  const isDialogOpen = isQuestionPreviewOpen();
+  const isQuestionReady = openQuestionPreview.ready();
+  const question = previewedQuestion();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) {
-      isQuestionPreviewOpen.setTrue()
+      isQuestionPreviewOpen.setTrue();
 
-      return
+      return;
     }
 
-    closeQuestionPreview()
-  })
+    closeQuestionPreview();
+  });
 
   return (
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
@@ -64,5 +64,5 @@ export const QuestionPreview = reatomComponent(() => {
         )}
       </DialogContent>
     </Dialog>
-  )
-}, 'QuestionPreview')
+  );
+}, 'QuestionPreview');

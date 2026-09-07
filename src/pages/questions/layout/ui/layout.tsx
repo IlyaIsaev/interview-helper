@@ -2,7 +2,11 @@ import { reatomBoolean, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { type ChangeEvent, type ReactNode } from "react";
 
-import { questionList, questionListQuery } from "@/entities/question";
+import {
+  questionList,
+  questionListQuery,
+  type QuestionListItem,
+} from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion } from "@/features/questions/delete-question";
 import { UpdateQuestion } from "@/features/questions/update-question";
@@ -32,6 +36,39 @@ type LayoutProps = {
   children?: ReactNode;
 };
 
+type QuestionSidebarProps = {
+  questions: Array<QuestionListItem> | null;
+  search: string;
+};
+
+function QuestionSidebar({ questions, search }: QuestionSidebarProps) {
+  if (questions === null) {
+    return (
+      <div className="flex min-h-0 flex-1 items-center justify-center">
+        <Spinner />
+      </div>
+    );
+  }
+
+  if (questions.length === 0 && search.trim().length === 0) {
+    return (
+      <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
+        no questions
+      </p>
+    );
+  }
+
+  if (questions.length === 0) {
+    return (
+      <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
+        no matches
+      </p>
+    );
+  }
+
+  return <QuestionList questions={questions} />;
+}
+
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const questions = questionList();
   const search = questionSearch();
@@ -42,7 +79,9 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
     const nextSearch = event.currentTarget.value;
 
     questionSearch.set(nextSearch);
+
     questionListQuery.set(nextSearch.trim());
+
     searchQuestions();
   });
 
@@ -68,21 +107,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
                 onChange={changeQuestionSearch}
               />
             </div>
-            {questions === null ? (
-              <div className="flex min-h-0 flex-1 items-center justify-center">
-                <Spinner />
-              </div>
-            ) : questions.length === 0 && search.trim().length === 0 ? (
-              <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
-                no questions
-              </p>
-            ) : questions.length === 0 ? (
-              <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
-                no matches
-              </p>
-            ) : (
-              <QuestionList questions={questions} />
-            )}
+            <QuestionSidebar questions={questions} search={search} />
           </SidebarGroup>
         </SidebarContent>
       </Sidebar>

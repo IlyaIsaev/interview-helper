@@ -1,31 +1,23 @@
 # Running Playwright Tests
 
-To run Playwright tests, use the `npx playwright test` command, or a package manager script. To avoid opening the interactive html report, use `PLAYWRIGHT_HTML_OPEN=never` environment variable.
+To run Playwright tests, use `pnpm test:e2e`. To avoid opening the interactive html report, use `PLAYWRIGHT_HTML_OPEN=never`.
 
 ```bash
-# Run all tests
-PLAYWRIGHT_HTML_OPEN=never npx playwright test
-
-# Run all tests through a custom npm script
-PLAYWRIGHT_HTML_OPEN=never npm run special-test-command
+PLAYWRIGHT_HTML_OPEN=never pnpm test:e2e
 ```
 
 # Debugging Playwright Tests
 
-To debug a failing Playwright test, run it with `--debug=cli` option. This command will pause the test at the start and print the debugging instructions.
+To debug a failing Playwright test, run it with `--debug=cli`. This pauses the test at the start and prints debugging instructions.
 
-**IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed. Make sure to stop the command after you have finished.
+**IMPORTANT**: run the command in the background and check the output until "Debugging Instructions" is printed. Stop the command after you have finished.
 
-Once instructions containing a session name are printed, use `playwright-cli` to attach the session and explore the page.
+Once a session name is printed, attach with `playwright-cli`. Do not `playwright-cli open` — that launches Chrome. Agent browsing of the live app is Lightpanda MCP, not this flow.
 
 ```bash
-# Run the test
-PLAYWRIGHT_HTML_OPEN=never npx playwright test --debug=cli
-# ...
-# ... debugging instructions for "tw-abcdef" session ...
-# ...
+PLAYWRIGHT_HTML_OPEN=never pnpm test:e2e --debug=cli
+# ... debugging instructions for "tw-abcdef" ...
 
-# Attach to the test
 playwright-cli attach tw-abcdef
 ```
 
