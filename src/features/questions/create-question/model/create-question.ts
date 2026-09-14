@@ -8,6 +8,7 @@ import {
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
+import { markdownPlainText, toast } from '@/shared/ui';
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,
@@ -32,8 +33,15 @@ export const createQuestionForm = reatomForm(
     validateOnBlur: true,
     validateOnChange: true,
     schema: questionFieldsSchema,
-    onSubmit: ({ question, answer }) =>
-      wrap(clientApi.createQuestion({ question, answer })),
+    onSubmit: async ({ question, answer }) => {
+      try {
+        return await wrap(clientApi.createQuestion({ question, answer }));
+      } catch {
+        toast.error('Could not create the question. Try again later.', {
+          description: markdownPlainText(question),
+        });
+      }
+    },
   },
 );
 
@@ -53,10 +61,16 @@ const syncCreatedQuestion = action(async (createdQuestion: {
 
 createQuestionForm.submit.onFulfill.extend(
   withCallHook(({ payload: createdQuestion }) => {
+    if (!createdQuestion) return;
+
     closeCreateQuestionDialog();
 
     urlAtom.go(questionPath(createdQuestion.id));
 
     syncCreatedQuestion(createdQuestion);
+
+    toast.success('Question created.', {
+      description: markdownPlainText(createdQuestion.question),
+    });
   }),
 );

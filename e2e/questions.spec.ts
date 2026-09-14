@@ -285,6 +285,8 @@ test('creating a question from the sidebar goes to the new question page', async
     page.getByRole('button', { name: questionText, current: 'page' }),
   ).toBeVisible()
   await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(notifications(page).getByText('Question created.')).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
 })
 
 test('create stays disabled until both fields have non-empty text', async ({
@@ -377,7 +379,12 @@ test('a failed create keeps the dialog and shows an error', async ({ page }) => 
   await createSubmit(page).click()
 
   await expect(page.getByRole('dialog')).toBeVisible()
-  await expect(page.getByText('POST /api/questions failed: 500')).toBeVisible()
+  await expect(
+    notifications(page).getByText(
+      'Could not create the question. Try again later.',
+    ),
+  ).toBeVisible()
+  await expect(notifications(page).getByText(questionText)).toBeVisible()
   await expect(page).toHaveURL(listUrl)
   await expect(sidebarQuestion(page, questionText)).toHaveCount(0)
 })
@@ -394,7 +401,13 @@ test('create is disabled while the question is saving', async ({ page }) => {
   await fillCreateQuestion(page, questionText, 'Pending answer')
   await expect(createSubmit(page)).toBeEnabled()
   await createSubmit(page).click()
-  await expect(createSubmit(page)).toBeDisabled()
+
+  const savingCreate = page
+    .getByRole('dialog')
+    .getByRole('button', { name: 'Loading Create' })
+
+  await expect(savingCreate).toBeDisabled()
+  await expect(savingCreate.getByRole('status', { name: 'Loading' })).toBeVisible()
   await expect(page.getByRole('dialog')).toBeVisible()
   await expect(openedQuestion(page, questionText)).toHaveCount(0)
 

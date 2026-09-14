@@ -11,7 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
   Form,
-  FormMessage,
+  Spinner,
 } from '@/shared/ui';
 
 import {
@@ -26,7 +26,6 @@ export const CreateQuestion = reatomComponent(() => {
   const isSubmitReady = submit.ready();
   const hasValidationErrors = validation().errors.length > 0;
   const { dirty } = createQuestionForm.focus();
-  const submitError = submit.error();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) isCreateQuestionDialogOpen.setTrue();
 
@@ -49,7 +48,6 @@ export const CreateQuestion = reatomComponent(() => {
           onSubmit={submit}
         >
           <QuestionFields question={fields.question} answer={fields.answer} />
-          <FormMessage>{submitError?.message}</FormMessage>
           <DialogFooter className="shrink-0">
             <Button
               type="button"
@@ -62,6 +60,7 @@ export const CreateQuestion = reatomComponent(() => {
               type="submit"
               disabled={!isSubmitReady || hasValidationErrors || !dirty}
             >
+              {!isSubmitReady ? <Spinner data-icon="inline-start" /> : null}
               Create
             </Button>
           </DialogFooter>
