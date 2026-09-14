@@ -23,6 +23,14 @@ export default defineConfig({
     tailwindcss(),
     cloudflare(),
   ],
+  build: {
+    // Font files must stay same-origin URLs; CSP font-src is 'self' (no data:).
+    assetsInlineLimit: (filePath: string) => {
+      if (filePath.endsWith('.woff2')) return false
+
+      if (filePath.endsWith('.woff')) return false
+    },
+  },
   resolve: {
     alias: {
       '@': srcRoot,
