@@ -30,7 +30,7 @@ export function QuestionPreview({
 }: QuestionPreviewProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[95vh] max-h-[95vh] min-h-0 min-w-[min(40vw,calc(100%-2rem))] w-[min(90vw,calc(100%-2rem))] flex-col overflow-clip [overflow-clip-margin:6px] sm:max-w-[90vw]">
+      <DialogContent className="flex max-h-[80vh] min-h-0 w-[min(calc(80ch+3rem),calc(100%-2rem))] flex-col overflow-clip [overflow-clip-margin:6px] sm:max-w-[calc(80ch+3rem)]">
         <DialogHeader className="sr-only">
           <DialogTitle>Question</DialogTitle>
           <DialogDescription>Question and answer.</DialogDescription>
