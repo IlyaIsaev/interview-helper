@@ -40,11 +40,13 @@ const openSignedInDestination = action(() => {
   if (questions() === null) return;
 
   const { pathname } = urlAtom();
+
   if (QUESTION_PAGE_PATH.test(pathname)) return;
 
   if (questions()?.length === 0) return;
 
   const question = pipe(questions() ?? [], sample());
+
   if (!question) return;
 
   questionRoute.go({ id: question.id }, true);
@@ -170,6 +172,7 @@ export const profileRoute = protectedRoute.reatomRoute(
     path: PROFILE_PATH.slice(1),
     async loader() {
       const user = session.data()?.user;
+
       if (!user) return null;
 
       return {
@@ -181,6 +184,7 @@ export const profileRoute = protectedRoute.reatomRoute(
       if (!self.loader.ready()) return <PageFallback />;
 
       const user = self.loader.data();
+
       if (!user) return <PageFallback />;
 
       return <ProfilePage user={user} />;

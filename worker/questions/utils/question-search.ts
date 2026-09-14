@@ -11,6 +11,7 @@ export const questionsMatchingSearch = <TQuestion extends SearchableQuestion>(
   query: string,
 ): ReadonlyArray<TQuestion> => {
   const normalizedQuery = query.trim().toLowerCase();
+
   if (normalizedQuery.length === 0) return [...questions];
 
   const matchesQuery = (row: TQuestion) =>

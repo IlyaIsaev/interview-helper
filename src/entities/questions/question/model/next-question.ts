@@ -8,9 +8,11 @@ import { questions, type Question } from './questions';
 const openedQuestionId = computed(() => {
   const { pathname } = urlAtom();
   const prefix = `${QUESTIONS_PATH}/`;
+
   if (!pathname.startsWith(prefix)) return null;
 
   const questionId = pathname.slice(prefix.length);
+
   if (questionId.length === 0 || questionId.includes('/')) return null;
 
   return questionId;
@@ -21,6 +23,7 @@ const isOtherQuestion = (currentQuestionId: string) => (question: Question) =>
 
 export const otherQuestions = computed(() => {
   const currentQuestionId = openedQuestionId();
+
   if (!currentQuestionId) return [];
 
   return pipe(questions() ?? [], filter(isOtherQuestion(currentQuestionId)));
@@ -28,6 +31,7 @@ export const otherQuestions = computed(() => {
 
 export const openNextQuestion = action(() => {
   const nextQuestion = pipe(otherQuestions(), sample());
+
   if (!nextQuestion) return;
 
   urlAtom.go(questionPath(nextQuestion.id));

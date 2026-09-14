@@ -147,6 +147,14 @@ const expireSessionCookies = (context: DemoUserContext) => {
   });
 };
 
+const statusFromError = (error: unknown): unknown => {
+  if (typeof error !== 'object' || error === null) return null;
+
+  if (!('status' in error)) return null;
+
+  return error.status;
+};
+
 export const demoUser = new Hono<{ Bindings: Env }>()
   .use(
     csrf({
@@ -205,10 +213,8 @@ export const demoUser = new Hono<{ Bindings: Env }>()
 
       if (signUpResponse.status !== 422) return signUpResponse;
     } catch (error) {
-      const errorStatus =
-        typeof error === 'object' && error !== null && 'status' in error
-          ? error.status
-          : null;
+      const errorStatus = statusFromError(error);
+
       if (errorStatus !== 422 && errorStatus !== 'UNPROCESSABLE_ENTITY') throw error;
     }
 
@@ -221,14 +227,16 @@ export const demoUser = new Hono<{ Bindings: Env }>()
       asResponse: true,
     });
 
-    return signInResponse.ok
-      ? responseWithDemoCredentials(context, signInResponse, demoSignIn)
-      : signInResponse;
+    if (signInResponse.ok)
+      return responseWithDemoCredentials(context, signInResponse, demoSignIn);
+
+    return signInResponse;
   })
   .delete('/', async (context) => {
     const currentSession = await createAuth(context.env).api.getSession({
       headers: context.req.raw.headers,
     });
+
     if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
 
     const database = createDatabase(context.env.DB);

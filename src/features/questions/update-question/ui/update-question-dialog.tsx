@@ -29,13 +29,9 @@ export const UpdateQuestion = reatomComponent(() => {
   const hasValidationErrors = validation().errors.length > 0;
   const { dirty } = updateQuestionForm.focus();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isUpdateQuestionDialogOpen.setTrue();
+    if (shouldOpen) isUpdateQuestionDialogOpen.setTrue();
 
-      return;
-    }
-
-    closeUpdateQuestionDialog();
+    if (!shouldOpen) closeUpdateQuestionDialog();
   });
 
   return (

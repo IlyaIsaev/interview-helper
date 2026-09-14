@@ -41,10 +41,12 @@ export function QuestionList({
 
   function questionMenuItem(row: VirtualItem) {
     const question = questions[row.index];
+
     if (!question) return null;
 
     const isQuestionActive = activeQuestionId === question.id;
     const questionAriaCurrent = isQuestionActive ? activeAriaCurrent : undefined;
+
     const handleQuestionClick = () => {
       onQuestionClick(question.id);
     };

@@ -1,5 +1,6 @@
 import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
+import { find, pipe } from "es-toolkit/fp";
 import type { ChangeEvent, ReactNode } from "react";
 
 import {
@@ -77,7 +78,8 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
   const isPreviewOpen = isQuestionPreviewOpen();
   const previewedId = previewedQuestionId();
   const isOpenedQuestion = (question: Question) => questionPath(question.id) === currentPath;
-  const openedQuestionId = questions.find(isOpenedQuestion)?.id ?? null;
+  const openedQuestionId = pipe(questions, find(isOpenedQuestion))?.id ?? null;
+
   const handleQuestionClick = wrap((questionId: string) => {
     openQuestionPreview(questionId);
   });
@@ -104,18 +106,17 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();
+
   const changeQuestionPreviewOpen = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isQuestionPreviewOpen.setTrue();
+    if (shouldOpen) isQuestionPreviewOpen.setTrue();
 
-      return;
-    }
-
-    closeQuestionPreview();
+    if (!shouldOpen) closeQuestionPreview();
   });
+
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
   });
+
   const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
     const nextSearch = event.currentTarget.value;
 

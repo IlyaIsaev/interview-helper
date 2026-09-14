@@ -22,6 +22,7 @@ const buildUserInitials = (name: string): string => {
     join(''),
     toUpperCase,
   );
+
   if (!initials) return '?';
 
   return initials;
@@ -29,6 +30,7 @@ const buildUserInitials = (name: string): string => {
 
 export const user = computed((): User | null => {
   const name = session.data()?.user?.name;
+
   if (typeof name !== 'string') return null;
 
   return {

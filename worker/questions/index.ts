@@ -64,6 +64,7 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
   const currentSession = await createAuth(context.env).api.getSession({
     headers: context.req.raw.headers,
   });
+
   if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
 
   const { id: userId, email, createdAt } = currentSession.user;
@@ -76,6 +77,7 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
   }
 
   context.set('userId', userId);
+
   context.set('email', email);
 
   await next();
@@ -126,6 +128,7 @@ export const questions = new Hono<QuestionsContext>()
       questionId,
       context.get('userId'),
     );
+
     if (!foundQuestion) return context.json({ message: 'Question not found' }, 404);
 
     return context.json(foundQuestion, 200);
@@ -139,10 +142,11 @@ export const questions = new Hono<QuestionsContext>()
       .select({ questionCount: count() })
       .from(question)
       .where(eq(question.userId, userId));
+
     const email = context.get('email');
-    if ((questionTotal?.questionCount ?? 0) >= maxQuestionsForEmail(email)) {
+
+    if ((questionTotal?.questionCount ?? 0) >= maxQuestionsForEmail(email))
       return context.json({ message: questionLimitMessage(email) }, 400);
-    }
 
     const [createdQuestion] = await database
       .insert(question)
@@ -173,6 +177,7 @@ export const questions = new Hono<QuestionsContext>()
         })
         .where(ownedQuestion(questionId, context.get('userId')))
         .returning(questionRow);
+
       if (!updatedQuestion) return context.json({ message: 'Question not found' }, 404);
 
       return context.json(updatedQuestion, 200);
@@ -186,6 +191,7 @@ export const questions = new Hono<QuestionsContext>()
       .delete(question)
       .where(ownedQuestion(questionId, context.get('userId')))
       .returning(questionRow);
+
     if (!deletedQuestion) return context.json({ message: 'Question not found' }, 404);
 
     return context.body(null, 204);

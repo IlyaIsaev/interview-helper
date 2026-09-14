@@ -33,20 +33,20 @@ const retrySessionIfUnauthorized = async (response: Response): Promise<void> => 
   await wrap(session.retry());
 };
 
+const isErrorMessageBody = (body: unknown): body is { message: string } =>
+  typeof body === 'object' &&
+  body !== null &&
+  'message' in body &&
+  typeof body.message === 'string';
+
 const failedRequestMessage = async (
   response: Response,
   failedMessage: string,
 ): Promise<string> => {
   try {
     const body: unknown = await wrap(response.json());
-    if (
-      typeof body === 'object' &&
-      body !== null &&
-      'message' in body &&
-      typeof body.message === 'string'
-    ) {
-      return body.message;
-    }
+
+    if (isErrorMessageBody(body)) return body.message;
   } catch {
     return `${failedMessage}: ${response.status}`;
   }
@@ -59,6 +59,7 @@ const readJson = async <TBody>(
   failedMessage: string,
 ): Promise<TBody> => {
   await retrySessionIfUnauthorized(response);
+
   if (!response.ok) throw new Error(`${failedMessage}: ${response.status}`);
 
   const body: unknown = await wrap(response.json());
@@ -105,6 +106,7 @@ export const clientApi = {
     const response = await wrap(
       api.api.questions[':id'].$get({ param: { id } }),
     );
+
     if (response.status === 404) return null;
 
     return await readJson<QuestionResponse>(
@@ -121,9 +123,9 @@ export const clientApi = {
     );
 
     await retrySessionIfUnauthorized(response);
-    if (!response.ok) {
+
+    if (!response.ok)
       throw new Error(await failedRequestMessage(response, 'POST /api/questions failed'));
-    }
 
     const createdQuestion: unknown = await wrap(response.json());
 
@@ -156,6 +158,7 @@ export const clientApi = {
     );
 
     await retrySessionIfUnauthorized(response);
+
     if (!response.ok) throw new Error(`DELETE /api/questions/:id failed: ${response.status}`);
   },
 
@@ -174,11 +177,13 @@ export const clientApi = {
         json: demoSignIn,
       }),
     );
+
     if (!response.ok) throw new Error(`POST /api/demo-user failed: ${response.status}`);
   },
 
   async deleteUser(): Promise<void> {
     const response = await wrap(api.api['demo-user'].$delete());
+
     if (!response.ok) throw new Error(`DELETE /api/demo-user failed: ${response.status}`);
   },
 };

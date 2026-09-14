@@ -29,6 +29,7 @@ export const RandomQuestion = reatomComponent(() => {
   }
 
   const handleShowAnswer = wrap(showAnswer);
+
   const handleOpenNextQuestion = wrap(openNextQuestion);
 
   return (

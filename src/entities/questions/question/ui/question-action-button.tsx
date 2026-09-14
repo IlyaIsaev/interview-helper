@@ -15,6 +15,7 @@ export function QuestionActionButton({
 
   useLayoutEffect(() => {
     const button = questionAction.current;
+
     if (!button) return;
 
     const focusQuestionAction = () => {
@@ -27,6 +28,7 @@ export function QuestionActionButton({
 
     let dialogCount = document.querySelectorAll('[role="dialog"]').length;
     let dialogCloseFrame = 0;
+
     const observer = new MutationObserver(() => {
       const nextDialogCount = document.querySelectorAll('[role="dialog"]').length;
 

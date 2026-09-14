@@ -21,13 +21,9 @@ export const DeleteUser = reatomComponent(() => {
   const isDialogOpen = isDeleteUserDialogOpen();
   const isDeleteReady = deleteUser.ready();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isDeleteUserDialogOpen.setTrue();
+    if (shouldOpen) isDeleteUserDialogOpen.setTrue();
 
-      return;
-    }
-
-    closeDeleteUserDialog();
+    if (!shouldOpen) closeDeleteUserDialog();
   });
   const handleDeleteUser = wrap(deleteUser);
 

@@ -16,6 +16,7 @@ import { user } from '../model/user';
 
 export const UserMenu = reatomComponent(() => {
   const { name, initials } = user() ?? { name: '', initials: '' };
+
   if (!name) return null;
 
   const handleLogOut = wrap(signOut);

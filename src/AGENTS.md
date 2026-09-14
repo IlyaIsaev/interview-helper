@@ -198,9 +198,7 @@ const protectedRoute = layoutRoute.reatomRoute(
       return {};
     },
     render(self) {
-      if (!session.ready()) {
-        return <PageFallback />;
-      }
+      if (!session.ready()) return <PageFallback />;
 
       return <>{self.outlet()}</>;
     },
@@ -214,6 +212,7 @@ Use `loader` when the decision needs fetched data (missing resource, API 403/404
 ```ts
 async loader({ id }) {
   const question = await wrap(clientApi.loadQuestion(id));
+
   if (!question) {
     questionsRoute.go(undefined, true);
 
@@ -365,6 +364,11 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 | `handleClickSubmit`           | `submitOrder`          |
 | `userDataAtom`                | `user`                 |
 | `onChangeEmailInput`          | `changeEmail`          |
+| `questionList`, `userList`    | `questions`, `users`   |
+| `addQuestionToQuestions`      | `addToQuestions`       |
+| `removeQuestionFromQuestions` | `removeFromQuestions`  |
+| `updateQuestionInQuestions`   | `updateInQuestions`    |
+| `initQuestionList`            | `initQuestions`        |
 
 ```ts
 // Values — business intent

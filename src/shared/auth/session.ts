@@ -10,6 +10,7 @@ export const session = computed(async () => {
 
 export const signOut = action(async () => {
   const { error } = await wrap(authClient.signOut());
+
   if (error) throw new Error(error.message);
 
   await wrap(session.retry());

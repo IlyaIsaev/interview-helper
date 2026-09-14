@@ -45,6 +45,7 @@ export const openQuestionPreview = action(async (questionId: string) => {
   previewedQuestion.set(null);
 
   const nextQuestion = await wrap(clientApi.loadQuestion(questionId));
+
   if (!nextQuestion) {
     closeQuestionPreview();
 
@@ -56,8 +57,6 @@ export const openQuestionPreview = action(async (questionId: string) => {
 
 removeFromQuestions.extend(
   withCallHook((_payload, [questionId]: [string]) => {
-    if (previewedQuestionId() === questionId) {
-      closeQuestionPreview();
-    }
+    if (previewedQuestionId() === questionId) closeQuestionPreview();
   }),
 );

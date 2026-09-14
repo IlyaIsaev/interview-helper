@@ -22,6 +22,7 @@ const limitAuthPosts = async (
   next: Next,
 ) => {
   const pathname = new URL(context.req.url).pathname;
+
   if (context.req.method !== 'POST' || !isAuthPostPath(pathname)) {
     await next();
 
@@ -31,6 +32,7 @@ const limitAuthPosts = async (
   const { success } = await context.env.AUTH_RATE_LIMITER.limit({
     key: `${pathname}:${connectingIp(context)}`,
   });
+
   if (!success) return context.json({ message: 'Too many requests' }, 429);
 
   await next();
@@ -82,9 +84,9 @@ export default {
     ctx: ExecutionContext,
   ): Promise<Response> {
     const { hostname, pathname } = new URL(request.url);
-    if (pathname === '/__scheduled' && !isLocalHost(hostname)) {
+
+    if (pathname === '/__scheduled' && !isLocalHost(hostname))
       return new Response(null, { status: 404 });
-    }
 
     return app.fetch(request, env, ctx);
   },

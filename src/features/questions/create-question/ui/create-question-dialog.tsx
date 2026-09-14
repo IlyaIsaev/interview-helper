@@ -28,13 +28,9 @@ export const CreateQuestion = reatomComponent(() => {
   const { dirty } = createQuestionForm.focus();
   const submitError = submit.error();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isCreateQuestionDialogOpen.setTrue();
+    if (shouldOpen) isCreateQuestionDialogOpen.setTrue();
 
-      return;
-    }
-
-    closeCreateQuestionDialog();
+    if (!shouldOpen) closeCreateQuestionDialog();
   });
 
   return (

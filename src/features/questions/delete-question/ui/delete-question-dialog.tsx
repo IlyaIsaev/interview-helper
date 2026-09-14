@@ -21,13 +21,9 @@ export const DeleteQuestion = reatomComponent(() => {
   const isDialogOpen = isDeleteQuestionDialogOpen();
   const isDeleteReady = deleteQuestion.ready();
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isDeleteQuestionDialogOpen.setTrue();
+    if (shouldOpen) isDeleteQuestionDialogOpen.setTrue();
 
-      return;
-    }
-
-    closeDeleteQuestionDialog();
+    if (!shouldOpen) closeDeleteQuestionDialog();
   });
   const handleDeleteQuestion = wrap(deleteQuestion);
 

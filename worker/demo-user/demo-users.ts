@@ -49,6 +49,7 @@ export const deleteExpiredDemoUsers = async (
   now = new Date(),
 ): Promise<void> => {
   const cutoff = new Date(now.getTime() - DEMO_USER_MAX_AGE_MS);
+
   const foundUsers = await database
     .select({
       id: user.id,

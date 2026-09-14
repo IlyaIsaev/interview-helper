@@ -21,6 +21,7 @@ type MarkdownRehypePlugins = NonNullable<
 
 const isAllowedMarkdownUrl = (url: string): boolean => {
   const trimmedUrl = url.trim();
+
   if (trimmedUrl.length === 0) return false;
 
   if (trimmedUrl.startsWith('#') || trimmedUrl.startsWith('/')) return !trimmedUrl.startsWith('//');

@@ -40,6 +40,7 @@ export const openDeleteQuestion = action((questionId: string) => {
 
 export const deleteQuestion = action(async () => {
   const questionId = deletedQuestionId();
+
   if (!questionId) return;
 
   const index = pipe(questions() ?? [], findIndex(hasQuestionId(questionId)));
@@ -50,16 +51,12 @@ export const deleteQuestion = action(async () => {
 
   closeDeleteQuestionDialog();
 
-  if (isSearchEmpty) {
-    removeFromQuestions(questionId);
-  }
+  if (isSearchEmpty) removeFromQuestions(questionId);
 
   try {
     await wrap(clientApi.deleteQuestion(questionId));
   } catch {
-    if (isSearchEmpty && question !== undefined) {
-      restoreToQuestions(question, index);
-    }
+    if (isSearchEmpty && question !== undefined) restoreToQuestions(question, index);
 
     toast.error('Could not delete the question. Try again later.', {
       description: questionDescription,

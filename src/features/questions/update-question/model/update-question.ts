@@ -19,6 +19,7 @@ import {
   questionsQuery,
   refetchQuestions,
   updateInQuestions,
+  type OpenedQuestion,
   type Question,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
@@ -59,6 +60,7 @@ export const updateQuestionForm = reatomForm(
     schema: questionFieldsSchema,
     onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {
       const questionId = updatedQuestionId();
+
       if (!questionId) return;
 
       const question = pipe(questions() ?? [], find(hasQuestionId(questionId)));
@@ -69,15 +71,21 @@ export const updateQuestionForm = reatomForm(
         questionText === undefined ? undefined : markdownPlainText(questionText);
       const isSearchEmpty = questionsQuery().length === 0;
 
+      const syncQuestion = (
+        listedQuestion: Question | undefined,
+        nextOpenedQuestion: OpenedQuestion | null,
+      ) => {
+        if (isSearchEmpty && listedQuestion !== undefined) updateInQuestions(listedQuestion);
+
+        if (isQuestionOpened) initQuestion(nextOpenedQuestion);
+      };
+
       closeUpdateQuestionDialog();
 
-      if (isSearchEmpty) {
-        updateInQuestions({ id: questionId, question: nextQuestion });
-      }
-
-      if (isQuestionOpened) {
-        initQuestion({ question: nextQuestion, answer: nextAnswer });
-      }
+      syncQuestion(
+        { id: questionId, question: nextQuestion },
+        { question: nextQuestion, answer: nextAnswer },
+      );
 
       try {
         const updatedQuestion = await wrap(
@@ -87,19 +95,16 @@ export const updateQuestionForm = reatomForm(
           }),
         );
 
-        if (isSearchEmpty) {
-          updateInQuestions({
+        syncQuestion(
+          {
             id: updatedQuestion.id,
             question: updatedQuestion.question,
-          });
-        }
-
-        if (isQuestionOpened) {
-          initQuestion({
+          },
+          {
             question: updatedQuestion.question,
             answer: updatedQuestion.answer,
-          });
-        }
+          },
+        );
 
         toast.success('Question updated.', {
           description: questionDescription,
@@ -109,13 +114,7 @@ export const updateQuestionForm = reatomForm(
 
         return updatedQuestion;
       } catch {
-        if (isSearchEmpty && question) {
-          updateInQuestions(question);
-        }
-
-        if (isQuestionOpened) {
-          initQuestion(questionOnPage ?? null);
-        }
+        syncQuestion(question, questionOnPage ?? null);
 
         toast.error('Could not update the question. Try again later.', {
           description: questionDescription,
@@ -131,6 +130,7 @@ export const openUpdateQuestion = action(async (questionId: string) => {
   isUpdateQuestionDialogOpen.setTrue();
 
   const nextQuestion = await wrap(clientApi.loadQuestion(questionId));
+
   if (!nextQuestion) {
     closeUpdateQuestionDialog();
 
