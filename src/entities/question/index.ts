@@ -16,3 +16,5 @@ export {
 } from './model/questions';
 
 export { QuestionFields } from './ui/question-fields';
+
+export { QuestionList } from './ui/question-list';

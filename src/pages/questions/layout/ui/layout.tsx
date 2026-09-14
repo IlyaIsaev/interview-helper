@@ -1,18 +1,19 @@
-import { reatomBoolean, wrap } from "@reatom/core";
+import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import type { ChangeEvent, ReactNode } from "react";
 
 import {
+  QuestionList,
   questions,
   questionsQuery,
   type Question,
 } from "@/entities/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
-import { DeleteQuestion } from "@/features/questions/delete-question";
-import { UpdateQuestion } from "@/features/questions/update-question";
+import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
+import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
-import { HOME_PATH } from "@/shared/config";
+import { HOME_PATH, questionPath } from "@/shared/config";
 import {
   Input,
   Label,
@@ -26,8 +27,12 @@ import {
   Spinner,
 } from "@/shared/ui";
 
+import {
+  isQuestionPreviewOpen,
+  openQuestionPreview,
+  previewedQuestionId,
+} from "../model/question-preview";
 import { questionSearch, searchQuestions } from "../model/question-search";
-import { QuestionList } from "./question-list";
 import { QuestionPreview } from "./question-preview-dialog";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
@@ -41,7 +46,7 @@ type QuestionSidebarProps = {
   search: string;
 };
 
-function QuestionSidebar({ questions, search }: QuestionSidebarProps) {
+const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarProps) => {
   if (questions === null) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -66,8 +71,34 @@ function QuestionSidebar({ questions, search }: QuestionSidebarProps) {
     );
   }
 
-  return <QuestionList questions={questions} />;
-}
+  const currentPath = urlAtom().pathname;
+  const isPreviewOpen = isQuestionPreviewOpen();
+  const previewedId = previewedQuestionId();
+  const isOpenedQuestion = (question: Question) => questionPath(question.id) === currentPath;
+  const openedQuestionId = questions.find(isOpenedQuestion)?.id ?? null;
+  const handleQuestionClick = wrap((questionId: string) => {
+    openQuestionPreview(questionId);
+  });
+
+  function renderUpdateQuestion(question: Question) {
+    return <UpdateQuestionButton className="right-7" questionId={question.id} />;
+  }
+
+  function renderDeleteQuestion(question: Question) {
+    return <DeleteQuestionButton questionId={question.id} />;
+  }
+
+  return (
+    <QuestionList
+      questions={questions}
+      activeQuestionId={isPreviewOpen ? previewedId : openedQuestionId}
+      activeAriaCurrent={isPreviewOpen ? true : "page"}
+      onQuestionClick={handleQuestionClick}
+      updateQuestion={renderUpdateQuestion}
+      deleteQuestion={renderDeleteQuestion}
+    />
+  );
+}, "QuestionSidebar");
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();

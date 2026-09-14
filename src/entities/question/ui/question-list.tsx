@@ -1,13 +1,7 @@
-import { urlAtom, wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
 import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { map, pipe } from 'es-toolkit/fp';
-import { useRef } from 'react';
+import { useRef, type ReactNode } from 'react';
 
-import type { Question } from '@/entities/question';
-import { DeleteQuestionButton } from '@/features/questions/delete-question';
-import { UpdateQuestionButton } from '@/features/questions/update-question';
-import { questionPath } from '@/shared/config';
 import {
   Markdown,
   SidebarMenu,
@@ -15,22 +9,27 @@ import {
   SidebarMenuItem,
 } from '@/shared/ui';
 
-import {
-  isQuestionPreviewOpen,
-  openQuestionPreview,
-  previewedQuestionId,
-} from '../model/question-preview';
+import type { Question } from '../model/questions';
 
 const questionRowSize = 36;
 
 type QuestionListProps = {
   questions: ReadonlyArray<Question>;
+  activeQuestionId: string | null;
+  activeAriaCurrent: true | 'page';
+  onQuestionClick: (questionId: string) => void;
+  updateQuestion: (question: Question) => ReactNode;
+  deleteQuestion: (question: Question) => ReactNode;
 };
 
-export const QuestionList = reatomComponent(({ questions }: QuestionListProps) => {
-  const currentPath = urlAtom().pathname;
-  const isPreviewOpen = isQuestionPreviewOpen();
-  const previewedId = previewedQuestionId();
+export function QuestionList({
+  questions,
+  activeQuestionId,
+  activeAriaCurrent,
+  onQuestionClick,
+  updateQuestion,
+  deleteQuestion,
+}: QuestionListProps) {
   const questionsScroller = useRef<HTMLDivElement>(null);
   const questionsVirtualizer = useVirtualizer({
     count: questions.length,
@@ -44,15 +43,11 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
     const question = questions[row.index];
     if (!question) return null;
 
-    const isQuestionOpened = currentPath === questionPath(question.id);
-    const isQuestionPreviewed = previewedId === question.id;
-    const isQuestionActive = isPreviewOpen ? isQuestionPreviewed : isQuestionOpened;
-    const previewAriaCurrent = isPreviewOpen && isQuestionPreviewed ? true : undefined;
-    const pageAriaCurrent = !isPreviewOpen && isQuestionOpened ? 'page' : undefined;
-    const questionAriaCurrent = previewAriaCurrent ?? pageAriaCurrent;
-    const handleOpenQuestionPreview = wrap(() => {
-      openQuestionPreview(question.id);
-    });
+    const isQuestionActive = activeQuestionId === question.id;
+    const questionAriaCurrent = isQuestionActive ? activeAriaCurrent : undefined;
+    const handleQuestionClick = () => {
+      onQuestionClick(question.id);
+    };
 
     return (
       <SidebarMenuItem
@@ -65,12 +60,12 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
           isActive={isQuestionActive}
           aria-current={questionAriaCurrent}
           className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
-          onClick={handleOpenQuestionPreview}
+          onClick={handleQuestionClick}
         >
           <Markdown plain>{question.question}</Markdown>
         </SidebarMenuButton>
-        <UpdateQuestionButton className="right-7" questionId={question.id} />
-        <DeleteQuestionButton questionId={question.id} />
+        {updateQuestion(question)}
+        {deleteQuestion(question)}
       </SidebarMenuItem>
     );
   }
@@ -85,4 +80,4 @@ export const QuestionList = reatomComponent(({ questions }: QuestionListProps) =
       </SidebarMenu>
     </div>
   );
-}, 'QuestionList');
+}
