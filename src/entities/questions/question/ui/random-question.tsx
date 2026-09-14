@@ -2,12 +2,11 @@ import { wrap } from '@reatom/core';
 import { reatomComponent } from '@reatom/react';
 
 import { cn } from '@/shared/lib';
-import { Markdown } from '@/shared/ui';
+import { Button, Markdown } from '@/shared/ui';
 
 import { openNextQuestion, otherQuestions } from '../model/next-question';
 import { question } from '../model/question';
 import { isAnswerVisible, showAnswer } from '../model/show-answer';
-import { QuestionActionButton } from './question-action-button';
 
 const randomQuestionClassName = cn(
   'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
@@ -45,18 +44,26 @@ export const RandomQuestion = reatomComponent(() => {
             <Markdown>{openedQuestion.answer}</Markdown>
           </div>
         ) : (
-          <QuestionActionButton
+          <Button
             key={openedQuestion.question}
+            className="mt-auto shrink-0"
+            type="button"
+            autoFocus
             onClick={handleShowAnswer}
           >
             Show answer
-          </QuestionActionButton>
+          </Button>
         )}
       </div>
       {isAnswerVisible() && otherQuestions().length > 0 ? (
-        <QuestionActionButton onClick={handleOpenNextQuestion}>
+        <Button
+          className="mt-auto shrink-0"
+          type="button"
+          autoFocus
+          onClick={handleOpenNextQuestion}
+        >
           Next question
-        </QuestionActionButton>
+        </Button>
       ) : null}
     </section>
   );
