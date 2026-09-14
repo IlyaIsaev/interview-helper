@@ -14,7 +14,7 @@ export const MAX_QUESTIONS_PER_USER = 200;
 
 type Database = ReturnType<typeof createDatabase>;
 
-type DemoUserRow = Pick<typeof user.$inferSelect, 'id' | 'email' | 'createdAt'>;
+type DemoUser = Pick<typeof user.$inferSelect, 'id' | 'email' | 'createdAt'>;
 
 export const isDemoUserEmail = (email: string): boolean =>
   DEMO_USER_EMAIL_PATTERN.test(email);
@@ -41,7 +41,7 @@ export const deleteUserById = async (
   await database.delete(user).where(eq(user.id, userId));
 };
 
-const isExpiredDemoUser = (now: Date) => (demoUser: DemoUserRow): boolean =>
+const isExpiredDemoUser = (now: Date) => (demoUser: DemoUser): boolean =>
   isDemoUserEmail(demoUser.email) && isDemoUserExpired(demoUser.createdAt, now);
 
 export const deleteExpiredDemoUsers = async (
@@ -60,7 +60,7 @@ export const deleteExpiredDemoUsers = async (
     .where(and(like(user.email, 'demo-user-%@demo.com'), lte(user.createdAt, cutoff)));
 
   const expiredDemoUsers = pipe(foundUsers, filter(isExpiredDemoUser(now)));
-  const deleteExpiredDemoUser = (expiredUser: DemoUserRow) =>
+  const deleteExpiredDemoUser = (expiredUser: DemoUser) =>
     deleteUserById(database, expiredUser.id);
 
   await Promise.all(pipe(expiredDemoUsers, map(deleteExpiredDemoUser)));

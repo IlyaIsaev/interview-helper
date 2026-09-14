@@ -11,7 +11,7 @@ import {
 
 import type { Question } from '../model/questions';
 
-const questionRowSize = 36;
+const QUESTION_HEIGHT = 36;
 
 type QuestionListProps = {
   questions: ReadonlyArray<Question>;
@@ -33,14 +33,14 @@ export function QuestionList({
   const questionsScroller = useRef<HTMLDivElement>(null);
   const questionsVirtualizer = useVirtualizer({
     count: questions.length,
-    estimateSize: () => questionRowSize,
+    estimateSize: () => QUESTION_HEIGHT,
     getItemKey: (index) => questions[index]?.id ?? index,
     getScrollElement: () => questionsScroller.current,
     overscan: 8,
   });
 
-  function questionMenuItem(row: VirtualItem) {
-    const question = questions[row.index];
+  function questionMenu(virtualQuestion: VirtualItem) {
+    const question = questions[virtualQuestion.index];
 
     if (!question) return null;
 
@@ -55,7 +55,7 @@ export function QuestionList({
       <SidebarMenuItem
         key={question.id}
         className="absolute top-0 left-0 w-full"
-        style={{ transform: `translateY(${row.start}px)` }}
+        style={{ transform: `translateY(${virtualQuestion.start}px)` }}
       >
         <SidebarMenuButton
           type="button"
@@ -78,7 +78,7 @@ export function QuestionList({
         className="relative gap-0"
         style={{ height: questionsVirtualizer.getTotalSize() }}
       >
-        {pipe(questionsVirtualizer.getVirtualItems(), map(questionMenuItem))}
+        {pipe(questionsVirtualizer.getVirtualItems(), map(questionMenu))}
       </SidebarMenu>
     </div>
   );

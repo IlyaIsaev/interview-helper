@@ -26,7 +26,7 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 - When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`.
 - The domain folder is only for navigation. It is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
 - Slices on the same layer must not import each other's internals, including siblings in a domain folder. If two feature slices must share UI or a schema, export it from the owning slice's `index.ts`. Prefer merging slices, moving shared domain code to `entities/`, or composing from `pages/` / `app/` first.
-- `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged (e.g. `import { Question } from '@/entities/question/@x/answer'`). Document why merge does not apply. Never use `@x` on features.
+- `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged (e.g. `import { Question } from '@/entities/questions/question/@x/answer'`). Document why merge does not apply. Never use `@x` on features.
 - If the domain is unclear or the slice spans several domains (`theme-switcher`), keep it at the top of `features/` or `entities/`.
 
 ### Current layout
@@ -38,7 +38,7 @@ pages/questions/     ← questions route group (under protectedRoute)
   layout/            ← questionsRoute chrome + list loader (sidebar + toggle + header)
   index/             ← questions list / empty state (/questions)
   question/
-    index/           ← signed-in question detail + show-answer (/questions/:id)
+    index/           ← signed-in question detail; composes RandomQuestion (/questions/:id)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
@@ -51,7 +51,7 @@ features/questions/update-question/ ← dialog form to update a question + answe
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: profile link + log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/question/   ← current question + questions (model only)
+entities/questions/question/ ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
@@ -86,9 +86,9 @@ UI reads the atom, not `route.loader.data()` from inside entities or features. M
 ```ts
 import { map, pick, pipe } from 'es-toolkit/fp';
 
-export const questions = atom<Array<Question>>([], 'questions');
+export const questions = atom<ReadonlyArray<Question> | null>(null, 'questions');
 
-export const initQuestions = action((nextQuestions: Array<Question>) => {
+export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => {
   questions.set(pipe(nextQuestions, map(pick(['id', 'question']))));
 }, 'initQuestions');
 
@@ -170,9 +170,7 @@ const protectedRoute = layoutRoute.reatomRoute(
       return {};
     },
     render(self) {
-      if (!session.ready()) {
-        return <PageFallback />;
-      }
+      if (!session.ready()) return <PageFallback />;
 
       return <>{self.outlet()}</>;
     },
@@ -186,6 +184,7 @@ Use `loader` when the decision needs fetched data (missing resource, API 403/404
 ```ts
 async loader({ id }) {
   const question = await wrap(clientApi.loadQuestion(id));
+
   if (!question) {
     questionsRoute.go(undefined, true);
 
@@ -201,7 +200,7 @@ A standalone `effect()` that watches `adminRoute()` and calls `.go()` is a last 
 ## React
 
 - Declare with `function`, never arrow functions. This is the exception to the parent “prefer arrow functions” rule.
-- Always extract props into a separate `type`.
+- Always extract props into a separate `type` named `[ComponentName]Props`.
 - Keep components mostly pure: derive values, avoid unnecessary local mutation.
 
 ```ts
@@ -335,7 +334,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ```ts
 // Values — business intent
-export const cartItems = atom<Array<CartItem>>([], 'cartItems');
+export const cartItems = atom<ReadonlyArray<CartItem>>([], 'cartItems');
 export const user = atom<User | null>(null, 'user');
 export const checkout = action(async () => { ... }, 'checkout');
 export const applyDiscount = action((code: string) => { ... }, 'applyDiscount');

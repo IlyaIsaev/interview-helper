@@ -72,10 +72,10 @@ export const updateQuestionForm = reatomForm(
       const isSearchEmpty = questionsQuery().length === 0;
 
       const syncQuestion = (
-        listedQuestion: Question | undefined,
+        question: Question | undefined,
         nextOpenedQuestion: OpenedQuestion | null,
       ) => {
-        if (isSearchEmpty && listedQuestion !== undefined) updateInQuestions(listedQuestion);
+        if (isSearchEmpty && question !== undefined) updateInQuestions(question);
 
         if (isQuestionOpened) initQuestion(nextOpenedQuestion);
       };

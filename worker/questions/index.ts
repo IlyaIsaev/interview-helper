@@ -32,7 +32,7 @@ const questionRow = {
   answer: question.answer,
 };
 
-type QuestionRow = Omit<typeof question.$inferSelect, 'userId'>;
+type Question = Omit<typeof question.$inferSelect, 'userId'>;
 
 const questionFieldsSchema = v.object({
   question: v.pipe(
@@ -87,7 +87,7 @@ const loadQuestion = async (
   database: ReturnType<typeof createDatabase>,
   questionId: string,
   userId: string,
-): Promise<QuestionRow | null> => {
+): Promise<Question | null> => {
   const [foundQuestion] = await database
     .select(questionRow)
     .from(question)

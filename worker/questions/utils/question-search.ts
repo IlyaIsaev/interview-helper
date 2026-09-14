@@ -14,8 +14,8 @@ export const questionsMatchingSearch = <TQuestion extends SearchableQuestion>(
 
   if (normalizedQuery.length === 0) return [...questions];
 
-  const matchesQuery = (row: TQuestion) =>
-    markdownPlainText(row.question).toLowerCase().includes(normalizedQuery);
+  const matchesQuery = (question: TQuestion) =>
+    markdownPlainText(question.question).toLowerCase().includes(normalizedQuery);
 
   return pipe(questions, filter(matchesQuery));
 };

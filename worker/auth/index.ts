@@ -21,7 +21,7 @@ export const trustedOriginsFor = (betterAuthUrl: string): Array<string> => {
 export const isTrustedAuthOrigin = (origin: string, betterAuthUrl: string): boolean =>
   trustedOriginsFor(betterAuthUrl).includes(origin);
 
-export const createAuth = (env: Env) =>
+const authForEnv = (env: Env) =>
   betterAuth({
     appName: 'interview-helper',
     baseURL: env.BETTER_AUTH_URL,
@@ -43,6 +43,9 @@ export const createAuth = (env: Env) =>
       },
     },
   });
+
+export const createAuth = (env: Env): ReturnType<typeof authForEnv> =>
+  authForEnv(env);
 
 const isPublicEmailSignUp = (method: string, pathname: string): boolean =>
   method === 'POST' && pathname.endsWith('/sign-up/email');
