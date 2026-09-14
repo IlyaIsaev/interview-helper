@@ -42,8 +42,8 @@ type DemoCredentials = v.InferOutput<typeof demoSignInSchema>;
 type DemoUserContext = Context<{ Bindings: Env }>;
 
 const selectRandomPasswordCharacter = (): string => {
-  const characterIndex =
-    crypto.getRandomValues(new Uint32Array(1))[0] % PASSWORD_CHARACTERS.length;
+  const randomValue = crypto.getRandomValues(new Uint32Array(1))[0] ?? 0;
+  const characterIndex = randomValue % PASSWORD_CHARACTERS.length;
 
   return PASSWORD_CHARACTERS[characterIndex] ?? 'A';
 };

@@ -29,7 +29,7 @@ const openQuestionPage = (questionCount: 'one' | 'two') => {
   )
 }
 
-test('question page renders markdown for the question', async () => {
+test('should render markdown when the question page opens', async () => {
   openQuestionPage('one')
 
   const screen = await render(<QuestionPage />)
@@ -38,7 +38,7 @@ test('question page renders markdown for the question', async () => {
   await expect.element(screen.getByText('# Hello')).not.toBeInTheDocument()
 })
 
-test('next question is hidden until the answer is visible', async () => {
+test('should hide next question when the answer is still hidden', async () => {
   openQuestionPage('two')
 
   const screen = await render(<QuestionPage />)
@@ -49,7 +49,7 @@ test('next question is hidden until the answer is visible', async () => {
     .not.toBeInTheDocument()
 })
 
-test('answer is revealed without a separator', async () => {
+test('should reveal the answer without a separator when show answer is clicked', async () => {
   openQuestionPage('one')
 
   const screen = await render(<QuestionPage />)
@@ -63,7 +63,7 @@ test('answer is revealed without a separator', async () => {
   await expect.element(screen.getByText('hidden answer')).toBeVisible()
 })
 
-test('next question is focused after reveal when another question is loaded', async () => {
+test('should focus next question when the answer is revealed and another question is loaded', async () => {
   openQuestionPage('two')
 
   const screen = await render(<QuestionPage />)
@@ -80,7 +80,7 @@ test('next question is focused after reveal when another question is loaded', as
   expect(urlAtom().pathname).toBe(questionPath(otherQuestionId))
 })
 
-test('next question is hidden when the list has only the current question', async () => {
+test('should hide next question when the list has only the current question', async () => {
   openQuestionPage('one')
 
   const screen = await render(<QuestionPage />)

@@ -37,7 +37,7 @@ type LayoutProps = {
 };
 
 type QuestionSidebarProps = {
-  questions: Array<Question> | null;
+  questions: ReadonlyArray<Question> | null;
   search: string;
 };
 

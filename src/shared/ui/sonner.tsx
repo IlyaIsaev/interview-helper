@@ -8,10 +8,9 @@ import {
 } from 'lucide-react'
 import { Toaster as Sonner, type ToasterProps } from 'sonner'
 
-function Toaster({ theme, ...props }: ToasterProps) {
+function Toaster(props: ToasterProps) {
   return (
     <Sonner
-      theme={theme}
       className="toaster group font-mono"
       icons={{
         success: <CircleCheckIcon className="size-4" />,

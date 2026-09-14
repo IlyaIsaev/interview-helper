@@ -24,7 +24,7 @@ import {
 const questionRowSize = 36;
 
 type QuestionListProps = {
-  questions: Array<Question>;
+  questions: ReadonlyArray<Question>;
 };
 
 export const QuestionList = reatomComponent(({ questions }: QuestionListProps) => {

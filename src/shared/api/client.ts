@@ -54,14 +54,17 @@ const failedRequestMessage = async (
   return `${failedMessage}: ${response.status}`;
 };
 
-const readJson = async <T>(
+const readJson = async <TBody>(
   response: Response,
   failedMessage: string,
-): Promise<T> => {
+): Promise<TBody> => {
   await retrySessionIfUnauthorized(response);
   if (!response.ok) throw new Error(`${failedMessage}: ${response.status}`);
 
-  return await wrap(response.json());
+  const body: unknown = await wrap(response.json());
+
+  // Response.json() is untyped; callers pass the Hono 200 body type.
+  return body as TBody;
 };
 
 type QuestionsResponse = InferResponseType<typeof api.api.questions.$get, 200>;
@@ -122,7 +125,10 @@ export const clientApi = {
       throw new Error(await failedRequestMessage(response, 'POST /api/questions failed'));
     }
 
-    return await wrap(response.json());
+    const createdQuestion: unknown = await wrap(response.json());
+
+    // Response.json() is untyped; CreatedQuestion is the Hono 201 body type.
+    return createdQuestion as CreatedQuestion;
   },
 
   async updateQuestion(

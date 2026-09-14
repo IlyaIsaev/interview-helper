@@ -9,11 +9,11 @@ export type Question = DeepReadonly<{
   question: string;
 }>;
 
-export const questions = atom<Array<Question> | null>(null, 'questions');
+export const questions = atom<ReadonlyArray<Question> | null>(null, 'questions');
 
 export const questionsQuery = reatomString('', 'questionsQuery');
 
-export const initQuestions = action((nextQuestions: Array<Question>) => {
+export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => {
   questions.set(pipe(nextQuestions, map(pick(['id', 'question']))));
 }, 'initQuestions');
 

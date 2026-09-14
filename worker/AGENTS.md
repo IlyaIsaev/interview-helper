@@ -2,7 +2,7 @@
 
 The API is a [Hono](https://hono.dev) Cloudflare Worker. Official docs for LLMs: https://hono.dev/llms.txt
 
-General style, naming, and kebab-case come from the parent `AGENTS.md`. Frontend rules live in `src/AGENTS.md`.
+TypeScript conventions live in the parent `AGENTS.md`. Frontend rules live in `src/AGENTS.md`.
 
 ```text
 index.ts             ← mount auth, demo-user, questions, health; hourly demo expiry cron

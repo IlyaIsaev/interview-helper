@@ -9,7 +9,7 @@ export type User = DeepReadonly<{
   initials: string;
 }>;
 
-const firstLetter = (namePart: string): string => namePart[0];
+const firstLetter = (namePart: string): string => namePart.charAt(0);
 
 const toUpperCase = (text: string): string => text.toUpperCase();
 

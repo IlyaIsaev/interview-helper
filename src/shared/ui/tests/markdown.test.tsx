@@ -3,7 +3,7 @@ import { render } from 'vitest-browser-react'
 
 import { Markdown, markdownPlainText } from '../markdown'
 
-test('renders markdown instead of raw syntax', async () => {
+test('should render markdown elements when the source contains syntax', async () => {
   const screen = await render(<Markdown>{'# Hello\n\n**bold**'}</Markdown>)
 
   await expect.element(screen.getByRole('heading', { name: 'Hello' })).toBeVisible()
@@ -12,7 +12,7 @@ test('renders markdown instead of raw syntax', async () => {
   await expect.element(screen.getByText('**bold**')).not.toBeInTheDocument()
 })
 
-test('plain markdown is text without elements', async () => {
+test('should render plain text without elements when plain is set', async () => {
   const screen = await render(<Markdown plain>{'# Hello\n\n**bold**'}</Markdown>)
 
   await expect.element(screen.getByText(/Hello\s+bold/)).toBeVisible()
@@ -21,7 +21,7 @@ test('plain markdown is text without elements', async () => {
   await expect.element(screen.getByText('**bold**')).not.toBeInTheDocument()
 })
 
-test('plain markdown links are text inside a parent link', async () => {
+test('should keep the parent href when plain markdown contains a link', async () => {
   const screen = await render(
     <a href="/questions/1">
       <Markdown plain>{'[Hello](https://example.com)'}</Markdown>
@@ -34,7 +34,7 @@ test('plain markdown links are text inside a parent link', async () => {
     .toHaveAttribute('href', '/questions/1')
 })
 
-test('markdownPlainText strips markup to visible text', () => {
+test('should strip markup to visible text when markdownPlainText runs', () => {
   expect(markdownPlainText('# Hello')).toBe('Hello')
   expect(markdownPlainText('**bold**')).toBe('bold')
   expect(markdownPlainText('[Hello](https://example.com)')).toBe('Hello')
@@ -44,7 +44,7 @@ test('markdownPlainText strips markup to visible text', () => {
   )
 })
 
-test('markdown links keep https hrefs with rel and referrer policy', async () => {
+test('should keep https hrefs with rel and referrer policy when a link is rendered', async () => {
   const screen = await render(<Markdown>{'[Hello](https://example.com)'}</Markdown>)
   const link = screen.getByRole('link', { name: 'Hello' })
 
@@ -54,7 +54,7 @@ test('markdown links keep https hrefs with rel and referrer policy', async () =>
   await expect.element(link).toHaveAttribute('referrerpolicy', 'no-referrer')
 })
 
-test('markdown drops javascript urls and does not render images', async () => {
+test('should drop javascript urls and images when markdown contains them', async () => {
   const screen = await render(
     <Markdown>{'[bad](javascript:alert(1))\n\n![](https://example.com/pixel.png)'}</Markdown>,
   )
@@ -63,7 +63,7 @@ test('markdown drops javascript urls and does not render images', async () => {
   await expect.element(screen.getByRole('img')).not.toBeInTheDocument()
 })
 
-test('fenced typescript is syntax highlighted', async () => {
+test('should highlight typescript when a fenced ts block is rendered', async () => {
   const screen = await render(<Markdown>{'```ts\nconst x = 1\n```'}</Markdown>)
   const keyword = screen.getByText('const')
 

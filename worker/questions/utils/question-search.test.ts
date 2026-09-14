@@ -2,7 +2,7 @@ import { expect, test } from 'vitest';
 
 import { questionsMatchingSearch } from './question-search';
 
-test('empty search returns every question', () => {
+test('should return every question when the search is empty', () => {
   const questions = [
     { id: '1', question: '# Hello field' },
     { id: '2', question: 'Other' },
@@ -13,7 +13,7 @@ test('empty search returns every question', () => {
   expect(questionsMatchingSearch(questions, '   ')).toEqual(questions);
 });
 
-test('search matches visible question text and ignores markdown syntax', () => {
+test('should match visible question text when the query ignores markdown syntax', () => {
   const questions = [
     { id: '1', question: '# Hello field' },
     { id: '2', question: 'Other' },

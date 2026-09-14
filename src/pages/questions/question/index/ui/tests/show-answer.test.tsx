@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react'
 import { isAnswerVisible } from '../../model/show-answer'
 import { ShowAnswer } from '../show-answer'
 
-test('show answer button is focused and enter reveals the answer', async () => {
+test('should reveal the answer when enter is pressed on the focused button', async () => {
   isAnswerVisible.setFalse()
 
   const screen = await render(<ShowAnswer answer="Feature-Sliced Design" />)
@@ -20,7 +20,7 @@ test('show answer button is focused and enter reveals the answer', async () => {
   await expect.element(showAnswer).not.toBeInTheDocument()
 })
 
-test('show answer renders markdown instead of raw syntax', async () => {
+test('should render markdown when the answer is revealed', async () => {
   isAnswerVisible.setFalse()
 
   const screen = await render(<ShowAnswer answer="**bold**" />)

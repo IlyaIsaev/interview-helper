@@ -1,33 +1,74 @@
 # Frontend
 
-General style, semicolons, one-line guards, immutability, domain naming, and kebab-case come from user-level `~/.cursor/AGENTS.md`. Parent `AGENTS.md` adds `es-toolkit/fp` pipelines and `es-toolkit/types`. This file adds architecture, React, Reatom, UI, and unit-test conventions.
+TypeScript, kebab-case, `es-toolkit/fp`, and named-export rules come from the parent [`AGENTS.md`](../AGENTS.md). This file adds architecture, React, Reatom, UI, and unit-test conventions.
 
-## Architecture
+## Feature-Sliced Design
 
-Use [Feature-Sliced Design (FSD)](https://fsd.how). Official docs for LLMs: https://fsd.how/llms.txt  
+The SPA in `src/` uses [Feature-Sliced Design (FSD) **v2.1**](https://fsd.how) (current methodology). Official docs for LLMs: https://fsd.how/llms.txt
+
 Local skill: `.agents/skills/feature-sliced-design/SKILL.md` — follow it when placing, moving, or reviewing code.
+
+### Layers
+
+v2.1 core: **start simple, extract when needed.** Place code in `pages/` first. Duplication across pages is acceptable. Extract only when the same code is used in more than one place right now, the usages do not always change together, and the boundary is focused.
+
+Layers from highest to lowest. This project uses `app`, `pages`, `features`, `entities`, and `shared`. Do not adopt `widgets/`. Do not use the deprecated `processes/` layer.
+
+```text
+app/       → Entrypoint, providers, routing, global styles
+pages/     → Route-level composition; owns page-specific UI, state, and logic
+features/  → Reusable user interactions (only when used in 2+ places)
+entities/  → Reusable business domain models (only when used in 2+ places)
+shared/    → Infrastructure with no business logic (UI kit, utils, API client)
+```
+
+Not all layers are required. `app/` + `pages/` + `shared/` is valid FSD. Do not create empty `features/` or `entities/` folders. When in doubt, keep code in the page.
+
+**Shared** is organized by segments only (no slices). It may hold application-aware infrastructure (route constants, API client, session). It must not hold business calculations, domain rules, or feature-specific code. CRUD belongs in `shared/api/`. Auth tokens and session belong in `shared/auth/`.
+
+Name files after the business domain (`question.ts`, `session.ts`), not a technical role (`types.ts`, `utils.ts`, `helpers.ts`).
 
 ### Import rules
 
-A module may import only from layers strictly below it (`app` → `pages` → `features` → `entities` → `shared`). Do not import a slice's internals (`ui/`, `model/`). Consume `features/` and `entities/` through their public `index.ts`. Pages are the exception: see **Pages and routes**.
+A module may import only from layers strictly below it (`app` → `pages` → `features` → `entities` → `shared`). Upward imports are forbidden.
 
-Same-layer internals are forbidden. Features that must share UI or a schema import the owning slice's public `index.ts`. `@x` is entities-only (see **Domain folders**).
+Consume `features/` and `entities/` through that slice's public `index.ts`. Do not import a slice's internals (`ui/`, `model/`, `api/`). Shared has no slices: import from a segment public API (`@/shared/ui`, `@/shared/api`), not a top-level `shared/index.ts`.
 
-### When to extract slices
+Same-layer internals are forbidden. Prefer merging slices, moving shared domain code to `entities/`, or composing from `pages/` / `app/`. If two feature slices must share UI or a schema, import the owning slice's public `index.ts`. `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged. Document why merge does not apply. Never use `@x` on features.
 
-Not all layers are required. Start with `app/`, `pages/`, and `shared/`. Extract to `features/` or `entities/` only when the same code is used in more than one place. Do not adopt `widgets/`. When in doubt, keep code in the page.
+Pages are the exception: they have no slice `index.ts`. See **Pages**.
 
-Do not create empty `features/` or `entities/` folders.
+```ts
+// Allowed
+import { Button } from '@/shared/ui';
+import { questions } from '@/entities/question';
+import { CreateQuestion } from '@/features/questions/create-question';
+
+// Forbidden
+import { loginUser } from '@/features/auth'; // entities → features
+import { QuestionFields } from '@/features/questions/create-question/ui/question-fields'; // bypasses public API
+```
 
 ### Domain folders
 
-Group `features/` and `entities/` slices by **business domain**, not by technical role.
+Group `features/` and `entities/` slices by **business domain**, not by technical role. A domain folder is an FSD slice group: navigation only.
 
 - When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`.
-- The domain folder is only for navigation. It is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
-- Slices on the same layer must not import each other's internals, including siblings in a domain folder. If two feature slices must share UI or a schema, export it from the owning slice's `index.ts`. Prefer merging slices, moving shared domain code to `entities/`, or composing from `pages/` / `app/` first.
-- `@x` is for the entities layer only, and only as a last resort when entity boundaries cannot be merged (e.g. `import { Question } from '@/entities/question/@x/answer'`). Document why merge does not apply. Never use `@x` on features.
+- The folder is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
+- Slices on the same layer must not import each other's internals, including siblings in a domain folder.
 - If the domain is unclear or the slice spans several domains (`theme-switcher`), keep it at the top of `features/` or `entities/`.
+
+### Pages
+
+Pages own substantial logic in v2.1. They are not thin wrappers.
+
+- Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`.
+- A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route's own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present).
+- Page `ui/` files have only a default export (`export default QuestionsPage`). Do not add a slice `index.ts`.
+- Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/questions/index/ui/questions-page`.
+- Load pages with `React.lazy(() => import('@/pages/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
+- Pages must not import from `app/`. Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
+- Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
 
 ### Current layout
 
@@ -60,19 +101,6 @@ shared/config/       ← path constants
 shared/theme/        ← light/dark theme atom + document class sync
 ```
 
-## Pages and routes
-
-Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from `app/`. Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
-
-### Folder layout
-
-- Nest page folders to match `reatomRoute` parent/child inheritance in `src/app/routes.tsx`.
-- A route folder is a group: it may contain child route folders, but not `ui/` or `model/`. The route’s own slice lives in `layout/` if the route has `layout: true`, otherwise in `index/` (`ui/`, `model/` when present).
-- Page `ui/` files have only a default export (`export default QuestionsPage`). Do not add a slice `index.ts`.
-- Import pages in `src/app/routes.tsx` directly from those UI files, e.g. `@/pages/questions/index/ui/questions-page`.
-- Load pages with `React.lazy(() => import('@/pages/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
-- Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
-
 ### Loaders and `init*`
 
 If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
@@ -86,9 +114,9 @@ UI reads the atom, not `route.loader.data()` from inside entities or features. M
 ```ts
 import { map, pick, pipe } from 'es-toolkit/fp';
 
-export const questions = atom<Array<Question>>([], 'questions');
+export const questions = atom<ReadonlyArray<Question> | null>(null, 'questions');
 
-export const initQuestions = action((nextQuestions: Array<Question>) => {
+export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => {
   questions.set(pipe(nextQuestions, map(pick(['id', 'question']))));
 }, 'initQuestions');
 
@@ -201,8 +229,11 @@ A standalone `effect()` that watches `adminRoute()` and calls `.go()` is a last 
 ## React
 
 - Declare with `function`, never arrow functions. This is the exception to the parent “prefer arrow functions” rule.
-- Always extract props into a separate `type`.
-- Keep components mostly pure: derive values, avoid unnecessary local mutation.
+- Always extract props into a separate `type` named `[ComponentName]Props`. Do not use `React.FC`.
+- Keep the majority of props required. Use optional props only when the value may independently be absent. Exclusive variants belong in a discriminated union, not a pile of optionals.
+- DOM callback props are `on*`. Local DOM handlers are `handle*`. Reatom actions stay verb + domain object.
+- Keep components mostly pure: derive values, avoid unnecessary local mutation. Do not copy a prop into `useState` unless the prop is named `initial*`.
+- Do not add Zustand, TanStack Query, or React Router. Reatom owns state, async, and routing.
 
 ```ts
 type FormProps = {
@@ -280,7 +311,7 @@ Form schemas use Valibot via `reatomForm` `schema` (Standard Schema). Do not add
 ## API client
 
 - Frontend API calls go through `clientApi` from `@/shared/api` (`clientApi.loadQuestions()`, `clientApi.createQuestion()`, …), not raw RPC. Hono RPC (`hc<AppType>`) is an implementation detail of that slice.
-- Route-level resources: call `clientApi` in the route `loader`, then `init*` on the entity or feature. Do not call `clientApi` for that resource inside `entities/` or `features/`. See **Pages and routes**.
+- Route-level resources: call `clientApi` in the route `loader`, then `init*` on the entity or feature. Do not call `clientApi` for that resource inside `entities/` or `features/`. See **Loaders and `init*`**.
 - Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
 - Keep the auth client (`authClient`) separate from that facade.
 - Do not import `worker/` at runtime. The only allowed `src/` → `worker/` import is `import type { AppType } from '../../../worker'` in `@/shared/api`.
@@ -315,10 +346,12 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 ## Unit tests
 
 - Vitest Browser Mode (`pnpm test`). Tests under `src/` live in a `tests/` folder next to the code they cover (`ui/tests/foo.test.tsx`, not `ui/foo.test.tsx`). Run in Chromium.
+- Titles follow `test('should ... when ...')`. Query by role, label, then text — not test ids.
 - Screenshots and visual snapshots for those tests live in the same `tests/` folder (including Vitest `__screenshots__/`). Do not put `__screenshots__/` next to production source.
 - React components: `await render(...)` from `vitest-browser-react`, query with locators (`getByRole`, `getByText`), assert with `await expect.element(...).toBeVisible()`.
 - Do not use `createRoot`, `flushSync`, jsdom, Cypress, or Testing Library-in-Node.
 - Do not put Playwright specs in `src/` — those belong in `e2e/`.
+- Do not add snapshot tests.
 
 ## Naming
 
@@ -335,7 +368,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ```ts
 // Values — business intent
-export const cartItems = atom<Array<CartItem>>([], 'cartItems');
+export const cartItems = atom<ReadonlyArray<CartItem>>([], 'cartItems');
 export const user = atom<User | null>(null, 'user');
 export const checkout = action(async () => { ... }, 'checkout');
 export const applyDiscount = action((code: string) => { ... }, 'applyDiscount');

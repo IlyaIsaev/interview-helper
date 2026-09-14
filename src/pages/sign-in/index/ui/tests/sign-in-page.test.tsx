@@ -5,7 +5,7 @@ import { render } from 'vitest-browser-react'
 import { signInForm } from '../../model/sign-in'
 import SignInPage from '../sign-in-page'
 
-test('sign-in links to sign-up and does not mention 24 hour demo expiry', async () => {
+test('should link to sign-up and omit demo expiry copy when the sign-in page renders', async () => {
   const screen = await render(<SignInPage />)
 
   await expect.element(screen.getByRole('heading', { name: 'Sign in' })).toBeVisible()
@@ -15,7 +15,7 @@ test('sign-in links to sign-up and does not mention 24 hour demo expiry', async 
     .not.toBeInTheDocument()
 })
 
-test('sign-in email validation appears on blur, not while typing', async () => {
+test('should show email validation when the field is blurred with invalid input', async () => {
   signInForm.reset()
 
   const screen = await render(<SignInPage />)

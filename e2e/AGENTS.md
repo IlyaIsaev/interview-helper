@@ -1,8 +1,9 @@
 # End-to-end tests
 
-Playwright specs for the app. General style and naming come from the parent `AGENTS.md`. Unit tests live in `src/**/tests/` (see `src/AGENTS.md`).
+Playwright specs for the app. TypeScript conventions come from the parent `AGENTS.md`. Unit tests live in `src/**/tests/` (see `src/AGENTS.md`).
 
 - Specs live in this folder as `*.spec.ts` (`sign-in`, `home`, `questions`).
+- Titles describe the user flow (`signing in creates the demo user and lands on questions`). Do not rewrite them as Vitest `should ... when ...`.
 - Run with `pnpm test:e2e` (Chromium).
 - Do not put e2e specs in `src/`.
 - Do not add Cypress.

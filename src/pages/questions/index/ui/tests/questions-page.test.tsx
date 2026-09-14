@@ -5,7 +5,7 @@ import { initQuestions } from '@/entities/question'
 
 import QuestionsPage from '../questions-page'
 
-test('empty questions page shows create question', async () => {
+test('should show create question when the questions list is empty', async () => {
   initQuestions([])
 
   const screen = await render(<QuestionsPage />)
