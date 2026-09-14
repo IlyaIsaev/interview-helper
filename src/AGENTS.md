@@ -92,7 +92,7 @@ features/questions/update-question/ ← dialog form to update a question + answe
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: profile link + log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/question/   ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots)
+entities/question/   ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives

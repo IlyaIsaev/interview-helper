@@ -4,6 +4,7 @@ import type { ChangeEvent, ReactNode } from "react";
 
 import {
   QuestionList,
+  QuestionPreview,
   questions,
   questionsQuery,
   type Question,
@@ -28,12 +29,13 @@ import {
 } from "@/shared/ui";
 
 import {
+  closeQuestionPreview,
   isQuestionPreviewOpen,
   openQuestionPreview,
+  previewedQuestion,
   previewedQuestionId,
 } from "../model/question-preview";
 import { questionSearch, searchQuestions } from "../model/question-search";
-import { QuestionPreview } from "./question-preview-dialog";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
 
@@ -102,6 +104,15 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();
+  const changeQuestionPreviewOpen = wrap((shouldOpen: boolean) => {
+    if (shouldOpen) {
+      isQuestionPreviewOpen.setTrue();
+
+      return;
+    }
+
+    closeQuestionPreview();
+  });
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
   });
@@ -142,7 +153,11 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         </SidebarContent>
       </Sidebar>
       <CreateQuestion />
-      <QuestionPreview />
+      <QuestionPreview
+        open={isQuestionPreviewOpen()}
+        question={previewedQuestion()}
+        onOpenChange={changeQuestionPreviewOpen}
+      />
       <UpdateQuestion />
       <DeleteQuestion />
       <SidebarInset className="min-h-0 overflow-hidden">

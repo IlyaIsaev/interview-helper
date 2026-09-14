@@ -1,6 +1,3 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
-
 import { cn } from '@/shared/lib';
 import {
   Dialog,
@@ -12,12 +9,7 @@ import {
   Spinner,
 } from '@/shared/ui';
 
-import {
-  closeQuestionPreview,
-  isQuestionPreviewOpen,
-  openQuestionPreview,
-  previewedQuestion,
-} from '../model/question-preview';
+import type { OpenedQuestion } from '../model/question';
 
 const questionPreviewClassName = cn(
   'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
@@ -25,28 +17,25 @@ const questionPreviewClassName = cn(
 
 const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col');
 
-export const QuestionPreview = reatomComponent(() => {
-  const isDialogOpen = isQuestionPreviewOpen();
-  const isQuestionReady = openQuestionPreview.ready();
-  const question = previewedQuestion();
-  const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) {
-      isQuestionPreviewOpen.setTrue();
+type QuestionPreviewProps = {
+  open: boolean;
+  question: OpenedQuestion | null;
+  onOpenChange: (open: boolean) => void;
+};
 
-      return;
-    }
-
-    closeQuestionPreview();
-  });
-
+export function QuestionPreview({
+  open,
+  question,
+  onOpenChange,
+}: QuestionPreviewProps) {
   return (
-    <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="flex h-[95vh] max-h-[95vh] min-h-0 min-w-[min(40vw,calc(100%-2rem))] w-[min(90vw,calc(100%-2rem))] flex-col overflow-clip [overflow-clip-margin:6px] sm:max-w-[90vw]">
         <DialogHeader className="sr-only">
           <DialogTitle>Question</DialogTitle>
           <DialogDescription>Question and answer.</DialogDescription>
         </DialogHeader>
-        {!isQuestionReady || !question ? (
+        {!question ? (
           <div className="flex min-h-0 flex-1 items-center justify-center">
             <Spinner className="size-6" />
             <span className="sr-only">loading</span>
@@ -65,4 +54,4 @@ export const QuestionPreview = reatomComponent(() => {
       </DialogContent>
     </Dialog>
   );
-}, 'QuestionPreview');
+}
