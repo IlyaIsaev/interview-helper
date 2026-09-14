@@ -1,6 +1,7 @@
 import { wrap } from '@reatom/core';
 import { reatomComponent } from '@reatom/react';
 
+import { QuestionFields } from '@/entities/question';
 import {
   Button,
   Dialog,
@@ -18,7 +19,6 @@ import {
   createQuestionForm,
   isCreateQuestionDialogOpen,
 } from '../model/create-question';
-import { QuestionFields } from './question-fields';
 
 export const CreateQuestion = reatomComponent(() => {
   const isDialogOpen = isCreateQuestionDialogOpen();

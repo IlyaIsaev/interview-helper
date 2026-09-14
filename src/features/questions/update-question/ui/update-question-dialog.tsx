@@ -1,7 +1,7 @@
 import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 
-import { QuestionFields } from "@/features/questions/create-question";
+import { QuestionFields } from "@/entities/question";
 import {
   Button,
   Dialog,

@@ -1,5 +1,7 @@
 export { initQuestion, question, type OpenedQuestion } from './model/question';
 
+export { questionFieldsSchema } from './model/question-fields';
+
 export {
   addToQuestions,
   initQuestions,
@@ -12,3 +14,5 @@ export {
   updateInQuestions,
   type Question,
 } from './model/questions';
+
+export { QuestionFields } from './ui/question-fields';

@@ -14,13 +14,13 @@ import { find, pipe } from 'es-toolkit/fp';
 import {
   initQuestion,
   question as openedQuestion,
+  questionFieldsSchema,
   questions,
   questionsQuery,
   refetchQuestions,
   updateInQuestions,
   type Question,
 } from '@/entities/question';
-import { questionFieldsSchema } from '@/features/questions/create-question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
 import { markdownPlainText, toast } from '@/shared/ui';

@@ -2,13 +2,12 @@ import { action, reatomBoolean, reatomForm, urlAtom, withCallHook, wrap } from '
 
 import {
   addToQuestions,
+  questionFieldsSchema,
   questionsQuery,
   refetchQuestions,
 } from '@/entities/question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
-
-import { questionFieldsSchema } from './question-fields';
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,

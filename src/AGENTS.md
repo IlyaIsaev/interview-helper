@@ -41,12 +41,12 @@ Pages are the exception: they have no slice `index.ts`. See **Pages**.
 ```ts
 // Allowed
 import { Button } from '@/shared/ui';
-import { questions } from '@/entities/question';
+import { QuestionFields, questions } from '@/entities/question';
 import { CreateQuestion } from '@/features/questions/create-question';
 
 // Forbidden
 import { loginUser } from '@/features/auth'; // entities → features
-import { QuestionFields } from '@/features/questions/create-question/ui/question-fields'; // bypasses public API
+import { QuestionFields } from '@/entities/question/ui/question-fields'; // bypasses public API
 ```
 
 ### Domain folders
@@ -92,7 +92,7 @@ features/questions/update-question/ ← dialog form to update a question + answe
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: profile link + log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/question/   ← current question + questions (model only)
+entities/question/   ← current question + questions, questionFieldsSchema, QuestionFields
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
