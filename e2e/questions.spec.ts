@@ -1011,7 +1011,7 @@ test('reloading a question page fetches that question once', async ({
   await expect(openedQuestion(page, questionText)).toBeVisible()
 
   const questionId = new URL(page.url()).pathname.split('/').at(-1)
-  const questionRequests: string[] = []
+  const questionRequests: Array<string> = []
 
   page.on('request', (request) => {
     if (request.method() !== 'GET') {

@@ -335,7 +335,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ```ts
 // Values — business intent
-export const cartItems = atom<CartItem[]>([], 'cartItems');
+export const cartItems = atom<Array<CartItem>>([], 'cartItems');
 export const user = atom<User | null>(null, 'user');
 export const checkout = action(async () => { ... }, 'checkout');
 export const applyDiscount = action((code: string) => { ... }, 'applyDiscount');

@@ -1,7 +1,7 @@
 import { and, eq, like, lte } from 'drizzle-orm';
 import { filter, map, pipe } from 'es-toolkit/fp';
 
-import { createDatabase } from '../db/client';
+import type { createDatabase } from '../db/client';
 import { account, session, user } from '../db/schema';
 
 export const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/;
@@ -14,11 +14,7 @@ export const MAX_QUESTIONS_PER_USER = 200;
 
 type Database = ReturnType<typeof createDatabase>;
 
-type DemoUserRow = {
-  id: string;
-  email: string;
-  createdAt: Date;
-};
+type DemoUserRow = Pick<typeof user.$inferSelect, 'id' | 'email' | 'createdAt'>;
 
 export const isDemoUserEmail = (email: string): boolean =>
   DEMO_USER_EMAIL_PATTERN.test(email);

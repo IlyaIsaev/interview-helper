@@ -1,10 +1,9 @@
 import { atom } from '@reatom/core';
 import type { DeepReadonly } from 'es-toolkit/types';
 
-export type DemoCredentials = DeepReadonly<{
-  email: string;
-  password: string;
-}>;
+import type { DemoUserCredentials } from '@/shared/api';
+
+export type DemoCredentials = DeepReadonly<DemoUserCredentials>;
 
 export const createdDemoUser = atom<DemoCredentials | null>(
   null,

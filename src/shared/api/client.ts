@@ -81,7 +81,9 @@ type UpdatedQuestion = InferResponseType<
   200
 >;
 
-type DemoUserCredentials = InferResponseType<(typeof api.api)['demo-user']['$get']>;
+export type DemoUserCredentials = InferResponseType<
+  (typeof api.api)['demo-user']['$get']
+>;
 
 type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json'];
 

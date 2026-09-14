@@ -28,9 +28,9 @@ const createDemoAccount = async (page: Page) => {
 }
 
 test('opening the app redirects guests to sign-in', async ({ page }) => {
-  const demoUserGets: string[] = []
-  const demoUserPosts: string[] = []
-  const signUpRequests: string[] = []
+  const demoUserGets: Array<string> = []
+  const demoUserPosts: Array<string> = []
+  const signUpRequests: Array<string> = []
 
   page.on('requestfinished', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
@@ -134,7 +134,7 @@ test('user menu name opens the profile page without a sidebar', async ({
   ).toBeVisible()
   await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
 
-  const loadQuestionsRequests: string[] = []
+  const loadQuestionsRequests: Array<string> = []
 
   page.on('request', (request) => {
     if (request.method() !== 'GET') {
@@ -216,7 +216,7 @@ test('deleting the account prefills a new demo user', async ({ page }) => {
   await expect(page.getByLabel('password')).not.toHaveValue('')
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
 
-  const demoUserPosts: string[] = []
+  const demoUserPosts: Array<string> = []
 
   page.on('request', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'POST') {
@@ -235,8 +235,8 @@ test('sign-up stays empty, toasts that it is unavailable, and does not register'
   page,
   request,
 }) => {
-  const demoUserGets: string[] = []
-  const signUpRequests: string[] = []
+  const demoUserGets: Array<string> = []
+  const signUpRequests: Array<string> = []
 
   page.on('request', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'GET') {

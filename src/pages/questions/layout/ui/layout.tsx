@@ -1,6 +1,6 @@
 import { reatomBoolean, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
-import { type ChangeEvent, type ReactNode } from "react";
+import type { ChangeEvent, ReactNode } from "react";
 
 import {
   questions,

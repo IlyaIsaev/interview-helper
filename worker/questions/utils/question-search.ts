@@ -7,11 +7,11 @@ type SearchableQuestion = {
 };
 
 export const questionsMatchingSearch = <Question extends SearchableQuestion>(
-  questions: Array<Question>,
+  questions: ReadonlyArray<Question>,
   query: string,
 ): Array<Question> => {
   const normalizedQuery = query.trim().toLowerCase();
-  if (normalizedQuery.length === 0) return questions;
+  if (normalizedQuery.length === 0) return [...questions];
 
   const matchesQuery = (row: Question) =>
     markdownPlainText(row.question).toLowerCase().includes(normalizedQuery);

@@ -28,7 +28,7 @@ test('accepting cookies hides the consent banner', async ({ page }) => {
 test('declining cookies leaves for Google without deleting a user', async ({
   page,
 }) => {
-  const deleteRequests: string[] = []
+  const deleteRequests: Array<string> = []
 
   page.on('request', (request) => {
     if (request.url().includes('/api/demo-user') && request.method() === 'DELETE') {

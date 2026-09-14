@@ -4,7 +4,7 @@ import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
 import { map, pipe } from 'es-toolkit/fp';
 import { useRef } from 'react';
 
-import { type Question } from '@/entities/question';
+import type { Question } from '@/entities/question';
 import { DeleteQuestionButton } from '@/features/questions/delete-question';
 import { UpdateQuestionButton } from '@/features/questions/update-question';
 import { questionPath } from '@/shared/config';
