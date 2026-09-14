@@ -1,6 +1,6 @@
 import { reatomBoolean, withCallHook } from '@reatom/core';
 
-import { initQuestion } from '@/entities/question';
+import { initQuestion } from './question';
 
 export const isAnswerVisible = reatomBoolean(false, 'isAnswerVisible');
 

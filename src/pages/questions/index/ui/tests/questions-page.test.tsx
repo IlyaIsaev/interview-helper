@@ -1,7 +1,7 @@
 import { expect, test } from 'vitest'
 import { render } from 'vitest-browser-react'
 
-import { initQuestions } from '@/entities/question'
+import { initQuestions } from '@/entities/questions/question'
 
 import QuestionsPage from '../questions-page'
 

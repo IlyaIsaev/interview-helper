@@ -20,7 +20,7 @@ import {
   refetchQuestions,
   updateInQuestions,
   type Question,
-} from '@/entities/question';
+} from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
 import { markdownPlainText, toast } from '@/shared/ui';

@@ -9,7 +9,7 @@ import {
 } from '@reatom/core';
 import { pick, pipe } from 'es-toolkit/fp';
 
-import { removeFromQuestions, type OpenedQuestion } from '@/entities/question';
+import { removeFromQuestions, type OpenedQuestion } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
 
 export const previewedQuestionId = atom<string | null>(

@@ -41,20 +41,20 @@ Pages are the exception: they have no slice `index.ts`. See **Pages**.
 ```ts
 // Allowed
 import { Button } from '@/shared/ui';
-import { QuestionFields, questions } from '@/entities/question';
+import { QuestionFields, questions } from '@/entities/questions/question';
 import { CreateQuestion } from '@/features/questions/create-question';
 
 // Forbidden
 import { loginUser } from '@/features/auth'; // entities → features
-import { QuestionFields } from '@/entities/question/ui/question-fields'; // bypasses public API
+import { QuestionFields } from '@/entities/questions/question/ui/question-fields'; // bypasses public API
 ```
 
 ### Domain folders
 
 Group `features/` and `entities/` slices by **business domain**, not by technical role. A domain folder is an FSD slice group: navigation only.
 
-- When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`.
-- The folder is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`.
+- When a slice clearly belongs to one domain, put it in a domain folder: `features/questions/create-question`, `entities/questions/question`.
+- The folder is not a slice: no `index.ts`, no `model/` / `ui/` / `api/` on the folder itself, and no shared files inside it. Import the slice: `@/features/questions/create-question`, `@/entities/questions/question`.
 - Slices on the same layer must not import each other's internals, including siblings in a domain folder.
 - If the domain is unclear or the slice spans several domains (`theme-switcher`), keep it at the top of `features/` or `entities/`.
 
@@ -79,7 +79,7 @@ pages/questions/     ← questions route group (under protectedRoute)
   layout/            ← questionsRoute chrome + list loader (sidebar + toggle + header)
   index/             ← questions list / empty state (/questions)
   question/
-    index/           ← signed-in question detail + show-answer (/questions/:id)
+    index/           ← signed-in question detail (/questions/:id)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
@@ -92,7 +92,7 @@ features/questions/update-question/ ← dialog form to update a question + answe
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: profile link + log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/question/   ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview
+entities/questions/question/ ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives

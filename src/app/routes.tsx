@@ -8,7 +8,7 @@ import {
   questions,
   questionsQuery,
   resetQuestions,
-} from "@/entities/question";
+} from "@/entities/questions/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
 import { initSignIn } from "@/pages/sign-in/index/model/sign-in";
 import { clientApi } from "@/shared/api";

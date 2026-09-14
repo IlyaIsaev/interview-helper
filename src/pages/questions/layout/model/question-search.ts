@@ -1,6 +1,6 @@
 import { action, reatomString, sleep, withAbort, wrap } from '@reatom/core';
 
-import { refetchQuestions } from '@/entities/question';
+import { refetchQuestions } from '@/entities/questions/question';
 
 export const questionSearch = reatomString('', 'questionSearch');
 

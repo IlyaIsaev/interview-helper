@@ -8,7 +8,7 @@ import {
   questions,
   questionsQuery,
   type Question,
-} from "@/entities/question";
+} from "@/entities/questions/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";

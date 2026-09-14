@@ -20,3 +20,5 @@ export { QuestionFields } from './ui/question-fields';
 export { QuestionList } from './ui/question-list';
 
 export { QuestionPreview } from './ui/question-preview';
+
+export { RandomQuestion } from './ui/random-question';

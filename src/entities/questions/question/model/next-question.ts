@@ -1,8 +1,9 @@
 import { action, computed, urlAtom } from '@reatom/core';
 import { filter, pipe, sample } from 'es-toolkit/fp';
 
-import { questions, type Question } from '@/entities/question';
 import { QUESTIONS_PATH, questionPath } from '@/shared/config';
+
+import { questions, type Question } from './questions';
 
 const openedQuestionId = computed(() => {
   const { pathname } = urlAtom();
