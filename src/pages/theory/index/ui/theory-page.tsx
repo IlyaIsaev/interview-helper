@@ -85,38 +85,38 @@ const QuestionAccordionItem = reatomComponent(
 
     return (
       <AccordionItem className="group/accordion-item" value={listedQuestion.id}>
-        <div className="flex items-start gap-1">
-          <AccordionTrigger
-            className="py-3 hover:no-underline"
-            title={markdownPlainText(listedQuestion.question)}
-          >
-            <span className="min-w-0 flex-1 text-left">
-              <Markdown plain>{listedQuestion.question}</Markdown>
-            </span>
-          </AccordionTrigger>
-          <div className="flex shrink-0 items-center gap-1 py-2 pr-1 transition-opacity md:opacity-0 md:group-hover/accordion-item:opacity-100 md:group-focus-within/accordion-item:opacity-100">
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              aria-label="Update question"
-              onClick={handleOpenUpdateQuestion}
-            >
-              <Pencil />
-            </Button>
-            <Button
-              type="button"
-              variant="ghost"
-              size="icon"
-              className="size-7"
-              aria-label="Delete question"
-              onClick={handleOpenDeleteQuestion}
-            >
-              <Trash2 />
-            </Button>
-          </div>
-        </div>
+        <AccordionTrigger
+          className="py-3 hover:no-underline"
+          title={markdownPlainText(listedQuestion.question)}
+          trailing={
+            <div className="flex shrink-0 items-center gap-1 py-2 pr-1 transition-opacity md:opacity-0 md:group-hover/accordion-item:opacity-100 md:group-focus-within/accordion-item:opacity-100">
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label="Update question"
+                onClick={handleOpenUpdateQuestion}
+              >
+                <Pencil />
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="size-7"
+                aria-label="Delete question"
+                onClick={handleOpenDeleteQuestion}
+              >
+                <Trash2 />
+              </Button>
+            </div>
+          }
+        >
+          <span className="min-w-0 flex-1 text-left">
+            <Markdown plain>{listedQuestion.question}</Markdown>
+          </span>
+        </AccordionTrigger>
         <AccordionContent>
           <QuestionAnswer questionId={listedQuestion.id} />
         </AccordionContent>

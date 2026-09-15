@@ -102,9 +102,19 @@ test('should include hover-revealed update and delete actions on an accordion it
 
   if (!questionActions) throw new Error('Missing question actions')
 
+  const chevronTrigger = questionActions.parentElement?.querySelector(
+    '[data-slot="accordion-trigger-icon"]',
+  )
+
+  if (!chevronTrigger) throw new Error('Missing accordion chevron')
+
   expect(questionActions.className).toContain('md:opacity-0')
   expect(questionActions.className).toContain('md:group-hover/accordion-item:opacity-100')
   expect(questionActions.className).toContain('md:group-focus-within/accordion-item:opacity-100')
+  expect(
+    updateQuestion.element().compareDocumentPosition(chevronTrigger) &
+      Node.DOCUMENT_POSITION_FOLLOWING,
+  ).toBe(Node.DOCUMENT_POSITION_FOLLOWING)
 })
 
 test('should clear the question id search param when the open trigger collapses', async () => {
