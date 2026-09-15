@@ -16,6 +16,7 @@ const openRandomQuestion = (questionCount: 'one' | 'two') => {
   isAnswerVisible.setFalse()
   urlAtom.go(questionPath(currentQuestionId))
   initQuestion({
+    id: currentQuestionId,
     question: '# Hello',
     answer: 'hidden answer',
   })
@@ -57,6 +58,7 @@ test('should render markdown when the answer is revealed', async () => {
   isAnswerVisible.setFalse()
   urlAtom.go(questionPath(currentQuestionId))
   initQuestion({
+    id: currentQuestionId,
     question: '# Hello',
     answer: '**bold**',
   })

@@ -13,6 +13,8 @@ import { find, pipe } from 'es-toolkit/fp';
 
 import {
   initQuestion,
+  openedQuestionId,
+  openQuestion,
   question as openedQuestion,
   questionFieldsSchema,
   questions,
@@ -64,7 +66,9 @@ export const updateQuestionForm = reatomForm(
       if (!questionId) return;
 
       const question = pipe(questions() ?? [], find(hasQuestionId(questionId)));
-      const isQuestionOpened = urlAtom().pathname === questionPath(questionId);
+      const isQuestionOpened =
+        openedQuestionId() === questionId ||
+        urlAtom().pathname === questionPath(questionId);
       const questionOnPage = isQuestionOpened ? openedQuestion() : undefined;
       const questionText = question?.question ?? questionOnPage?.question;
       const questionDescription =
@@ -84,7 +88,7 @@ export const updateQuestionForm = reatomForm(
 
       syncQuestion(
         { id: questionId, question: nextQuestion },
-        { question: nextQuestion, answer: nextAnswer },
+        { id: questionId, question: nextQuestion, answer: nextAnswer },
       );
 
       try {
@@ -101,6 +105,7 @@ export const updateQuestionForm = reatomForm(
             question: updatedQuestion.question,
           },
           {
+            id: updatedQuestion.id,
             question: updatedQuestion.question,
             answer: updatedQuestion.answer,
           },
@@ -147,6 +152,6 @@ updateQuestionForm.submit.onFulfill.extend(
   withCallHook(({ payload: updatedQuestion }) => {
     if (!updatedQuestion) return;
 
-    urlAtom.go(questionPath(updatedQuestion.id));
+    openQuestion(updatedQuestion.id);
   }),
 );

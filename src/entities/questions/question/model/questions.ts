@@ -4,6 +4,8 @@ import type { DeepReadonly } from 'es-toolkit/types';
 
 import { clientApi } from '@/shared/api';
 
+import { initQuestion, openedQuestionId } from './question';
+
 export type Question = DeepReadonly<{
   id: string;
   question: string;
@@ -21,6 +23,10 @@ export const resetQuestions = action(() => {
   questions.set(null);
 
   questionsQuery.set('');
+
+  openedQuestionId.set('');
+
+  initQuestion(null);
 }, 'resetQuestions');
 
 export const addToQuestions = action((question: Question) => {

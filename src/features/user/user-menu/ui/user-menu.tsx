@@ -2,7 +2,7 @@ import { wrap } from '@reatom/core';
 import { reatomComponent } from '@reatom/react';
 
 import { signOut } from '@/shared/auth';
-import { PROFILE_PATH } from '@/shared/config';
+import { PROFILE_PATH, QUESTIONS_PATH, THEORY_PATH } from '@/shared/config';
 import {
   Avatar,
   AvatarFallback,
@@ -30,6 +30,12 @@ export const UserMenu = reatomComponent(() => {
         <span className="sr-only">{name}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <a href={QUESTIONS_PATH}>Questions</a>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <a href={THEORY_PATH}>Theory</a>
+        </DropdownMenuItem>
         <DropdownMenuItem asChild>
           <a href={PROFILE_PATH}>Profile</a>
         </DropdownMenuItem>

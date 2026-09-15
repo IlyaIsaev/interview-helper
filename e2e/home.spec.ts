@@ -27,6 +27,15 @@ const createDemoAccount = async (page: Page) => {
   return { email, password }
 }
 
+const openUserMenu = async (page: Page) => {
+  await expect(async () => {
+    await page.getByRole('button', { name: 'Demo user' }).click()
+    await expect(page.getByRole('menuitem', { name: 'Profile' })).toBeVisible({
+      timeout: 2_000,
+    })
+  }).toPass({ timeout: 15_000 })
+}
+
 test('opening the app redirects guests to sign-in', async ({ page }) => {
   const demoUserGets: Array<string> = []
   const demoUserPosts: Array<string> = []
@@ -79,7 +88,9 @@ test('signing in creates the demo user and lands on questions', async ({
     await expect(page.getByText('the questions list is empty')).toBeVisible()
   }
 
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await openUserMenu(page)
+  await expect(page.getByRole('menuitem', { name: 'Questions' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: 'Theory' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Profile' })).toBeVisible()
   await expect(page.getByRole('menuitem', { name: 'Log Out' })).toBeVisible()
 
@@ -94,7 +105,7 @@ test('signing out returns to sign-in with the same demo user', async ({
 }) => {
   const { email, password } = await createDemoAccount(page)
 
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Log Out' }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/)
@@ -119,7 +130,7 @@ test('user menu name opens the profile page without a sidebar', async ({
 }) => {
   const { email } = await createDemoAccount(page)
 
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
 
   await expect(page).toHaveURL(/\/profile$/)
@@ -179,7 +190,7 @@ test('signed-in users opening sign-in are sent to questions', async ({
 test('cancelling account deletion stays on profile', async ({ page }) => {
   await createDemoAccount(page)
 
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 
@@ -202,7 +213,7 @@ test('cancelling account deletion stays on profile', async ({ page }) => {
 test('deleting the account prefills a new demo user', async ({ page }) => {
   const { email: deletedEmail } = await createDemoAccount(page)
 
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
   await expect(page).toHaveURL(/\/profile$/)
 

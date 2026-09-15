@@ -8,7 +8,11 @@ test('should render markdown when the preview is open with a question', async ()
   const screen = await render(
     <QuestionPreview
       open
-      question={{ question: '# Hello', answer: 'hidden answer' }}
+      question={{
+        id: '11111111-1111-1111-1111-111111111111',
+        question: '# Hello',
+        answer: 'hidden answer',
+      }}
       onOpenChange={() => {}}
     />,
   )
@@ -33,7 +37,11 @@ test('should call onOpenChange when close is clicked', async () => {
   const screen = await render(
     <QuestionPreview
       open
-      question={{ question: 'Question text', answer: 'Answer text' }}
+      question={{
+        id: '11111111-1111-1111-1111-111111111111',
+        question: 'Question text',
+        answer: 'Answer text',
+      }}
       onOpenChange={(open) => {
         opens.push(open)
       }}

@@ -1,13 +1,13 @@
-import { action, reatomBoolean, reatomForm, urlAtom, withCallHook, wrap } from '@reatom/core';
+import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/core';
 
 import {
   addToQuestions,
+  openQuestion,
   questionFieldsSchema,
   questionsQuery,
   refetchQuestions,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
-import { questionPath } from '@/shared/config';
 import { markdownPlainText, toast } from '@/shared/ui';
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
@@ -65,7 +65,7 @@ createQuestionForm.submit.onFulfill.extend(
 
     closeCreateQuestionDialog();
 
-    urlAtom.go(questionPath(createdQuestion.id));
+    openQuestion(createdQuestion.id);
 
     syncCreatedQuestion(createdQuestion);
 

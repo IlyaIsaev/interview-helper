@@ -3,6 +3,7 @@ import { findIndex, pipe } from 'es-toolkit/fp';
 
 import {
   initQuestion,
+  openedQuestionId,
   questions,
   questionsQuery,
   refetchQuestions,
@@ -11,7 +12,7 @@ import {
   type Question,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
-import { questionPath, QUESTIONS_PATH } from '@/shared/config';
+import { QUESTIONS_PATH, questionPath, THEORY_PATH } from '@/shared/config';
 import { markdownPlainText, toast } from '@/shared/ui';
 
 export const deletedQuestionId = atom<string | null>(null, 'deletedQuestionId');
@@ -69,7 +70,13 @@ export const deleteQuestion = action(async () => {
     description: questionDescription,
   });
 
-  if (urlAtom().pathname === questionPath(questionId)) {
+  if (urlAtom().pathname === THEORY_PATH) {
+    if (openedQuestionId() === questionId) {
+      openedQuestionId.set('');
+
+      initQuestion(null);
+    }
+  } else if (urlAtom().pathname === questionPath(questionId)) {
     initQuestion(null);
 
     urlAtom.go(QUESTIONS_PATH);

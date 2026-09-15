@@ -5,7 +5,7 @@ import { QUESTIONS_PATH, questionPath } from '@/shared/config';
 
 import { questions, type Question } from './questions';
 
-const openedQuestionId = computed(() => {
+const currentQuestionId = computed(() => {
   const { pathname } = urlAtom();
   const prefix = `${QUESTIONS_PATH}/`;
 
@@ -16,17 +16,17 @@ const openedQuestionId = computed(() => {
   if (questionId.length === 0 || questionId.includes('/')) return null;
 
   return questionId;
-}, 'openedQuestionId');
+}, 'currentQuestionId');
 
-const isOtherQuestion = (currentQuestionId: string) => (question: Question) =>
-  question.id !== currentQuestionId;
+const isOtherQuestion = (openedQuestionId: string) => (question: Question) =>
+  question.id !== openedQuestionId;
 
 export const otherQuestions = computed(() => {
-  const currentQuestionId = openedQuestionId();
+  const openedQuestionId = currentQuestionId();
 
-  if (!currentQuestionId) return [];
+  if (!openedQuestionId) return [];
 
-  return pipe(questions() ?? [], filter(isOtherQuestion(currentQuestionId)));
+  return pipe(questions() ?? [], filter(isOtherQuestion(openedQuestionId)));
 }, 'otherQuestions');
 
 export const openNextQuestion = action(() => {

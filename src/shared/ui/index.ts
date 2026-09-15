@@ -1,3 +1,10 @@
+export {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from './accordion';
+
 export { Avatar, AvatarFallback, AvatarImage } from './avatar';
 
 export { Button } from './button';
@@ -100,6 +107,13 @@ export { Label } from './label';
 export { Markdown, markdownPlainText } from './markdown';
 
 export { Textarea } from './textarea';
+
+export type {
+  AccordionContentProps,
+  AccordionItemProps,
+  AccordionProps,
+  AccordionTriggerProps,
+} from './accordion';
 
 export type { ButtonProps } from './button';
 

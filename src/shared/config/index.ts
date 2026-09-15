@@ -5,5 +5,6 @@ export {
   QUESTIONS_PATH,
   SIGN_IN_PATH,
   SIGN_UP_PATH,
+  THEORY_PATH,
 } from './routes';
 export type { QuestionPath } from './routes';

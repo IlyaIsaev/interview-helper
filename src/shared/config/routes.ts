@@ -8,6 +8,8 @@ export const PROFILE_PATH = '/profile';
 
 export const QUESTIONS_PATH = '/questions';
 
+export const THEORY_PATH = '/theory';
+
 export type QuestionPath = `${typeof QUESTIONS_PATH}/${string}`;
 
 export const questionPath = (questionId: string): QuestionPath =>

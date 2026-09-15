@@ -1,4 +1,10 @@
-export { initQuestion, question, type OpenedQuestion } from './model/question';
+export {
+  initQuestion,
+  openedQuestionId,
+  openQuestion,
+  question,
+  type OpenedQuestion,
+} from './model/question';
 
 export { questionFieldsSchema } from './model/question-fields';
 

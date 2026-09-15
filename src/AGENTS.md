@@ -39,6 +39,8 @@ pages/questions/     ← questions route group (under protectedRoute)
   index/             ← questions list / empty state (/questions)
   question/
     index/           ← signed-in question detail; composes RandomQuestion (/questions/:id)
+pages/theory/
+  index/             ← accordion list / empty state (/theory, open item is ?id=)
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
@@ -49,9 +51,9 @@ features/questions/create-question/ ← dialog form to create a question + answe
 features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
-features/user/user-menu/ ← header menu: profile link + log out
+features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/questions/question/ ← current question + questions, questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
+entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
@@ -102,6 +104,21 @@ async loader() {
   initQuestions(nextQuestions);
 
   openSignedInDestination();
+}
+
+// theoryRoute loader
+async loader() {
+  if (!session.data()?.user) return;
+
+  const { questions: nextQuestions } = await wrap(
+    clientApi.loadQuestions(questionsQuery()),
+  );
+
+  initQuestions(nextQuestions);
+
+  effect(() => {
+    loadOpenedQuestion(openedQuestionId());
+  });
 }
 
 // Forbidden — entity/feature fetches a route-level resource
@@ -305,6 +322,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.
   - Signed-in users on `/` or auth URLs go to `questionsRoute`. Questions load in that route's `loader`; empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
+  - `/theory` is behind `protectedRoute` for auth; it loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
   - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
 - Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.

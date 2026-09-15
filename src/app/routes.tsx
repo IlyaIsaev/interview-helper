@@ -1,16 +1,19 @@
-import { action, reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { action, effect, reatomRoute, urlAtom, wrap } from "@reatom/core";
 import { pipe, sample } from "es-toolkit/fp";
 import { lazy, Suspense } from "react";
 
 import {
   initQuestion,
   initQuestions,
+  openedQuestionId,
   questions,
   questionsQuery,
   resetQuestions,
 } from "@/entities/questions/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
 import { initSignIn } from "@/pages/sign-in/index/model/sign-in";
+import { loadOpenedQuestion } from "@/pages/theory/index/model/load-opened-question";
+import { theoryQuestionSearch } from "@/pages/theory/index/model/question-search";
 import { clientApi } from "@/shared/api";
 import { session } from "@/shared/auth";
 import {
@@ -19,6 +22,7 @@ import {
   QUESTIONS_PATH,
   SIGN_IN_PATH,
   SIGN_UP_PATH,
+  THEORY_PATH,
 } from "@/shared/config";
 import { PageFallback } from "@/shared/ui";
 
@@ -33,6 +37,8 @@ const SignInPage = lazy(() => import("@/pages/sign-in/index/ui/sign-in-page"));
 const SignUpPage = lazy(() => import("@/pages/sign-up/index/ui/sign-up-page"));
 
 const ProfilePage = lazy(() => import("@/pages/profile/index/ui/profile-page"));
+
+const TheoryPage = lazy(() => import("@/pages/theory/index/ui/theory-page"));
 
 const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
 
@@ -79,6 +85,8 @@ export const protectedRoute = rootRoute.reatomRoute(
         resetQuestions();
 
         questionSearch.reset();
+
+        theoryQuestionSearch.reset();
       }
 
       if (!user && !onAuthPage) {
@@ -117,6 +125,8 @@ export const questionsRoute = protectedRoute.reatomRoute(
     },
     async loader() {
       if (!session.data()?.user) return;
+
+      questionsQuery.set(questionSearch().trim());
 
       const { questions: nextQuestions } = await wrap(
         clientApi.loadQuestions(questionsQuery()),
@@ -165,6 +175,41 @@ export const questionRoute = questionsRoute.reatomRoute(
     },
   },
   "questionRoute",
+);
+
+export const theoryRoute = protectedRoute.reatomRoute(
+  {
+    path: THEORY_PATH.slice(1),
+    async loader() {
+      if (!session.data()?.user) return;
+
+      const idFromUrl = urlAtom().searchParams.get("id") ?? "";
+
+      if (openedQuestionId() !== idFromUrl) {
+        openedQuestionId.set(idFromUrl);
+      }
+
+      questionsQuery.set(theoryQuestionSearch().trim());
+
+      const { questions: nextQuestions } = await wrap(
+        clientApi.loadQuestions(questionsQuery()),
+      );
+
+      initQuestions(nextQuestions);
+
+      effect(() => {
+        loadOpenedQuestion(openedQuestionId());
+      });
+    },
+    render(self) {
+      self.loader.ready();
+
+      if (questions() === null) return <PageFallback />;
+
+      return <TheoryPage />;
+    },
+  },
+  "theoryRoute",
 );
 
 export const profileRoute = protectedRoute.reatomRoute(
@@ -241,6 +286,7 @@ export const appRoutes = {
   protected: protectedRoute,
   questions: questionsRoute,
   question: questionRoute,
+  theory: theoryRoute,
   profile: profileRoute,
   signIn: signInRoute,
   signUp: signUpRoute,

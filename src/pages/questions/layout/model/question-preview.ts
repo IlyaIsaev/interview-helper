@@ -52,7 +52,7 @@ export const openQuestionPreview = action(async (questionId: string) => {
     return;
   }
 
-  previewedQuestion.set(pipe(nextQuestion, pick(['question', 'answer'])));
+  previewedQuestion.set(pipe(nextQuestion, pick(['id', 'question', 'answer'])));
 }, 'openQuestionPreview').extend(withAsync(), withAbort());
 
 removeFromQuestions.extend(
