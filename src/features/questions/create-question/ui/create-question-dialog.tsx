@@ -1,5 +1,7 @@
 import { wrap } from '@reatom/core';
 import { reatomComponent } from '@reatom/react';
+import { FileUp } from 'lucide-react';
+import { useRef, type ChangeEvent } from 'react';
 
 import { QuestionFields } from '@/entities/questions/question';
 import {
@@ -17,15 +19,31 @@ import {
 import {
   closeCreateQuestionDialog,
   createQuestionForm,
+  importQuestionFromMarkdown,
   isCreateQuestionDialogOpen,
 } from '../model/create-question';
 
 export const CreateQuestion = reatomComponent(() => {
+  const markdownFileInputRef = useRef<HTMLInputElement>(null);
   const isDialogOpen = isCreateQuestionDialogOpen();
   const { fields, submit, validation } = createQuestionForm;
   const isSubmitReady = submit.ready();
   const hasValidationErrors = validation().errors.length > 0;
   const { dirty } = createQuestionForm.focus();
+  const openMarkdownFilePicker = wrap(() => {
+    markdownFileInputRef.current?.click();
+  });
+  const handleMarkdownFileChange = wrap(
+    async (event: ChangeEvent<HTMLInputElement>) => {
+      const file = event.target.files?.[0];
+
+      if (!file) return;
+
+      await importQuestionFromMarkdown(file);
+
+      event.target.value = '';
+    },
+  );
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) isCreateQuestionDialogOpen.setTrue();
 
@@ -48,21 +66,38 @@ export const CreateQuestion = reatomComponent(() => {
           onSubmit={submit}
         >
           <QuestionFields question={fields.question} answer={fields.answer} />
-          <DialogFooter className="shrink-0">
+          <input
+            ref={markdownFileInputRef}
+            type="file"
+            accept=".md"
+            className="hidden"
+            onChange={handleMarkdownFileChange}
+          />
+          <DialogFooter className="shrink-0 sm:justify-between">
             <Button
               type="button"
               variant="outline"
-              onClick={wrap(closeCreateQuestionDialog)}
+              onClick={openMarkdownFilePicker}
             >
-              Cancel
+              <FileUp data-icon="inline-start" />
+              From markdown
             </Button>
-            <Button
-              type="submit"
-              disabled={!isSubmitReady || hasValidationErrors || !dirty}
-            >
-              {!isSubmitReady ? <Spinner data-icon="inline-start" /> : null}
-              Create
-            </Button>
+            <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={wrap(closeCreateQuestionDialog)}
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={!isSubmitReady || hasValidationErrors || !dirty}
+              >
+                {!isSubmitReady ? <Spinner data-icon="inline-start" /> : null}
+                Create
+              </Button>
+            </div>
           </DialogFooter>
         </Form>
       </DialogContent>

@@ -321,6 +321,60 @@ test('create stays disabled until both fields have non-empty text', async ({
   await expect(createSubmit(page)).toBeEnabled()
 })
 
+test('importing markdown prefills the create question form', async ({ page }) => {
+  const stamp = Date.now()
+  const headingText = `Imported ${stamp}`
+  const answerLine = `Answer **${stamp}**`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+
+  const dialog = page.getByRole('dialog')
+
+  await expect(dialog).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'From markdown' })).toBeVisible()
+
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: 'question.md',
+    mimeType: 'text/markdown',
+    buffer: Buffer.from(`# ${headingText}\n\n${answerLine}`),
+  })
+
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    headingText,
+  )
+  await expect(dialog.getByRole('textbox', { name: 'answer' })).toHaveValue(
+    answerLine,
+  )
+  await expect(createSubmit(page)).toBeEnabled()
+})
+
+test('importing invalid markdown shows an error and leaves the form empty', async ({
+  page,
+}) => {
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+
+  const dialog = page.getByRole('dialog')
+
+  await expect(dialog).toBeVisible()
+
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: 'question.md',
+    mimeType: 'text/markdown',
+    buffer: Buffer.from('## Not a top-level heading\n\nBody'),
+  })
+
+  await expect(
+    notifications(page).getByText('The file must start with a heading.'),
+  ).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue('')
+  await expect(dialog.getByRole('textbox', { name: 'answer' })).toHaveValue('')
+  await expect(createSubmit(page)).toBeDisabled()
+})
+
 test('cancelling create resets the form', async ({ page }) => {
   await signIn(page)
 

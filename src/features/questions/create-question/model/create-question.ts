@@ -10,6 +10,8 @@ import {
 import { clientApi } from '@/shared/api';
 import { markdownPlainText, toast } from '@/shared/ui';
 
+import { parseQuestionMarkdown } from './parse-question-markdown';
+
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,
   'isCreateQuestionDialogOpen',
@@ -22,6 +24,29 @@ export const closeCreateQuestionDialog = action(() => {
 
   createQuestionForm.reset();
 }, 'closeCreateQuestionDialog');
+
+const markdownImportInvalidMessage = 'The file must start with a heading.';
+
+export const importQuestionFromMarkdown = action(async (file: File) => {
+  if (!file.name.toLowerCase().endsWith('.md')) {
+    toast.error(markdownImportInvalidMessage);
+
+    return;
+  }
+
+  const content = await wrap(file.text());
+  const parsed = parseQuestionMarkdown(content);
+
+  if (!parsed) {
+    toast.error(markdownImportInvalidMessage);
+
+    return;
+  }
+
+  createQuestionForm.fields.question.change(parsed.question);
+
+  createQuestionForm.fields.answer.change(parsed.answer);
+}, 'importQuestionFromMarkdown');
 
 export const createQuestionForm = reatomForm(
   {
