@@ -1,20 +1,43 @@
 import type { FieldAtom } from '@reatom/core';
-import { wrap } from '@reatom/core';
+import { memoKey, notify, wrap } from '@reatom/core';
 import { bindField } from '@reatom/react';
 import { omit, pipe } from 'es-toolkit/fp';
+
+import { triggerFieldSchemaValidation } from './form-schema-validation';
+
+type FieldBlurSession = {
+  editedDuringFocus: boolean;
+};
 
 export const bindFormControl = <TState, TValue>(
   field: FieldAtom<TState, TValue>,
 ): Omit<ReturnType<typeof bindField<TValue>>, 'error'> => {
   const bound = bindField(field);
-  const baseOnBlur = bound.onBlur;
+  const baseOnFocus = bound.onFocus;
+  const baseOnChange = bound.onChange;
+  const session = memoKey<FieldBlurSession>(field.name, () => ({
+    editedDuringFocus: false,
+  }));
 
-  return pipe(bound, omit(['error', 'onBlur']), (controls) => ({
+  return pipe(bound, omit(['error', 'onBlur', 'onFocus', 'onChange']), (controls) => ({
     ...controls,
+    onFocus: wrap((event) => {
+      session.editedDuringFocus = false;
+      baseOnFocus(event);
+    }),
+    onChange: wrap((event) => {
+      session.editedDuringFocus = true;
+      baseOnChange(event);
+    }),
     onBlur: wrap(() => {
-      baseOnBlur();
+      field.focus.out();
 
-      if (field.focus().dirty) field.validation.trigger();
+      if (session.editedDuringFocus || field.focus().dirty) {
+        field.validation.trigger();
+        triggerFieldSchemaValidation(field);
+      }
+
+      notify();
     }),
   }));
 };

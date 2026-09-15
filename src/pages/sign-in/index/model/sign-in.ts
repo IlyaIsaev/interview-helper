@@ -8,7 +8,7 @@ import {
   session,
   type DemoCredentials,
 } from '@/shared/auth';
-import { toast } from '@/shared/ui';
+import { registerFormSchemaValidation, toast } from '@/shared/ui';
 
 const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/;
 
@@ -65,6 +65,11 @@ export const signInForm = reatomForm(
     },
   },
 );
+
+registerFormSchemaValidation(signInForm, [
+  signInForm.fields.email,
+  signInForm.fields.password,
+]);
 
 export const initSignIn = action((credentials: DemoCredentials) => {
   createdDemoUser.set(credentials);

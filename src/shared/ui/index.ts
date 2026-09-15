@@ -21,6 +21,8 @@ export {
 
 export { bindFormControl } from './bind-form-control';
 
+export { registerFormSchemaValidation } from './form-schema-validation';
+
 export {
   DropdownMenu,
   DropdownMenuContent,

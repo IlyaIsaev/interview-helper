@@ -8,7 +8,7 @@ import {
   refetchQuestions,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
-import { markdownPlainText, toast } from '@/shared/ui';
+import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,
@@ -44,6 +44,11 @@ export const createQuestionForm = reatomForm(
     },
   },
 );
+
+registerFormSchemaValidation(createQuestionForm, [
+  createQuestionForm.fields.question,
+  createQuestionForm.fields.answer,
+]);
 
 const syncCreatedQuestion = action(async (createdQuestion: {
   id: string;
