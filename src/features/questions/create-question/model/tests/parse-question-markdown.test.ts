@@ -6,14 +6,14 @@ test('parses an ATX h1 question and markdown answer body', () => {
   const content = '# What is FSD?\n\n**Feature-Sliced Design**';
 
   expect(parseQuestionMarkdown(content)).toEqual({
-    question: 'What is FSD?',
+    question: '# What is FSD?',
     answer: '**Feature-Sliced Design**',
   });
 });
 
 test('parses a title-only file with an empty answer', () => {
   expect(parseQuestionMarkdown('# Solo title')).toEqual({
-    question: 'Solo title',
+    question: '# Solo title',
     answer: '',
   });
 });

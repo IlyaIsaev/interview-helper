@@ -362,8 +362,9 @@ test('importing markdown prefills the create question form', async ({ page }) =>
   })
 
   await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
-    headingText,
+    `# ${headingText}`,
   )
+  await expect(dialog.getByRole('heading', { name: headingText })).toBeVisible()
   await expect(dialog.getByRole('textbox', { name: 'answer' })).toHaveValue(
     answerLine,
   )

@@ -13,16 +13,12 @@ export function parseQuestionMarkdown(
     firstLineEnd === -1 ? content : content.slice(0, firstLineEnd);
   const match = ATX_H1_PATTERN.exec(firstLine);
 
-  if (!match) return null;
-
-  const question = match[1];
-
-  if (!question) return null;
+  if (!match?.[1]) return null;
 
   const rawAnswer =
     firstLineEnd === -1 ? '' : content.slice(firstLineEnd + 1);
   const answer =
     rawAnswer.startsWith('\n') ? rawAnswer.slice(1) : rawAnswer;
 
-  return { question, answer };
+  return { question: firstLine, answer };
 }
