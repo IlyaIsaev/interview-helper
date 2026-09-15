@@ -33,3 +33,6 @@ Session.vim
 .playwright-mcp/*
 .vitest-attachments/
 lefthook-local.yml
+
+# graft's local graph cache — regenerable, not committed (run `graft build`).
+/graft/
