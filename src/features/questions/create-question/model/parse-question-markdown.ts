@@ -17,7 +17,7 @@ export function parseQuestionMarkdown(
 
   const question = match[1];
 
-  if (question.length === 0) return null;
+  if (!question) return null;
 
   const rawAnswer =
     firstLineEnd === -1 ? '' : content.slice(firstLineEnd + 1);

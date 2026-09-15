@@ -21,9 +21,9 @@ export const bindFormControl = <TState, TValue>(
 
   return pipe(bound, omit(['error', 'onBlur', 'onFocus', 'onChange']), (controls) => ({
     ...controls,
-    onFocus: wrap((event) => {
+    onFocus: wrap(() => {
       session.editedDuringFocus = false;
-      baseOnFocus(event);
+      baseOnFocus();
     }),
     onChange: wrap((event) => {
       session.editedDuringFocus = true;
