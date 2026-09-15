@@ -25,7 +25,7 @@ export const signUpForm = reatomForm(
   },
   {
     name: 'signUpForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: false,
     schema: signUpSchema,
     onSubmit: () => {

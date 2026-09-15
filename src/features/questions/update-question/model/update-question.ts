@@ -57,7 +57,7 @@ export const updateQuestionForm = reatomForm(
   },
   {
     name: 'updateQuestionForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {

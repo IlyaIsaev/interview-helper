@@ -34,7 +34,7 @@ export const signInForm = reatomForm(
   },
   {
     name: 'signInForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: false,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {

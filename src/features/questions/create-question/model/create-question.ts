@@ -30,7 +30,7 @@ export const createQuestionForm = reatomForm(
   },
   {
     name: 'createQuestionForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question, answer }) => {
