@@ -12,7 +12,7 @@ import {
 import type { OpenedQuestion } from '../model/question';
 
 const questionPreviewClassName = cn(
-  'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
+  'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 pt-10 pb-4',
 );
 
 const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col');
@@ -44,7 +44,7 @@ export function QuestionPreview({
           <section className={questionPreviewClassName}>
             <div className={questionAnswerColumnClassName}>
               <Markdown className="shrink-0">{question.question}</Markdown>
-              <div className="h-[3lh] shrink-0" aria-hidden="true" />
+              <div className="h-6 shrink-0" aria-hidden="true" />
               <div className="min-h-0 flex-1 overflow-y-auto">
                 <Markdown>{question.answer}</Markdown>
               </div>

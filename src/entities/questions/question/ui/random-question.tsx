@@ -9,7 +9,7 @@ import { question } from '../model/question';
 import { isAnswerVisible, showAnswer } from '../model/show-answer';
 
 const randomQuestionClassName = cn(
-  'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 py-4',
+  'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 pt-10 pb-4',
 );
 
 const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col');
@@ -36,7 +36,7 @@ export const RandomQuestion = reatomComponent(() => {
       <div className={questionAnswerColumnClassName}>
         <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
         <div
-          className={cn('shrink-0', isAnswerVisible() ? 'h-[3lh]' : 'h-4')}
+          className={cn('shrink-0', isAnswerVisible() ? 'h-6' : 'h-4')}
           aria-hidden="true"
         />
         {isAnswerVisible() ? (
