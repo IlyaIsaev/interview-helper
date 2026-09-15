@@ -3,6 +3,14 @@ import { render } from 'vitest-browser-react'
 
 import { Markdown, markdownPlainText } from '../markdown'
 
+test('should omit text-ui on paragraphs when rich markdown is rendered', async () => {
+  const screen = await render(<Markdown>{'Hello paragraph'}</Markdown>)
+  const paragraph = screen.getByText('Hello paragraph')
+
+  await expect.element(paragraph).toBeVisible()
+  await expect.element(paragraph).not.toHaveClass('text-ui')
+})
+
 test('should render markdown elements when the source contains syntax', async () => {
   const screen = await render(<Markdown>{'# Hello\n\n**bold**'}</Markdown>)
 

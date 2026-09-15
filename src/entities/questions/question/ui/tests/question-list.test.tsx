@@ -2,7 +2,7 @@ import { expect, test } from 'vitest'
 import { userEvent } from 'vitest/browser'
 import { render } from 'vitest-browser-react'
 
-import { SidebarProvider } from '@/shared/ui'
+import { markdownPlainText, SidebarProvider } from '@/shared/ui'
 
 import type { Question } from '../../model/questions'
 import { QuestionList } from '../question-list'
@@ -17,12 +17,19 @@ const secondQuestion = {
   question: 'Second question',
 }
 
+const markedUpQuestion = {
+  id: '33333333-3333-3333-3333-333333333333',
+  question: '# Hello\n\n**bold**',
+}
+
 type RenderQuestionListOptions = {
   onQuestionClick?: (questionId: string) => void
+  questions?: ReadonlyArray<Question>
 }
 
 async function renderQuestionList({
   onQuestionClick = () => {},
+  questions = [firstQuestion, secondQuestion],
 }: RenderQuestionListOptions = {}) {
   function renderUpdateQuestion(question: Question) {
     return <span>{`update ${question.id}`}</span>
@@ -35,8 +42,8 @@ async function renderQuestionList({
   return render(
     <SidebarProvider className="h-[400px]">
       <QuestionList
-        questions={[firstQuestion, secondQuestion]}
-        activeQuestionId={firstQuestion.id}
+        questions={questions}
+        activeQuestionId={questions[0]?.id ?? null}
         activeAriaCurrent="page"
         onQuestionClick={onQuestionClick}
         updateQuestion={renderUpdateQuestion}
@@ -66,4 +73,14 @@ test('should call onQuestionClick when a question row is clicked', async () => {
   await userEvent.click(screen.getByRole('button', { name: 'Second question' }))
 
   expect(clicks).toEqual([secondQuestion.id])
+})
+
+test('should expose a markdown-free title when a question contains markup', async () => {
+  const screen = await renderQuestionList({
+    questions: [markedUpQuestion],
+  })
+
+  await expect
+    .element(screen.getByRole('button', { name: /Hello\s+bold/ }))
+    .toHaveAttribute('title', markdownPlainText(markedUpQuestion.question))
 })

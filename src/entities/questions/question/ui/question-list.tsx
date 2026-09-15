@@ -4,6 +4,7 @@ import { useRef, type ReactNode } from 'react';
 
 import {
   Markdown,
+  markdownPlainText,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
@@ -62,6 +63,7 @@ export function QuestionList({
           isActive={isQuestionActive}
           aria-current={questionAriaCurrent}
           className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
+          title={markdownPlainText(question.question)}
           onClick={handleQuestionClick}
         >
           <Markdown plain>{question.question}</Markdown>
