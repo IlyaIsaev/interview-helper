@@ -89,6 +89,24 @@ test('should show question not found when the opened id is missing', async () =>
   await expect.element(screen.getByText('the questions list is empty')).not.toBeInTheDocument()
 })
 
+test('should include hover-revealed update and delete actions on an accordion item', async () => {
+  openTheoryPage()
+  initQuestions([{ id: firstQuestionId, question: 'First question' }])
+
+  const screen = await render(<TheoryPage />)
+  const updateQuestion = screen.getByRole('button', { name: 'Update question' })
+  const questionActions = updateQuestion.element().parentElement
+
+  await expect.element(updateQuestion).toBeInTheDocument()
+  await expect.element(screen.getByRole('button', { name: 'Delete question' })).toBeInTheDocument()
+
+  if (!questionActions) throw new Error('Missing question actions')
+
+  expect(questionActions.className).toContain('md:opacity-0')
+  expect(questionActions.className).toContain('md:group-hover/accordion-item:opacity-100')
+  expect(questionActions.className).toContain('md:group-focus-within/accordion-item:opacity-100')
+})
+
 test('should clear the question id search param when the open trigger collapses', async () => {
   openTheoryPage()
   initQuestions([{ id: firstQuestionId, question: 'First question' }])

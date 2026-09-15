@@ -274,9 +274,10 @@ test('updating a question from the list stays on theory', async ({ page }) => {
   await expect(page).toHaveURL(openedQuestionUrl, { timeout: 15_000 })
   await expect(openedQuestion(page, questionText)).toBeVisible()
 
-  await questionItem(page, questionText)
-    .getByRole('button', { name: 'Update question' })
-    .click()
+  const question = questionItem(page, questionText)
+
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
 
   await expect(
     page.getByRole('heading', { name: 'Update question' }),
@@ -310,6 +311,7 @@ test('deleting a question from the list removes it', async ({ page }) => {
 
   const question = questionItem(page, questionText)
 
+  await question.hover()
   await question.getByRole('button', { name: 'Delete question' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
@@ -336,9 +338,10 @@ test('a failed delete restores the question and shows a toast', async ({
 
   await failQuestionMutation(page, 'DELETE')
 
-  await questionItem(page, questionText)
-    .getByRole('button', { name: 'Delete question' })
-    .click()
+  const question = questionItem(page, questionText)
+
+  await question.hover()
+  await question.getByRole('button', { name: 'Delete question' }).click()
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(

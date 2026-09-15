@@ -84,7 +84,7 @@ const QuestionAccordionItem = reatomComponent(
     });
 
     return (
-      <AccordionItem value={listedQuestion.id}>
+      <AccordionItem className="group/accordion-item" value={listedQuestion.id}>
         <div className="flex items-start gap-1">
           <AccordionTrigger
             className="py-3 hover:no-underline"
@@ -94,7 +94,7 @@ const QuestionAccordionItem = reatomComponent(
               <Markdown plain>{listedQuestion.question}</Markdown>
             </span>
           </AccordionTrigger>
-          <div className="flex shrink-0 items-center gap-1 py-2 pr-1">
+          <div className="flex shrink-0 items-center gap-1 py-2 pr-1 transition-opacity md:opacity-0 md:group-hover/accordion-item:opacity-100 md:group-focus-within/accordion-item:opacity-100">
             <Button
               type="button"
               variant="ghost"
