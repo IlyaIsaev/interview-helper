@@ -1,7 +1,11 @@
+import type { CodeHighlighter, UrlTransform } from '@tanstack/markdown';
+import {
+  Markdown as TanStackMarkdown,
+  type MarkdownComponents,
+} from '@tanstack/markdown/react';
 import { map, pipe } from 'es-toolkit/fp';
+import hljs from 'highlight.js/lib/common';
 import type { ComponentProps, ReactNode } from 'react';
-import ReactMarkdown, { type Components } from 'react-markdown';
-import rehypeHighlight from 'rehype-highlight';
 
 import { cn, markdownPlainText } from '@/shared/lib';
 
@@ -15,9 +19,12 @@ type MarkdownPlainNodeProps = {
   children?: ReactNode;
 };
 
-type MarkdownRehypePlugins = NonNullable<
-  ComponentProps<typeof ReactMarkdown>['rehypePlugins']
->;
+const markdownHighlightLanguages = {
+  js: 'javascript',
+  jsx: 'javascript',
+  ts: 'typescript',
+  tsx: 'typescript',
+} as const;
 
 const isAllowedMarkdownUrl = (url: string): boolean => {
   const trimmedUrl = url.trim();
@@ -35,22 +42,26 @@ const isAllowedMarkdownUrl = (url: string): boolean => {
   }
 };
 
-const markdownUrl = (url: string): string => (isAllowedMarkdownUrl(url) ? url : '');
+const markdownUrl: UrlTransform = (_url, kind, defaultUrl) => {
+  if (kind === 'image') return defaultUrl;
 
-const markdownHighlightPlugins: MarkdownRehypePlugins = [
-  [
-    rehypeHighlight,
-    {
-      aliases: {
-        typescript: ['ts', 'tsx'],
-        javascript: ['js', 'jsx'],
-      },
-    },
-  ],
-];
+  if (!isAllowedMarkdownUrl(defaultUrl)) return null;
 
-const markdownComponents: Components = {
-  a: ({ node: _node, href, ...props }) =>
+  return defaultUrl;
+};
+
+const highlightMarkdownCode: CodeHighlighter = (code, lang = 'plaintext') => {
+  const language =
+    lang in markdownHighlightLanguages
+      ? markdownHighlightLanguages[lang as keyof typeof markdownHighlightLanguages]
+      : lang;
+  const highlightLanguage = hljs.getLanguage(language) === undefined ? 'plaintext' : language;
+
+  return hljs.highlight(code, { language: highlightLanguage, ignoreIllegals: true }).value;
+};
+
+const markdownComponents = {
+  a: ({ href, ...props }) =>
     href ? (
       <a
         {...props}
@@ -62,13 +73,13 @@ const markdownComponents: Components = {
       <span>{props.children}</span>
     ),
   img: () => null,
-  p: ({ node: _node, className: _className, ...props }) => <p {...props} />,
-};
+} satisfies MarkdownComponents;
 
 const markdownPlainTags = [
   'a',
   'blockquote',
   'code',
+  'del',
   'em',
   'h1',
   'h2',
@@ -82,42 +93,48 @@ const markdownPlainTags = [
   'pre',
   'strong',
   'ul',
-] as const satisfies ReadonlyArray<keyof Components>;
+] as const;
 
 function MarkdownPlainNode({ children }: MarkdownPlainNodeProps) {
   return <>{children} </>;
 }
 
-// Object.fromEntries widens keys; the tag list is a Components key union.
+// Object.fromEntries widens keys; the tag list is a MarkdownComponents key union.
 const markdownPlainComponents = pipe(
   markdownPlainTags,
   map((tag) => [tag, MarkdownPlainNode] as const),
   Object.fromEntries,
-) as Components;
+) as MarkdownComponents;
+
+const markdownParseOptions = {
+  frontmatter: false,
+  headingIds: false,
+  urlTransform: markdownUrl,
+} as const;
 
 function Markdown({ children, className, plain = false }: MarkdownProps) {
   if (plain) {
     return (
       <p className={cn('min-w-0 flex-1 truncate', className)}>
-        <ReactMarkdown
+        <TanStackMarkdown
+          {...markdownParseOptions}
           components={markdownPlainComponents}
-          urlTransform={markdownUrl}
         >
           {children}
-        </ReactMarkdown>
+        </TanStackMarkdown>
       </p>
     );
   }
 
   return (
     <div className={cn('prose max-w-none', className)}>
-      <ReactMarkdown
+      <TanStackMarkdown
+        {...markdownParseOptions}
         components={markdownComponents}
-        rehypePlugins={markdownHighlightPlugins}
-        urlTransform={markdownUrl}
+        highlighter={highlightMarkdownCode}
       >
         {children}
-      </ReactMarkdown>
+      </TanStackMarkdown>
     </div>
   );
 }
