@@ -26,7 +26,7 @@ import {
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
 import { questionPath } from '@/shared/config';
-import { markdownPlainText, toast } from '@/shared/ui';
+import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
 
 export const updatedQuestionId = atom<string | null>(null, 'updatedQuestionId');
 
@@ -57,7 +57,7 @@ export const updateQuestionForm = reatomForm(
   },
   {
     name: 'updateQuestionForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {
@@ -128,6 +128,11 @@ export const updateQuestionForm = reatomForm(
     },
   },
 );
+
+registerFormSchemaValidation(updateQuestionForm, [
+  updateQuestionForm.fields.question,
+  updateQuestionForm.fields.answer,
+]);
 
 export const openUpdateQuestion = action(async (questionId: string) => {
   updatedQuestionId.set(questionId);

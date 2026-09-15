@@ -8,7 +8,7 @@ import {
   refetchQuestions,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
-import { markdownPlainText, toast } from '@/shared/ui';
+import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
 
 import { parseQuestionMarkdown } from './parse-question-markdown';
 
@@ -55,7 +55,7 @@ export const createQuestionForm = reatomForm(
   },
   {
     name: 'createQuestionForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question, answer }) => {
@@ -69,6 +69,11 @@ export const createQuestionForm = reatomForm(
     },
   },
 );
+
+registerFormSchemaValidation(createQuestionForm, [
+  createQuestionForm.fields.question,
+  createQuestionForm.fields.answer,
+]);
 
 const syncCreatedQuestion = action(async (createdQuestion: {
   id: string;

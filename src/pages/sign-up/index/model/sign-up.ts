@@ -1,7 +1,7 @@
 import { computed, reatomForm } from '@reatom/core';
 import * as v from 'valibot';
 
-import { toast } from '@/shared/ui';
+import { registerFormSchemaValidation, toast } from '@/shared/ui';
 
 const signUpSchema = v.object({
   name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
@@ -25,7 +25,7 @@ export const signUpForm = reatomForm(
   },
   {
     name: 'signUpForm',
-    validateOnBlur: true,
+    validateOnBlur: false,
     validateOnChange: false,
     schema: signUpSchema,
     onSubmit: () => {
@@ -33,6 +33,12 @@ export const signUpForm = reatomForm(
     },
   },
 );
+
+registerFormSchemaValidation(signUpForm, [
+  signUpForm.fields.name,
+  signUpForm.fields.email,
+  signUpForm.fields.password,
+]);
 
 export const isSignUpValid = computed(() => {
   const parsedSignUp = v.safeParse(signUpSchema, {

@@ -294,6 +294,26 @@ test('creating a question from the sidebar goes to the new question page', async
   await expect(notifications(page).getByText(questionText).first()).toBeVisible()
 })
 
+test('create does not show empty-field errors when fields are focused without typing', async ({
+  page,
+}) => {
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+
+  const dialog = page.getByRole('dialog')
+  const questionField = dialog.getByRole('textbox', { name: 'question' })
+  const answerField = dialog.getByRole('textbox', { name: 'answer' })
+
+  await expect(dialog).toBeVisible()
+
+  await questionField.focus()
+  await answerField.focus()
+
+  await expect(dialog.getByText('Enter a question')).toHaveCount(0)
+  await expect(dialog.getByText('Enter an answer')).toHaveCount(0)
+})
+
 test('create stays disabled until both fields have non-empty text', async ({
   page,
 }) => {

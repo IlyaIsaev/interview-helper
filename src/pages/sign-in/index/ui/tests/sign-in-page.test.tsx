@@ -15,6 +15,19 @@ test('should link to sign-up and omit demo expiry copy when the sign-in page ren
     .not.toBeInTheDocument()
 })
 
+test('should not show email validation when the field is blurred without changes', async () => {
+  signInForm.reset()
+
+  const screen = await render(<SignInPage />)
+  const email = screen.getByRole('textbox', { name: 'email' })
+
+  await userEvent.click(email)
+  await userEvent.keyboard('{Tab}')
+
+  await expect.element(screen.getByText('Enter an email')).not.toBeInTheDocument()
+  await expect.element(screen.getByText('Enter a valid email')).not.toBeInTheDocument()
+})
+
 test('should show email validation when the field is blurred with invalid input', async () => {
   signInForm.reset()
 
