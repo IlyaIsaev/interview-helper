@@ -9,6 +9,11 @@ export {
 export { questionFieldsSchema } from './model/question-fields';
 
 export {
+  parseQuestionMarkdown,
+  type ParsedQuestionMarkdown,
+} from './model/parse-question-markdown';
+
+export {
   addToQuestions,
   initQuestions,
   questions,

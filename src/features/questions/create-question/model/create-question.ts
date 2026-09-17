@@ -3,14 +3,13 @@ import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/c
 import {
   addToQuestions,
   openQuestion,
+  parseQuestionMarkdown,
   questionFieldsSchema,
   questionsQuery,
   refetchQuestions,
 } from '@/entities/questions/question';
 import { clientApi } from '@/shared/api';
 import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
-
-import { parseQuestionMarkdown } from './parse-question-markdown';
 
 export const isCreateQuestionDialogOpen = reatomBoolean(
   false,

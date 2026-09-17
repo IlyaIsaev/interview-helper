@@ -819,6 +819,105 @@ test('updating a question shows a spinner while the question loads', async ({
   ).toHaveCount(0)
 })
 
+test('importing markdown prefills the update question form', async ({ page }) => {
+  const stamp = Date.now()
+  const originalQuestion = `Update markdown original ${stamp}`
+  const headingText = `Imported update ${stamp}`
+  const answerLine = `Answer **${stamp}**`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(originalQuestion)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Original answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(openedQuestion(page, originalQuestion)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const question = sidebarQuestionItem(page, originalQuestion)
+
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
+
+  const dialog = page.getByRole('dialog')
+
+  await expect(
+    dialog.getByRole('heading', { name: 'Update question' }),
+  ).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    originalQuestion,
+  )
+  await expect(dialog.getByRole('button', { name: 'From markdown' })).toBeVisible()
+  await expect(dialog.getByRole('button', { name: 'Update' })).toBeDisabled()
+
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: 'question.md',
+    mimeType: 'text/markdown',
+    buffer: Buffer.from(`# ${headingText}\n\n${answerLine}`),
+  })
+
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    `# ${headingText}`,
+  )
+  await expect(dialog.getByRole('heading', { name: headingText })).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'answer' })).toHaveValue(
+    answerLine,
+  )
+  await expect(dialog.getByRole('button', { name: 'Update' })).toBeEnabled()
+})
+
+test('importing invalid markdown shows an error and leaves the update form unchanged', async ({
+  page,
+}) => {
+  const questionText = `Update markdown invalid ${Date.now()}`
+
+  await signIn(page)
+
+  await sidebarCreateQuestion(page).click()
+  await expect(page.getByRole('dialog')).toBeVisible()
+  await page.getByRole('textbox', { name: 'question' }).fill(questionText)
+  await page.getByRole('textbox', { name: 'answer' }).fill('Original answer')
+  await page.getByRole('button', { name: 'Create' }).click()
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 })
+  await expect(openedQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+
+  const question = sidebarQuestionItem(page, questionText)
+
+  await question.hover()
+  await question.getByRole('button', { name: 'Update question' }).click()
+
+  const dialog = page.getByRole('dialog')
+
+  await expect(
+    dialog.getByRole('heading', { name: 'Update question' }),
+  ).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    questionText,
+  )
+
+  await dialog.locator('input[type="file"]').setInputFiles({
+    name: 'question.md',
+    mimeType: 'text/markdown',
+    buffer: Buffer.from('## Not a top-level heading\n\nBody'),
+  })
+
+  await expect(
+    notifications(page).getByText('The file must start with a heading.'),
+  ).toBeVisible()
+  await expect(dialog.getByRole('textbox', { name: 'question' })).toHaveValue(
+    questionText,
+  )
+  await expect(dialog.getByRole('textbox', { name: 'answer' })).toHaveValue(
+    'Original answer',
+  )
+  await expect(dialog.getByRole('button', { name: 'Update' })).toBeDisabled()
+})
+
 test('deleting a question from the sidebar removes it', async ({ page }) => {
   const questionText = `Delete me ${Date.now()}`
 

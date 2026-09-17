@@ -15,6 +15,7 @@ import {
   initQuestion,
   openedQuestionId,
   openQuestion,
+  parseQuestionMarkdown,
   question as openedQuestion,
   questionFieldsSchema,
   questions,
@@ -133,6 +134,29 @@ registerFormSchemaValidation(updateQuestionForm, [
   updateQuestionForm.fields.question,
   updateQuestionForm.fields.answer,
 ]);
+
+const markdownImportInvalidMessage = 'The file must start with a heading.';
+
+export const importQuestionFromMarkdown = action(async (file: File) => {
+  if (!file.name.toLowerCase().endsWith('.md')) {
+    toast.error(markdownImportInvalidMessage);
+
+    return;
+  }
+
+  const content = await wrap(file.text());
+  const parsed = parseQuestionMarkdown(content);
+
+  if (!parsed) {
+    toast.error(markdownImportInvalidMessage);
+
+    return;
+  }
+
+  updateQuestionForm.fields.question.change(parsed.question);
+
+  updateQuestionForm.fields.answer.change(parsed.answer);
+}, 'importQuestionFromMarkdown');
 
 export const openUpdateQuestion = action(async (questionId: string) => {
   updatedQuestionId.set(questionId);
