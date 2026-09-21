@@ -39,6 +39,14 @@ const demoSignInSchema = v.object({
   password: v.pipe(v.string(), v.minLength(8, 'Password is too short')),
 });
 
+const changePasswordSchema = v.object({
+  password: v.pipe(
+    v.string(),
+    v.minLength(8, 'Password is too short'),
+    v.maxLength(128, 'Password is too long'),
+  ),
+});
+
 type DemoCredentials = v.InferOutput<typeof demoSignInSchema>;
 
 type DemoUserContext = Context<{ Bindings: Env }>;
@@ -235,6 +243,36 @@ export const demoUser = new Hono<{ Bindings: Env }>()
       return responseWithDemoCredentials(context, signInResponse, demoSignIn);
 
     return signInResponse;
+  })
+  .post('/password', vValidator('json', changePasswordSchema), async (context) => {
+    const { password } = context.req.valid('json');
+    const auth = createAuth(context.env);
+    const currentSession = await auth.api.getSession({
+      headers: context.req.raw.headers,
+    });
+
+    if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
+
+    try {
+      const authContext = await auth.$context;
+      const hashedPassword = await authContext.password.hash(password);
+
+      await authContext.internalAdapter.updatePassword(
+        currentSession.user.id,
+        hashedPassword,
+      );
+    } catch {
+      return context.json({ message: 'Could not change the password' }, 500);
+    }
+
+    if (isDemoUserEmail(currentSession.user.email)) {
+      persistDemoCredentials(context, {
+        email: currentSession.user.email,
+        password,
+      });
+    }
+
+    return context.body(null, 204);
   })
   .delete('/', async (context) => {
     const currentSession = await createAuth(context.env).api.getSession({

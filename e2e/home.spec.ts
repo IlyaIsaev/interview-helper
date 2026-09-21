@@ -187,6 +187,50 @@ test('signed-in users opening sign-in are sent to questions', async ({
   await expect(page.getByRole('button', { name: 'Sign in' })).toHaveCount(0)
 })
 
+test('changing the password on profile signs in with the new password after log out', async ({
+  page,
+}) => {
+  await createDemoAccount(page)
+
+  await openUserMenu(page)
+  await page.getByRole('menuitem', { name: 'Profile' }).click()
+  await expect(page).toHaveURL(/\/profile$/)
+
+  const newPasswordInput = page.getByLabel('new password', { exact: true })
+  const confirmationInput = page.getByLabel('new password confirmation')
+
+  await expect(newPasswordInput).toBeVisible()
+  await expect(confirmationInput).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Delete account' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Change password' })).toBeVisible()
+  await expect(page.getByLabel('current password')).toHaveCount(0)
+
+  await newPasswordInput.fill('newpass1!')
+  await confirmationInput.fill('mismatch1')
+  await confirmationInput.blur()
+  await expect(page.getByText('Passwords do not match')).toBeVisible()
+
+  await confirmationInput.fill('newpass1!')
+  await confirmationInput.blur()
+  await page.getByRole('button', { name: 'Change password' }).click()
+
+  await expect(notifications(page).getByText('Password changed.')).toBeVisible()
+  await expect(page).toHaveURL(/\/profile$/)
+  await expect(newPasswordInput).toHaveValue('')
+  await expect(confirmationInput).toHaveValue('')
+
+  await openUserMenu(page)
+  await page.getByRole('menuitem', { name: 'Log Out' }).click()
+
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(page.getByLabel('password')).toHaveValue('newpass1!')
+
+  await page.getByRole('button', { name: 'Sign in' }).click()
+
+  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
+  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+})
+
 test('cancelling account deletion stays on profile', async ({ page }) => {
   await createDemoAccount(page)
 

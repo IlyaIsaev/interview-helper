@@ -91,6 +91,10 @@ export type DemoUserCredentials = InferResponseType<
 
 type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json'];
 
+type ChangePasswordBody = InferRequestType<
+  (typeof api.api)['demo-user']['password']['$post']
+>['json'];
+
 export const clientApi = {
   async loadQuestions(query = ''): Promise<QuestionsResponse> {
     const response = await wrap(
@@ -185,5 +189,18 @@ export const clientApi = {
     const response = await wrap(api.api['demo-user'].$delete());
 
     if (!response.ok) throw new Error(`DELETE /api/demo-user failed: ${response.status}`);
+  },
+
+  async changePassword(passwordChange: ChangePasswordBody): Promise<void> {
+    const response = await wrap(
+      api.api['demo-user'].password.$post({
+        json: passwordChange,
+      }),
+    );
+
+    await retrySessionIfUnauthorized(response);
+
+    if (!response.ok)
+      throw new Error(`POST /api/demo-user/password failed: ${response.status}`);
   },
 };

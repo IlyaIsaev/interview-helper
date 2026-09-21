@@ -52,6 +52,7 @@ features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
+features/user/change-password/ ← profile form: new password + confirmation (deleteUser slot)
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
 entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
@@ -325,6 +326,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
   - `/theory` is behind `protectedRoute` for auth; it loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
   - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
 - Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
+- Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`. For a demo user, the Worker refreshes the HttpOnly `createdDemoUser` cookie so sign-out still prefills the **new** password.
 - Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
 - Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.

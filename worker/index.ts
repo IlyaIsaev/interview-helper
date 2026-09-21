@@ -15,7 +15,7 @@ const connectingIp = (context: Context<{ Bindings: Env }>): string =>
   context.req.header('CF-Connecting-IP') ?? 'unknown';
 
 const isAuthPostPath = (pathname: string): boolean =>
-  pathname === '/api/demo-user' || pathname.startsWith('/api/auth/');
+  pathname.startsWith('/api/demo-user') || pathname.startsWith('/api/auth/');
 
 const limitAuthPosts = async (
   context: Context<{ Bindings: Env }>,
