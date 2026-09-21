@@ -54,7 +54,7 @@ features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
 features/user/change-password/ ← profile form: new password + confirmation (deleteUser slot)
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), QuestionPreview, RandomQuestion (show answer + next random)
+entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives

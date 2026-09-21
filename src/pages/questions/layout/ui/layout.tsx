@@ -4,8 +4,8 @@ import { find, pipe } from "es-toolkit/fp";
 import type { ChangeEvent, ReactNode } from "react";
 
 import {
+  openListedQuestion,
   QuestionList,
-  QuestionPreview,
   questions,
   questionsQuery,
   type Question,
@@ -27,15 +27,9 @@ import {
   SidebarProvider,
   SidebarTrigger,
   Spinner,
+  useSidebar,
 } from "@/shared/ui";
 
-import {
-  closeQuestionPreview,
-  isQuestionPreviewOpen,
-  openQuestionPreview,
-  previewedQuestion,
-  previewedQuestionId,
-} from "../model/question-preview";
 import { questionSearch, searchQuestions } from "../model/question-search";
 
 const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
@@ -50,6 +44,8 @@ type QuestionSidebarProps = {
 };
 
 const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarProps) => {
+  const { isMobile, setOpenMobile } = useSidebar();
+
   if (questions === null) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -75,13 +71,13 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
   }
 
   const currentPath = urlAtom().pathname;
-  const isPreviewOpen = isQuestionPreviewOpen();
-  const previewedId = previewedQuestionId();
   const isOpenedQuestion = (question: Question) => questionPath(question.id) === currentPath;
   const openedQuestionId = pipe(questions, find(isOpenedQuestion))?.id ?? null;
 
   const handleQuestionClick = wrap((questionId: string) => {
-    openQuestionPreview(questionId);
+    openListedQuestion(questionId);
+
+    if (isMobile) setOpenMobile(false);
   });
 
   function renderUpdateQuestion(question: Question) {
@@ -95,8 +91,8 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
   return (
     <QuestionList
       questions={questions}
-      activeQuestionId={isPreviewOpen ? previewedId : openedQuestionId}
-      activeAriaCurrent={isPreviewOpen ? true : "page"}
+      activeQuestionId={openedQuestionId}
+      activeAriaCurrent="page"
       onQuestionClick={handleQuestionClick}
       updateQuestion={renderUpdateQuestion}
       deleteQuestion={renderDeleteQuestion}
@@ -106,12 +102,6 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();
-
-  const changeQuestionPreviewOpen = wrap((shouldOpen: boolean) => {
-    if (shouldOpen) isQuestionPreviewOpen.setTrue();
-
-    if (!shouldOpen) closeQuestionPreview();
-  });
 
   const changeSidebarOpen = wrap((isNextOpen: boolean) => {
     isSidebarOpen.set(isNextOpen);
@@ -154,11 +144,6 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         </SidebarContent>
       </Sidebar>
       <CreateQuestion />
-      <QuestionPreview
-        open={isQuestionPreviewOpen()}
-        question={previewedQuestion()}
-        onOpenChange={changeQuestionPreviewOpen}
-      />
       <UpdateQuestion />
       <DeleteQuestion />
       <SidebarInset className="min-h-0 overflow-hidden">

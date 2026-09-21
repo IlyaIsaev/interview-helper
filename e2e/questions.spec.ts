@@ -1064,7 +1064,7 @@ test('mobile sidebar sheet shows Questions and opens create form', async ({
   ).toBeVisible()
 })
 
-test('app title keeps the sidebar and sidebar questions open a preview', async ({
+test('app title keeps the sidebar and sidebar questions open in the main pane', async ({
   page,
 }) => {
   const questionText = `Title nav ${Date.now()}`
@@ -1090,7 +1090,7 @@ test('app title keeps the sidebar and sidebar questions open a preview', async (
   await expect(openedQuestion(page, questionText)).toBeVisible({
     timeout: 15_000,
   })
-  await revealAnswer(page, answerText)
+  await expect(page.getByRole('button', { name: 'Show answer' })).toBeVisible()
   await expect(sidebarQuestion(page, questionText)).toBeVisible()
   await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
   await expect(sidebarCreateQuestion(page)).toBeVisible()
@@ -1105,27 +1105,25 @@ test('app title keeps the sidebar and sidebar questions open a preview', async (
 
   await sidebarQuestion(page, questionText).click()
 
-  const preview = page.getByRole('dialog')
-
-  await expect(preview).toBeVisible()
-  await expect(preview.getByText(questionText)).toBeVisible()
-  await expect(preview.getByText(answerText)).toBeVisible()
-  await expect(preview.getByRole('button', { name: 'Show answer' })).toHaveCount(0)
-  await expect(page).toHaveURL(questionUrl)
-
-  await preview.getByRole('button', { name: 'Close' }).click()
-  await expect(preview).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(openedQuestion(page, questionText)).toBeVisible()
+  await expect(page.getByRole('main').getByText(answerText)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show answer' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Next question' })).toHaveCount(0)
+  await expect(
+    page.getByRole('button', { name: questionText, current: 'page' }),
+  ).toBeVisible()
+  await expect(page).toHaveURL(questionUrl)
   await expect(page.getByRole('heading', { name: 'Home' })).toHaveCount(0)
   await expect(page.getByText('Questions', { exact: true }).first()).toBeVisible()
   await expect(sidebarCreateQuestion(page)).toBeVisible()
 })
 
-test('sidebar question preview swaps content without leaving the page', async ({
+test('sidebar question opens that question in the main pane', async ({
   page,
 }) => {
-  const firstQuestion = `Preview first ${Date.now()}`
-  const secondQuestion = `Preview second ${Date.now()}`
+  const firstQuestion = `List first ${Date.now()}`
+  const secondQuestion = `List second ${Date.now()}`
 
   await signIn(page)
 
@@ -1153,27 +1151,33 @@ test('sidebar question preview swaps content without leaving the page', async ({
 
   await sidebarQuestion(page, firstQuestion).click()
 
-  const preview = page.getByRole('dialog')
-
-  await expect(preview.getByText(firstQuestion)).toBeVisible()
-  await expect(preview.getByText('First answer')).toBeVisible()
-  await expect(preview.getByRole('button', { name: 'Show answer' })).toHaveCount(0)
-  await expect(page).toHaveURL(secondQuestionUrl)
-
-  await preview.getByRole('button', { name: 'Close' }).click()
-  await expect(preview).toHaveCount(0)
-  await expect(openedQuestion(page, secondQuestion)).toBeVisible()
+  await expect(page.getByRole('dialog')).toHaveCount(0)
+  await expect(openedQuestion(page, firstQuestion)).toBeVisible()
+  await expect(page.getByRole('main').getByText('First answer')).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Show answer' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Next question' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: firstQuestion, current: 'page' }),
+  ).toBeVisible()
+  await expect(page).not.toHaveURL(secondQuestionUrl)
 
   await sidebarQuestion(page, secondQuestion).click()
 
-  await expect(preview.getByText(secondQuestion)).toBeVisible()
-  await expect(preview.getByText('Second answer')).toBeVisible()
-  await expect(preview.getByText(firstQuestion)).toHaveCount(0)
-  await expect(page).toHaveURL(secondQuestionUrl)
-
-  await preview.getByRole('button', { name: 'Close' }).click()
-  await expect(preview).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(openedQuestion(page, secondQuestion)).toBeVisible()
+  await expect(page.getByRole('main').getByText('Second answer')).toBeVisible()
+  await expect(page.getByRole('main').getByText(firstQuestion)).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Show answer' })).toHaveCount(0)
+  await expect(page.getByRole('button', { name: 'Next question' })).toBeVisible()
+  await expect(
+    page.getByRole('button', { name: secondQuestion, current: 'page' }),
+  ).toBeVisible()
+
+  await page.getByRole('button', { name: 'Next question' }).click()
+
+  await expect(page.getByRole('button', { name: 'Show answer' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Next question' })).toHaveCount(0)
+  await expect(page.getByRole('dialog')).toHaveCount(0)
 })
 
 test('reloading a question page fetches that question once', async ({

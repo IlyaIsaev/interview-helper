@@ -6,6 +6,8 @@ export {
   type OpenedQuestion,
 } from './model/question';
 
+export { openListedQuestion } from './model/show-answer';
+
 export { questionFieldsSchema } from './model/question-fields';
 
 export {
@@ -29,7 +31,5 @@ export {
 export { QuestionFields } from './ui/question-fields';
 
 export { QuestionList } from './ui/question-list';
-
-export { QuestionPreview } from './ui/question-preview';
 
 export { RandomQuestion } from './ui/random-question';
