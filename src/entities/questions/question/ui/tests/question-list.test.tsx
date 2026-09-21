@@ -56,14 +56,22 @@ async function renderQuestionList({
   );
 }
 
-test("should show update and delete slots when the questions list renders", async () => {
+test("should include hover-revealed update and delete slots on a question item", async () => {
   const screen = await renderQuestionList();
+  const updateQuestion = screen.getByText(`update ${firstQuestion.id}`);
+  const questionActions = updateQuestion.element().parentElement;
 
   await expect.element(screen.getByRole("dialog", { name: "Questions" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "First question" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "Second question" })).toBeVisible();
-  await expect.element(screen.getByText(`update ${firstQuestion.id}`)).toBeVisible();
-  await expect.element(screen.getByText(`delete ${firstQuestion.id}`)).toBeVisible();
+  await expect.element(updateQuestion).toBeInTheDocument();
+  await expect.element(screen.getByText(`delete ${firstQuestion.id}`)).toBeInTheDocument();
+
+  if (!questionActions) throw new Error("Missing question actions");
+
+  expect(questionActions.className).toContain("md:opacity-0");
+  expect(questionActions.className).toContain("md:group-hover/question-item:opacity-100");
+  expect(questionActions.className).toContain("md:group-focus-within/question-item:opacity-100");
 });
 
 test("should call onQuestionClick when a question row is clicked", async () => {
@@ -93,13 +101,21 @@ test("should left-align rows without hover fill when the questions list renders"
   const screen = await renderQuestionList();
   const activeQuestion = screen.getByRole("button", { name: "First question" });
   const inactiveQuestion = screen.getByRole("button", { name: "Second question" });
+  const activeQuestionItem = activeQuestion.element().closest("li");
+  const inactiveQuestionItem = inactiveQuestion.element().closest("li");
 
   await expect.element(activeQuestion).toBeVisible();
   await expect.element(inactiveQuestion).toBeVisible();
 
+  if (!activeQuestionItem) throw new Error("Missing active question item");
+  if (!inactiveQuestionItem) throw new Error("Missing inactive question item");
+
+  expect(activeQuestionItem.className).toContain("bg-accent");
+  expect(activeQuestionItem.className).toContain("text-accent-foreground");
+  expect(inactiveQuestionItem.className).not.toContain("bg-accent");
   expect(activeQuestion.element().className).toContain("text-left");
-  expect(activeQuestion.element().className).toContain("bg-accent");
-  expect(activeQuestion.element().className).toContain("hover:bg-accent");
+  expect(activeQuestion.element().className).toContain("hover:bg-transparent");
+  expect(activeQuestion.element().className).not.toContain("bg-accent");
   expect(inactiveQuestion.element().className).toContain("text-left");
   expect(inactiveQuestion.element().className).toContain("hover:bg-transparent");
   expect(inactiveQuestion.element().className).not.toContain("bg-accent");

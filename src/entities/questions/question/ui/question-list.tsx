@@ -72,24 +72,23 @@ export function QuestionList({
       <li
         key={question.id}
         role="listitem"
-        className="absolute top-0 left-0 flex w-full items-center"
+        className={cn(
+          "group/question-item absolute top-0 left-0 flex w-full items-center",
+          isQuestionActive && "bg-accent text-accent-foreground",
+        )}
         style={{ height: QUESTION_HEIGHT, transform: `translateY(${virtualQuestion.start}px)` }}
       >
         <Button
           type="button"
           variant="ghost"
           aria-current={questionAriaCurrent}
-          className={cn(
-            "h-9 min-w-0 flex-1 justify-start overflow-hidden text-left font-normal normal-case tracking-normal hover:bg-transparent hover:text-inherit",
-            isQuestionActive &&
-              "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
-          )}
+          className="h-9 min-w-0 flex-1 justify-start overflow-hidden text-left font-normal normal-case tracking-normal hover:bg-transparent hover:text-inherit"
           title={markdownPlainText(question.question)}
           onClick={handleQuestionClick}
         >
           <Markdown plain>{question.question}</Markdown>
         </Button>
-        <div className="flex shrink-0 items-center">
+        <div className="flex shrink-0 items-center transition-opacity md:opacity-0 md:group-hover/question-item:opacity-100 md:group-focus-within/question-item:opacity-100">
           {updateQuestion(question)}
           {deleteQuestion(question)}
         </div>
