@@ -1,8 +1,8 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
 
-import { signOut } from '@/shared/auth';
-import { PROFILE_PATH, QUESTIONS_PATH, THEORY_PATH } from '@/shared/config';
+import { signOut } from "@/shared/auth";
+import { PROFILE_PATH, QUESTIONS_PATH, THEORY_PATH } from "@/shared/config";
 import {
   Avatar,
   AvatarFallback,
@@ -10,12 +10,12 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
-import { user } from '../model/user';
+import { user } from "../model/user";
 
 export const UserMenu = reatomComponent(() => {
-  const { name, initials } = user() ?? { name: '', initials: '' };
+  const { name, initials } = user() ?? { name: "", initials: "" };
 
   if (!name) return null;
 
@@ -45,4 +45,4 @@ export const UserMenu = reatomComponent(() => {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}, 'UserMenu');
+}, "UserMenu");

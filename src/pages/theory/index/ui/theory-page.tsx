@@ -1,8 +1,8 @@
-import { urlAtom, wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
-import { find, flatten, map, pipe } from 'es-toolkit/fp';
-import { House, Pencil, Trash2 } from 'lucide-react';
-import type { ChangeEvent } from 'react';
+import { urlAtom, wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
+import { find, flatten, map, pipe } from "es-toolkit/fp";
+import { House, Pencil, Trash2 } from "lucide-react";
+import type { ChangeEvent } from "react";
 
 import {
   openedQuestionId,
@@ -10,17 +10,17 @@ import {
   questions,
   questionsQuery,
   type Question,
-} from '@/entities/questions/question';
+} from "@/entities/questions/question";
 import {
   CreateQuestion,
   CreateQuestionButton,
   CreateQuestionEmptyButton,
-} from '@/features/questions/create-question';
-import { DeleteQuestion, openDeleteQuestion } from '@/features/questions/delete-question';
-import { UpdateQuestion, openUpdateQuestion } from '@/features/questions/update-question';
-import { ThemeSwitcher } from '@/features/theme-switcher';
-import { UserMenu } from '@/features/user/user-menu';
-import { HOME_PATH, THEORY_PATH } from '@/shared/config';
+} from "@/features/questions/create-question";
+import { DeleteQuestion, openDeleteQuestion } from "@/features/questions/delete-question";
+import { openUpdateQuestion, UpdateQuestion } from "@/features/questions/update-question";
+import { ThemeSwitcher } from "@/features/theme-switcher";
+import { UserMenu } from "@/features/user/user-menu";
+import { HOME_PATH, THEORY_PATH } from "@/shared/config";
 import {
   Accordion,
   AccordionContent,
@@ -32,10 +32,10 @@ import {
   Markdown,
   markdownPlainText,
   Spinner,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
-import { loadOpenedQuestion } from '../model/load-opened-question';
-import { searchTheoryQuestions, theoryQuestionSearch } from '../model/question-search';
+import { loadOpenedQuestion } from "../model/load-opened-question";
+import { searchTheoryQuestions, theoryQuestionSearch } from "../model/question-search";
 
 type QuestionAnswerProps = {
   questionId: string;
@@ -51,9 +51,7 @@ const QuestionAnswer = reatomComponent(({ questionId }: QuestionAnswerProps) => 
 
   if (isOpenedQuestionReady && openedQuestionId() === questionId && openedQuestion === null) {
     return (
-      <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
-        question not found
-      </p>
+      <p className="text-ui uppercase tracking-[2px] text-muted-foreground">question not found</p>
     );
   }
 
@@ -63,7 +61,7 @@ const QuestionAnswer = reatomComponent(({ questionId }: QuestionAnswerProps) => 
       <span className="sr-only">loading</span>
     </div>
   );
-}, 'QuestionAnswer');
+}, "QuestionAnswer");
 
 type QuestionAccordionItemProps = {
   question: Question;
@@ -123,7 +121,7 @@ const QuestionAccordionItem = reatomComponent(
       </AccordionItem>
     );
   },
-  'QuestionAccordionItem',
+  "QuestionAccordionItem",
 );
 
 const TheoryQuestions = reatomComponent(() => {
@@ -131,9 +129,7 @@ const TheoryQuestions = reatomComponent(() => {
   const search = theoryQuestionSearch();
   const openedId =
     openedQuestionId() ||
-    (urlAtom().pathname === THEORY_PATH
-      ? (urlAtom().searchParams.get('id') ?? '')
-      : '');
+    (urlAtom().pathname === THEORY_PATH ? (urlAtom().searchParams.get("id") ?? "") : "");
   const openedQuestion = question();
   const isOpenedQuestionReady = loadOpenedQuestion.ready();
   const isOpenedQuestionListed =
@@ -144,19 +140,14 @@ const TheoryQuestions = reatomComponent(() => {
     ) !== undefined;
 
   const extraOpenedQuestion =
-    openedId.length > 0 &&
-    !isOpenedQuestionListed &&
-    openedQuestion?.id === openedId
+    openedId.length > 0 && !isOpenedQuestionListed && openedQuestion?.id === openedId
       ? {
           id: openedQuestion.id,
           question: openedQuestion.question,
         }
       : null;
   const accordionQuestions = pipe(
-    [
-      listedQuestions ?? [],
-      extraOpenedQuestion === null ? [] : [extraOpenedQuestion],
-    ],
+    [listedQuestions ?? [], extraOpenedQuestion === null ? [] : [extraOpenedQuestion]],
     flatten(),
   );
   const isOpenedQuestionMissing =
@@ -185,16 +176,10 @@ const TheoryQuestions = reatomComponent(() => {
     );
   }
 
-  if (
-    listedQuestions.length === 0 &&
-    search.trim().length === 0 &&
-    openedId.length === 0
-  ) {
+  if (listedQuestions.length === 0 && search.trim().length === 0 && openedId.length === 0) {
     return (
       <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">
-        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
-          theory
-        </p>
+        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">theory</p>
         <h1 className="text-heading font-medium tracking-tight">Theory</h1>
         <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
           the questions list is empty
@@ -206,9 +191,7 @@ const TheoryQuestions = reatomComponent(() => {
 
   return (
     <section className="mx-auto flex min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 overflow-y-auto px-4 py-8">
-      <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
-        theory
-      </p>
+      <p className="text-xs uppercase tracking-[2px] text-muted-foreground">theory</p>
       <h1 className="text-heading font-medium tracking-tight">Theory</h1>
       <div className="flex flex-col gap-2">
         <Label htmlFor="theory-question-search">search</Label>
@@ -220,9 +203,7 @@ const TheoryQuestions = reatomComponent(() => {
         />
       </div>
       {accordionQuestions.length === 0 && !isOpenedQuestionMissing ? (
-        <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
-          no matches
-        </p>
+        <p className="text-ui uppercase tracking-[2px] text-muted-foreground">no matches</p>
       ) : (
         <>
           {accordionQuestions.length > 0 ? (
@@ -235,10 +216,7 @@ const TheoryQuestions = reatomComponent(() => {
               {pipe(
                 accordionQuestions,
                 map((listedQuestion) => (
-                  <QuestionAccordionItem
-                    key={listedQuestion.id}
-                    question={listedQuestion}
-                  />
+                  <QuestionAccordionItem key={listedQuestion.id} question={listedQuestion} />
                 )),
               )}
             </Accordion>
@@ -259,7 +237,7 @@ const TheoryQuestions = reatomComponent(() => {
       )}
     </section>
   );
-}, 'TheoryQuestions');
+}, "TheoryQuestions");
 
 const TheoryPage = reatomComponent(() => {
   return (
@@ -270,10 +248,7 @@ const TheoryPage = reatomComponent(() => {
             <House />
           </a>
         </Button>
-        <a
-          className="text-sm uppercase tracking-[2px] text-muted-foreground"
-          href={HOME_PATH}
-        >
+        <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
           Interview helper
         </a>
         <CreateQuestionButton />
@@ -290,6 +265,6 @@ const TheoryPage = reatomComponent(() => {
       </main>
     </div>
   );
-}, 'TheoryPage');
+}, "TheoryPage");
 
 export default TheoryPage;

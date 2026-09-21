@@ -1,8 +1,8 @@
-import type { ComponentProps, ReactNode } from 'react';
-import { ChevronDownIcon } from 'lucide-react';
-import { Accordion as AccordionPrimitive } from 'radix-ui';
+import type { ComponentProps, ReactNode } from "react";
+import { ChevronDownIcon } from "lucide-react";
+import { Accordion as AccordionPrimitive } from "radix-ui";
 
-import { cn } from '@/shared/lib';
+import { cn } from "@/shared/lib";
 
 type AccordionProps = ComponentProps<typeof AccordionPrimitive.Root>;
 
@@ -15,7 +15,7 @@ type AccordionTriggerProps = ComponentProps<typeof AccordionPrimitive.Trigger> &
 type AccordionContentProps = ComponentProps<typeof AccordionPrimitive.Content>;
 
 const accordionTriggerClassName =
-  'flex items-start gap-4 rounded-none py-4 text-left text-sm font-medium outline-none transition-all hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&[data-state=open]>svg]:rotate-180';
+  "flex items-start gap-4 rounded-none py-4 text-left text-sm font-medium outline-none transition-all hover:underline focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:size-4 [&_svg]:shrink-0 [&[data-state=open]>svg]:rotate-180";
 
 function AccordionChevron() {
   return (
@@ -31,7 +31,7 @@ function AccordionItem({ className, ...props }: AccordionItemProps) {
   return (
     <AccordionPrimitive.Item
       data-slot="accordion-item"
-      className={cn('border-b last:border-b-0', className)}
+      className={cn("border-b last:border-b-0", className)}
       {...props}
     />
   );
@@ -44,7 +44,7 @@ function AccordionTrigger({ className, children, trailing, ...props }: Accordion
         data-slot="accordion-trigger"
         className={cn(
           accordionTriggerClassName,
-          trailing ? 'min-w-0 flex-1' : 'flex-1 justify-between',
+          trailing ? "min-w-0 flex-1" : "flex-1 justify-between",
           className,
         )}
         {...props}
@@ -57,7 +57,7 @@ function AccordionTrigger({ className, children, trailing, ...props }: Accordion
         <AccordionPrimitive.Trigger
           data-slot="accordion-trigger-icon"
           tabIndex={-1}
-          className={cn(accordionTriggerClassName, className, 'shrink-0')}
+          className={cn(accordionTriggerClassName, className, "shrink-0")}
         >
           <AccordionChevron />
         </AccordionPrimitive.Trigger>
@@ -73,7 +73,7 @@ function AccordionContent({ className, children, ...props }: AccordionContentPro
       className="overflow-hidden text-sm data-[state=closed]:animate-accordion-up data-[state=open]:animate-accordion-down"
       {...props}
     >
-      <div className={cn('pt-0 pb-4', className)}>{children}</div>
+      <div className={cn("pt-0 pb-4", className)}>{children}</div>
     </AccordionPrimitive.Content>
   );
 }

@@ -1,6 +1,6 @@
-import { reatomComponent } from '@reatom/react';
+import { reatomComponent } from "@reatom/react";
 
-import { SIGN_UP_PATH } from '@/shared/config';
+import { SIGN_UP_PATH } from "@/shared/config";
 import {
   bindFormControl,
   Button,
@@ -11,10 +11,10 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
-import { isSignInValid, signInForm } from '../model/sign-in';
-import { CookieConsent } from './cookie-consent';
+import { isSignInValid, signInForm } from "../model/sign-in";
+import { CookieConsent } from "./cookie-consent";
 
 const SignInPage = reatomComponent(() => {
   const { fields, submit } = signInForm;
@@ -27,9 +27,7 @@ const SignInPage = reatomComponent(() => {
     <>
       <section className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
         <div>
-          <p className="mb-1.5 text-xs uppercase tracking-[2px] text-muted-foreground">
-            account
-          </p>
+          <p className="mb-1.5 text-xs uppercase tracking-[2px] text-muted-foreground">account</p>
           <h1 className="text-heading font-medium tracking-tight">Sign in</h1>
         </div>
         <Form className="border border-border bg-card p-4" onSubmit={submit}>
@@ -46,11 +44,7 @@ const SignInPage = reatomComponent(() => {
             <FormItem>
               <FormLabel>password</FormLabel>
               <FormControl>
-                <Input
-                  type="password"
-                  autoComplete="current-password"
-                  {...passwordField}
-                />
+                <Input type="password" autoComplete="current-password" {...passwordField} />
               </FormControl>
               <FormMessage />
             </FormItem>
@@ -61,11 +55,8 @@ const SignInPage = reatomComponent(() => {
           </Button>
         </Form>
         <p className="text-ui text-muted-foreground">
-          Don't have an account?{' '}
-          <a
-            className="text-primary underline-offset-4 hover:underline"
-            href={SIGN_UP_PATH}
-          >
+          Don't have an account?{" "}
+          <a className="text-primary underline-offset-4 hover:underline" href={SIGN_UP_PATH}>
             Sign up
           </a>
         </p>
@@ -73,6 +64,6 @@ const SignInPage = reatomComponent(() => {
       <CookieConsent />
     </>
   );
-}, 'SignInPage');
+}, "SignInPage");
 
 export default SignInPage;

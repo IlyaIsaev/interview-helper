@@ -43,75 +43,75 @@ Toggle the `.dark` class on `<html>`. This project uses a Reatom `theme` atom (n
 
 Dark mode (`.dark`, duskbox-dusk):
 
-| Variable | Hex | Usage |
-|---|---|---|
-| `--background` | `#232336` | Page background |
-| `--foreground` | `#ccd8ef` | Primary text |
-| `--card` | `#1d1d30` | Card/panel backgrounds |
-| `--primary` | `#79b3f7` | Primary accent (blue) |
-| `--muted-foreground` | `#a6b1c8` | Secondary/muted text |
-| `--border` | `#253a55` | Borders |
-| `--destructive` | `#f4514c` | Error/danger |
+| Variable             | Hex       | Usage                  |
+| -------------------- | --------- | ---------------------- |
+| `--background`       | `#232336` | Page background        |
+| `--foreground`       | `#ccd8ef` | Primary text           |
+| `--card`             | `#1d1d30` | Card/panel backgrounds |
+| `--primary`          | `#79b3f7` | Primary accent (blue)  |
+| `--muted-foreground` | `#a6b1c8` | Secondary/muted text   |
+| `--border`           | `#253a55` | Borders                |
+| `--destructive`      | `#f4514c` | Error/danger           |
 
 Light mode (`:root`, duskbox-day):
 
-| Variable | Hex | Usage |
-|---|---|---|
-| `--background` | `#f9fafc` | Page background |
-| `--foreground` | `#252e40` | Primary text |
-| `--card` | `#f0f2f4` | Card/panel backgrounds |
-| `--primary` | `#33659d` | Primary accent (blue) |
-| `--muted-foreground` | `#444d61` | Secondary/muted text |
-| `--border` | `#dee0e3` | Borders |
-| `--destructive` | `#be2327` | Error/danger |
+| Variable             | Hex       | Usage                  |
+| -------------------- | --------- | ---------------------- |
+| `--background`       | `#f9fafc` | Page background        |
+| `--foreground`       | `#252e40` | Primary text           |
+| `--card`             | `#f0f2f4` | Card/panel backgrounds |
+| `--primary`          | `#33659d` | Primary accent (blue)  |
+| `--muted-foreground` | `#444d61` | Secondary/muted text   |
+| `--border`           | `#dee0e3` | Borders                |
+| `--destructive`      | `#be2327` | Error/danger           |
 
 ### Extended SMUI Colors
 
 These are raw HSL triplets, overridden per theme. Use with `hsl()` and optional alpha: `text-[hsl(var(--smui-green))]`, `border-[hsl(var(--smui-yellow)/0.3)]`, `bg-[hsl(var(--smui-frost-2)/0.04)]`.
 
-| Variable | Light | Dark | Usage |
-|---|---|---|---|
-| `--smui-frost-1` | `#027369` | `#45d0c0` | Teal accent |
-| `--smui-frost-2` | `#097687` | `#44d6f1` | Cyan |
-| `--smui-frost-3` | `#2769b7` | `#86bafe` | Heading blue |
+| Variable         | Light     | Dark      | Usage                       |
+| ---------------- | --------- | --------- | --------------------------- |
+| `--smui-frost-1` | `#027369` | `#45d0c0` | Teal accent                 |
+| `--smui-frost-2` | `#097687` | `#44d6f1` | Cyan                        |
+| `--smui-frost-3` | `#2769b7` | `#86bafe` | Heading blue                |
 | `--smui-frost-4` | `#33659d` | `#79b3f7` | Chrome blue (= `--primary`) |
-| `--smui-green` | `#3e7232` | `#89cc7b` | Success, online, nominal |
-| `--smui-yellow` | `#8e6c02` | `#e7be62` | Warning, standby, caution |
-| `--smui-orange` | `#974c00` | `#f68c36` | Alert, degraded |
-| `--smui-red` | `#be2327` | `#f4514c` | Critical, error, danger |
-| `--smui-purple` | `#695890` | `#b19ee3` | Info, special, rare |
+| `--smui-green`   | `#3e7232` | `#89cc7b` | Success, online, nominal    |
+| `--smui-yellow`  | `#8e6c02` | `#e7be62` | Warning, standby, caution   |
+| `--smui-orange`  | `#974c00` | `#f68c36` | Alert, degraded             |
+| `--smui-red`     | `#be2327` | `#f4514c` | Critical, error, danger     |
+| `--smui-purple`  | `#695890` | `#b19ee3` | Info, special, rare         |
 
 ### Surface Hierarchy
 
 Dark (duskbox-dusk):
 
-| Variable | Hex | Usage |
-|---|---|---|
-| `--smui-surface-0` | `#232336` | Page background |
-| `--smui-surface-1` | `#1d1d30` | Cards, panels |
-| `--smui-surface-2` | `#2d2d41` | Elevated elements |
+| Variable           | Hex       | Usage                     |
+| ------------------ | --------- | ------------------------- |
+| `--smui-surface-0` | `#232336` | Page background           |
+| `--smui-surface-1` | `#1d1d30` | Cards, panels             |
+| `--smui-surface-2` | `#2d2d41` | Elevated elements         |
 | `--smui-surface-3` | `#253a55` | Highlights, active states |
 
 Light (duskbox-day):
 
-| Variable | Hex | Usage |
-|---|---|---|
-| `--smui-surface-0` | `#f9fafc` | Page background |
-| `--smui-surface-1` | `#f0f2f4` | Cards, panels |
-| `--smui-surface-2` | `#ebedef` | Elevated elements |
+| Variable           | Hex       | Usage                     |
+| ------------------ | --------- | ------------------------- |
+| `--smui-surface-0` | `#f9fafc` | Page background           |
+| `--smui-surface-1` | `#f0f2f4` | Cards, panels             |
+| `--smui-surface-2` | `#ebedef` | Elevated elements         |
 | `--smui-surface-3` | `#dee0e3` | Highlights, active states |
 
 ## Typography Patterns
 
-| Tailwind Class | Size | Usage |
-|---|---|---|
-| `text-label` | 11px | Labels, badges, status text |
-| `text-ui` | 13px | Buttons, nav, table body |
-| `text-xs` | 12px | Card titles, small text |
-| `text-sm` | 14px | Body text, list items |
-| `text-heading` | 22px | Section headings |
-| `text-stat` | 26px | Big stat numbers |
-| `text-hero` | 42px | Hero display text |
+| Tailwind Class | Size | Usage                       |
+| -------------- | ---- | --------------------------- |
+| `text-label`   | 11px | Labels, badges, status text |
+| `text-ui`      | 13px | Buttons, nav, table body    |
+| `text-xs`      | 12px | Card titles, small text     |
+| `text-sm`      | 14px | Body text, list items       |
+| `text-heading` | 22px | Section headings            |
+| `text-stat`    | 26px | Big stat numbers            |
+| `text-hero`    | 42px | Hero display text           |
 
 **Card title:** `text-xs text-muted-foreground tracking-[1.5px] uppercase font-normal`
 
@@ -143,19 +143,19 @@ Status dot: `inline-block w-[5px] h-[5px] rounded-full bg-[hsl(var(--smui-green)
 Custom text sizes conflict with tailwind-merge. Extend `cn()`:
 
 ```ts
-import { clsx, type ClassValue } from 'clsx'
-import { extendTailwindMerge } from 'tailwind-merge'
+import { clsx, type ClassValue } from "clsx";
+import { extendTailwindMerge } from "tailwind-merge";
 
 const twMerge = extendTailwindMerge({
   extend: {
     classGroups: {
-      'font-size': ['text-label', 'text-ui', 'text-heading', 'text-stat', 'text-hero'],
+      "font-size": ["text-label", "text-ui", "text-heading", "text-stat", "text-hero"],
     },
   },
-})
+});
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 ```
 

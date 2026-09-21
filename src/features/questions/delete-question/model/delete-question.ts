@@ -1,5 +1,5 @@
-import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core';
-import { findIndex, pipe } from 'es-toolkit/fp';
+import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from "@reatom/core";
+import { findIndex, pipe } from "es-toolkit/fp";
 
 import {
   initQuestion,
@@ -10,17 +10,14 @@ import {
   removeFromQuestions,
   restoreToQuestions,
   type Question,
-} from '@/entities/questions/question';
-import { clientApi } from '@/shared/api';
-import { QUESTIONS_PATH, questionPath, THEORY_PATH } from '@/shared/config';
-import { markdownPlainText, toast } from '@/shared/ui';
+} from "@/entities/questions/question";
+import { clientApi } from "@/shared/api";
+import { QUESTIONS_PATH, questionPath, THEORY_PATH } from "@/shared/config";
+import { markdownPlainText, toast } from "@/shared/ui";
 
-export const deletedQuestionId = atom<string | null>(null, 'deletedQuestionId');
+export const deletedQuestionId = atom<string | null>(null, "deletedQuestionId");
 
-export const isDeleteQuestionDialogOpen = reatomBoolean(
-  false,
-  'isDeleteQuestionDialogOpen',
-);
+export const isDeleteQuestionDialogOpen = reatomBoolean(false, "isDeleteQuestionDialogOpen");
 
 const hasQuestionId =
   (questionId: string) =>
@@ -31,13 +28,13 @@ export const closeDeleteQuestionDialog = action(() => {
   isDeleteQuestionDialogOpen.setFalse();
 
   deletedQuestionId.set(null);
-}, 'closeDeleteQuestionDialog');
+}, "closeDeleteQuestionDialog");
 
 export const openDeleteQuestion = action((questionId: string) => {
   deletedQuestionId.set(questionId);
 
   isDeleteQuestionDialogOpen.setTrue();
-}, 'openDeleteQuestion');
+}, "openDeleteQuestion");
 
 export const deleteQuestion = action(async () => {
   const questionId = deletedQuestionId();
@@ -59,20 +56,20 @@ export const deleteQuestion = action(async () => {
   } catch {
     if (isSearchEmpty && question !== undefined) restoreToQuestions(question, questionIndex);
 
-    toast.error('Could not delete the question. Try again later.', {
+    toast.error("Could not delete the question. Try again later.", {
       description: questionDescription,
     });
 
     return;
   }
 
-  toast.success('Question deleted.', {
+  toast.success("Question deleted.", {
     description: questionDescription,
   });
 
   if (urlAtom().pathname === THEORY_PATH) {
     if (openedQuestionId() === questionId) {
-      openedQuestionId.set('');
+      openedQuestionId.set("");
 
       initQuestion(null);
     }
@@ -83,4 +80,4 @@ export const deleteQuestion = action(async () => {
   }
 
   await wrap(refetchQuestions());
-}, 'deleteQuestion').extend(withAsync());
+}, "deleteQuestion").extend(withAsync());

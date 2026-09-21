@@ -346,11 +346,11 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - Prefer full words in props (`user`, `config`, `options` — not `usr`, `cfg`, `opts`)
 - Atoms/actions: **domain noun** (state) or **verb + domain object** (action). Do not encode Reatom in the name.
 
-| Instead of (weak / technical) | Prefer (business)      |
-| ----------------------------- | ---------------------- |
-| `handleClickSubmit`           | `submitOrder`          |
-| `userDataAtom`                | `user`                 |
-| `onChangeEmailInput`          | `changeEmail`          |
+| Instead of (weak / technical) | Prefer (business) |
+| ----------------------------- | ----------------- |
+| `handleClickSubmit`           | `submitOrder`     |
+| `userDataAtom`                | `user`            |
+| `onChangeEmailInput`          | `changeEmail`     |
 
 ```ts
 // Values — business intent

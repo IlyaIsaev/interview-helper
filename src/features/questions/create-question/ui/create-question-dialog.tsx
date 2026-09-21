@@ -1,9 +1,9 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
-import { FileUp } from 'lucide-react';
-import { useRef, type ChangeEvent } from 'react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
+import { FileUp } from "lucide-react";
+import { useRef, type ChangeEvent } from "react";
 
-import { QuestionFields } from '@/entities/questions/question';
+import { QuestionFields } from "@/entities/questions/question";
 import {
   Button,
   Dialog,
@@ -14,14 +14,14 @@ import {
   DialogTitle,
   Form,
   Spinner,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
 import {
   closeCreateQuestionDialog,
   createQuestionForm,
   importQuestionFromMarkdown,
   isCreateQuestionDialogOpen,
-} from '../model/create-question';
+} from "../model/create-question";
 
 export const CreateQuestion = reatomComponent(() => {
   const markdownFileInputRef = useRef<HTMLInputElement>(null);
@@ -33,17 +33,15 @@ export const CreateQuestion = reatomComponent(() => {
   const openMarkdownFilePicker = wrap(() => {
     markdownFileInputRef.current?.click();
   });
-  const handleMarkdownFileChange = wrap(
-    async (event: ChangeEvent<HTMLInputElement>) => {
-      const file = event.target.files?.[0];
+  const handleMarkdownFileChange = wrap(async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
 
-      if (!file) return;
+    if (!file) return;
 
-      await importQuestionFromMarkdown(file);
+    await importQuestionFromMarkdown(file);
 
-      event.target.value = '';
-    },
-  );
+    event.target.value = "";
+  });
   const handleDialogOpenChange = wrap((shouldOpen: boolean) => {
     if (shouldOpen) isCreateQuestionDialogOpen.setTrue();
 
@@ -54,17 +52,12 @@ export const CreateQuestion = reatomComponent(() => {
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent className="flex h-[95vh] max-h-[95vh] min-h-0 min-w-[min(40vw,calc(100%-2rem))] w-[min(90vw,calc(100%-2rem))] flex-col overflow-clip [overflow-clip-margin:6px] sm:max-w-[90vw]">
         <DialogHeader className="shrink-0">
-          <DialogTitle className="text-xs uppercase tracking-[1.5px]">
-            Create question
-          </DialogTitle>
+          <DialogTitle className="text-xs uppercase tracking-[1.5px]">Create question</DialogTitle>
           <DialogDescription className="text-ui text-muted-foreground">
             Add a question and its answer.
           </DialogDescription>
         </DialogHeader>
-        <Form
-          className="min-h-0 flex-1 overflow-clip [overflow-clip-margin:6px]"
-          onSubmit={submit}
-        >
+        <Form className="min-h-0 flex-1 overflow-clip [overflow-clip-margin:6px]" onSubmit={submit}>
           <QuestionFields question={fields.question} answer={fields.answer} />
           <input
             ref={markdownFileInputRef}
@@ -74,26 +67,15 @@ export const CreateQuestion = reatomComponent(() => {
             onChange={handleMarkdownFileChange}
           />
           <DialogFooter className="shrink-0 sm:justify-between">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={openMarkdownFilePicker}
-            >
+            <Button type="button" variant="outline" onClick={openMarkdownFilePicker}>
               <FileUp data-icon="inline-start" />
               From markdown
             </Button>
             <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={wrap(closeCreateQuestionDialog)}
-              >
+              <Button type="button" variant="outline" onClick={wrap(closeCreateQuestionDialog)}>
                 Cancel
               </Button>
-              <Button
-                type="submit"
-                disabled={!isSubmitReady || hasValidationErrors || !dirty}
-              >
+              <Button type="submit" disabled={!isSubmitReady || hasValidationErrors || !dirty}>
                 {!isSubmitReady ? <Spinner data-icon="inline-start" /> : null}
                 Create
               </Button>
@@ -103,4 +85,4 @@ export const CreateQuestion = reatomComponent(() => {
       </DialogContent>
     </Dialog>
   );
-}, 'CreateQuestion');
+}, "CreateQuestion");

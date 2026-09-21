@@ -1,6 +1,6 @@
-import { reatomComponent } from '@reatom/react';
+import { reatomComponent } from "@reatom/react";
 
-import { SIGN_IN_PATH } from '@/shared/config';
+import { SIGN_IN_PATH } from "@/shared/config";
 import {
   bindFormControl,
   Button,
@@ -11,9 +11,9 @@ import {
   FormLabel,
   FormMessage,
   Input,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
-import { isSignUpValid, signUpForm } from '../model/sign-up';
+import { isSignUpValid, signUpForm } from "../model/sign-up";
 
 const SignUpPage = reatomComponent(() => {
   const { fields, submit } = signUpForm;
@@ -26,9 +26,7 @@ const SignUpPage = reatomComponent(() => {
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-6 px-4 py-16">
       <div>
-        <p className="mb-1.5 text-xs uppercase tracking-[2px] text-muted-foreground">
-          account
-        </p>
+        <p className="mb-1.5 text-xs uppercase tracking-[2px] text-muted-foreground">account</p>
         <h1 className="text-heading font-medium tracking-tight">Sign up</h1>
       </div>
       <Form className="border border-border bg-card p-4" onSubmit={submit}>
@@ -54,11 +52,7 @@ const SignUpPage = reatomComponent(() => {
           <FormItem>
             <FormLabel>password</FormLabel>
             <FormControl>
-              <Input
-                type="password"
-                autoComplete="new-password"
-                {...passwordField}
-              />
+              <Input type="password" autoComplete="new-password" {...passwordField} />
             </FormControl>
             <FormMessage />
           </FormItem>
@@ -69,13 +63,13 @@ const SignUpPage = reatomComponent(() => {
         </Button>
       </Form>
       <p className="text-ui text-muted-foreground">
-        Already have an account?{' '}
+        Already have an account?{" "}
         <a className="text-primary underline-offset-4 hover:underline" href={SIGN_IN_PATH}>
           Sign in
         </a>
       </p>
     </section>
   );
-}, 'SignUpPage');
+}, "SignUpPage");
 
 export default SignUpPage;

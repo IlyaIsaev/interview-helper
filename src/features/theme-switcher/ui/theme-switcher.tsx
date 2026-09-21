@@ -1,11 +1,11 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
-import { Moon, Sun } from 'lucide-react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
+import { Moon, Sun } from "lucide-react";
 
-import { theme, ThemeMode } from '@/shared/theme';
-import { Button } from '@/shared/ui';
+import { theme, ThemeMode } from "@/shared/theme";
+import { Button } from "@/shared/ui";
 
-import { toggleTheme } from '../model/theme-switcher';
+import { toggleTheme } from "../model/theme-switcher";
 
 export const ThemeSwitcher = reatomComponent(() => {
   const themeMode = theme();
@@ -18,10 +18,10 @@ export const ThemeSwitcher = reatomComponent(() => {
       variant="ghost"
       size="icon"
       className="size-7"
-      aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
+      aria-label={isDark ? "Switch to light theme" : "Switch to dark theme"}
       onClick={handleToggleTheme}
     >
       {isDark ? <Sun /> : <Moon />}
     </Button>
   );
-}, 'ThemeSwitcher');
+}, "ThemeSwitcher");

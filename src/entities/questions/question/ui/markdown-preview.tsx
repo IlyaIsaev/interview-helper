@@ -1,4 +1,4 @@
-import { Markdown } from '@/shared/ui';
+import { Markdown } from "@/shared/ui";
 
 type MarkdownPreviewProps = {
   children: string;

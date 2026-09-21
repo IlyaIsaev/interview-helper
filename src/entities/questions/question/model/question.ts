@@ -1,8 +1,8 @@
-import { action, atom, urlAtom, withSearchParams } from '@reatom/core';
-import { pick, pipe } from 'es-toolkit/fp';
-import type { DeepReadonly } from 'es-toolkit/types';
+import { action, atom, urlAtom, withSearchParams } from "@reatom/core";
+import { pick, pipe } from "es-toolkit/fp";
+import type { DeepReadonly } from "es-toolkit/types";
 
-import { questionPath, THEORY_PATH } from '@/shared/config';
+import { questionPath, THEORY_PATH } from "@/shared/config";
 
 export type OpenedQuestion = DeepReadonly<{
   id: string;
@@ -10,11 +10,11 @@ export type OpenedQuestion = DeepReadonly<{
   answer: string;
 }>;
 
-export const question = atom<OpenedQuestion | null>(null, 'question');
+export const question = atom<OpenedQuestion | null>(null, "question");
 
-export const openedQuestionId = atom('', 'openedQuestionId').extend(
-  withSearchParams('id', {
-    parse: (value) => value ?? '',
+export const openedQuestionId = atom("", "openedQuestionId").extend(
+  withSearchParams("id", {
+    parse: (value) => value ?? "",
     serialize: (value) => (value.length === 0 ? undefined : value),
     path: THEORY_PATH,
   }),
@@ -27,8 +27,8 @@ export const initQuestion = action((nextQuestion: OpenedQuestion | null) => {
     return;
   }
 
-  question.set(pipe(nextQuestion, pick(['id', 'question', 'answer'])));
-}, 'initQuestion');
+  question.set(pipe(nextQuestion, pick(["id", "question", "answer"])));
+}, "initQuestion");
 
 export const openQuestion = action((questionId: string) => {
   if (urlAtom().pathname === THEORY_PATH) {
@@ -38,4 +38,4 @@ export const openQuestion = action((questionId: string) => {
   }
 
   urlAtom.go(questionPath(questionId));
-}, 'openQuestion');
+}, "openQuestion");

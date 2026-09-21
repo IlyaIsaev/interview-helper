@@ -8,8 +8,8 @@ import {
   withAsync,
   withCallHook,
   wrap,
-} from '@reatom/core';
-import { find, pipe } from 'es-toolkit/fp';
+} from "@reatom/core";
+import { find, pipe } from "es-toolkit/fp";
 
 import {
   initQuestion,
@@ -24,17 +24,14 @@ import {
   updateInQuestions,
   type OpenedQuestion,
   type Question,
-} from '@/entities/questions/question';
-import { clientApi } from '@/shared/api';
-import { questionPath } from '@/shared/config';
-import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
+} from "@/entities/questions/question";
+import { clientApi } from "@/shared/api";
+import { questionPath } from "@/shared/config";
+import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
 
-export const updatedQuestionId = atom<string | null>(null, 'updatedQuestionId');
+export const updatedQuestionId = atom<string | null>(null, "updatedQuestionId");
 
-export const isUpdateQuestionDialogOpen = reatomBoolean(
-  false,
-  'isUpdateQuestionDialogOpen',
-);
+export const isUpdateQuestionDialogOpen = reatomBoolean(false, "isUpdateQuestionDialogOpen");
 
 const hasQuestionId =
   (questionId: string) =>
@@ -49,15 +46,15 @@ export const closeUpdateQuestionDialog = action(() => {
   updatedQuestionId.set(null);
 
   updateQuestionForm.reset();
-}, 'closeUpdateQuestionDialog');
+}, "closeUpdateQuestionDialog");
 
 export const updateQuestionForm = reatomForm(
   {
-    question: '',
-    answer: '',
+    question: "",
+    answer: "",
   },
   {
-    name: 'updateQuestionForm',
+    name: "updateQuestionForm",
     validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
@@ -68,8 +65,7 @@ export const updateQuestionForm = reatomForm(
 
       const question = pipe(questions() ?? [], find(hasQuestionId(questionId)));
       const isQuestionOpened =
-        openedQuestionId() === questionId ||
-        urlAtom().pathname === questionPath(questionId);
+        openedQuestionId() === questionId || urlAtom().pathname === questionPath(questionId);
       const questionOnPage = isQuestionOpened ? openedQuestion() : undefined;
       const questionText = question?.question ?? questionOnPage?.question;
       const questionDescription =
@@ -112,7 +108,7 @@ export const updateQuestionForm = reatomForm(
           },
         );
 
-        toast.success('Question updated.', {
+        toast.success("Question updated.", {
           description: questionDescription,
         });
 
@@ -122,7 +118,7 @@ export const updateQuestionForm = reatomForm(
       } catch {
         syncQuestion(question, questionOnPage ?? null);
 
-        toast.error('Could not update the question. Try again later.', {
+        toast.error("Could not update the question. Try again later.", {
           description: questionDescription,
         });
       }
@@ -135,10 +131,10 @@ registerFormSchemaValidation(updateQuestionForm, [
   updateQuestionForm.fields.answer,
 ]);
 
-const markdownImportInvalidMessage = 'The file must start with a heading.';
+const markdownImportInvalidMessage = "The file must start with a heading.";
 
 export const importQuestionFromMarkdown = action(async (file: File) => {
-  if (!file.name.toLowerCase().endsWith('.md')) {
+  if (!file.name.toLowerCase().endsWith(".md")) {
     toast.error(markdownImportInvalidMessage);
 
     return;
@@ -156,7 +152,7 @@ export const importQuestionFromMarkdown = action(async (file: File) => {
   updateQuestionForm.fields.question.change(parsed.question);
 
   updateQuestionForm.fields.answer.change(parsed.answer);
-}, 'importQuestionFromMarkdown');
+}, "importQuestionFromMarkdown");
 
 export const openUpdateQuestion = action(async (questionId: string) => {
   updatedQuestionId.set(questionId);
@@ -175,7 +171,7 @@ export const openUpdateQuestion = action(async (questionId: string) => {
     question: nextQuestion.question,
     answer: nextQuestion.answer,
   });
-}, 'openUpdateQuestion').extend(withAsync(), withAbort());
+}, "openUpdateQuestion").extend(withAsync(), withAbort());
 
 updateQuestionForm.submit.onFulfill.extend(
   withCallHook(({ payload: updatedQuestion }) => {

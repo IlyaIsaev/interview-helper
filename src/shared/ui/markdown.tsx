@@ -1,17 +1,14 @@
-import type { CodeHighlighter, UrlTransform } from '@tanstack/markdown';
-import {
-  Markdown as TanStackMarkdown,
-  type MarkdownComponents,
-} from '@tanstack/markdown/react';
-import { map, pipe } from 'es-toolkit/fp';
-import hljs from 'highlight.js/lib/common';
-import type { ComponentProps, ReactNode } from 'react';
+import type { CodeHighlighter, UrlTransform } from "@tanstack/markdown";
+import { Markdown as TanStackMarkdown, type MarkdownComponents } from "@tanstack/markdown/react";
+import { map, pipe } from "es-toolkit/fp";
+import hljs from "highlight.js/lib/common";
+import type { ComponentProps, ReactNode } from "react";
 
-import { cn, markdownPlainText } from '@/shared/lib';
+import { cn, markdownPlainText } from "@/shared/lib";
 
 type MarkdownProps = {
   children: string;
-  className?: ComponentProps<'div'>['className'];
+  className?: ComponentProps<"div">["className"];
   plain?: boolean;
 };
 
@@ -20,10 +17,10 @@ type MarkdownPlainNodeProps = {
 };
 
 const markdownHighlightLanguages = {
-  js: 'javascript',
-  jsx: 'javascript',
-  ts: 'typescript',
-  tsx: 'typescript',
+  js: "javascript",
+  jsx: "javascript",
+  ts: "typescript",
+  tsx: "typescript",
 } as const;
 
 const isAllowedMarkdownUrl = (url: string): boolean => {
@@ -31,31 +28,31 @@ const isAllowedMarkdownUrl = (url: string): boolean => {
 
   if (trimmedUrl.length === 0) return false;
 
-  if (trimmedUrl.startsWith('#') || trimmedUrl.startsWith('/')) return !trimmedUrl.startsWith('//');
+  if (trimmedUrl.startsWith("#") || trimmedUrl.startsWith("/")) return !trimmedUrl.startsWith("//");
 
   try {
     const protocol = new URL(trimmedUrl).protocol;
 
-    return protocol === 'https:' || protocol === 'http:';
+    return protocol === "https:" || protocol === "http:";
   } catch {
-    return !trimmedUrl.includes(':');
+    return !trimmedUrl.includes(":");
   }
 };
 
 const markdownUrl: UrlTransform = (_url, kind, defaultUrl) => {
-  if (kind === 'image') return defaultUrl;
+  if (kind === "image") return defaultUrl;
 
   if (!isAllowedMarkdownUrl(defaultUrl)) return null;
 
   return defaultUrl;
 };
 
-const highlightMarkdownCode: CodeHighlighter = (code, lang = 'plaintext') => {
+const highlightMarkdownCode: CodeHighlighter = (code, lang = "plaintext") => {
   const language =
     lang in markdownHighlightLanguages
       ? markdownHighlightLanguages[lang as keyof typeof markdownHighlightLanguages]
       : lang;
-  const highlightLanguage = hljs.getLanguage(language) === undefined ? 'plaintext' : language;
+  const highlightLanguage = hljs.getLanguage(language) === undefined ? "plaintext" : language;
 
   return hljs.highlight(code, { language: highlightLanguage, ignoreIllegals: true }).value;
 };
@@ -63,12 +60,7 @@ const highlightMarkdownCode: CodeHighlighter = (code, lang = 'plaintext') => {
 const markdownComponents = {
   a: ({ href, ...props }) =>
     href ? (
-      <a
-        {...props}
-        href={href}
-        rel="noopener noreferrer nofollow"
-        referrerPolicy="no-referrer"
-      />
+      <a {...props} href={href} rel="noopener noreferrer nofollow" referrerPolicy="no-referrer" />
     ) : (
       <span>{props.children}</span>
     ),
@@ -76,23 +68,23 @@ const markdownComponents = {
 } satisfies MarkdownComponents;
 
 const markdownPlainTags = [
-  'a',
-  'blockquote',
-  'code',
-  'del',
-  'em',
-  'h1',
-  'h2',
-  'h3',
-  'h4',
-  'h5',
-  'h6',
-  'li',
-  'ol',
-  'p',
-  'pre',
-  'strong',
-  'ul',
+  "a",
+  "blockquote",
+  "code",
+  "del",
+  "em",
+  "h1",
+  "h2",
+  "h3",
+  "h4",
+  "h5",
+  "h6",
+  "li",
+  "ol",
+  "p",
+  "pre",
+  "strong",
+  "ul",
 ] as const;
 
 function MarkdownPlainNode({ children }: MarkdownPlainNodeProps) {
@@ -115,11 +107,8 @@ const markdownParseOptions = {
 function Markdown({ children, className, plain = false }: MarkdownProps) {
   if (plain) {
     return (
-      <p className={cn('min-w-0 flex-1 truncate', className)}>
-        <TanStackMarkdown
-          {...markdownParseOptions}
-          components={markdownPlainComponents}
-        >
+      <p className={cn("min-w-0 flex-1 truncate", className)}>
+        <TanStackMarkdown {...markdownParseOptions} components={markdownPlainComponents}>
           {children}
         </TanStackMarkdown>
       </p>
@@ -127,7 +116,7 @@ function Markdown({ children, className, plain = false }: MarkdownProps) {
   }
 
   return (
-    <div className={cn('prose max-w-none', className)}>
+    <div className={cn("prose max-w-none", className)}>
       <TanStackMarkdown
         {...markdownParseOptions}
         components={markdownComponents}

@@ -1,18 +1,18 @@
-import { resolve } from 'node:path'
+import { resolve } from "node:path";
 
-import { cloudflare } from '@cloudflare/vite-plugin'
-import babel from '@rolldown/plugin-babel'
-import { reatom } from '@reatom/vite'
-import tailwindcss from '@tailwindcss/vite'
-import react, { reactCompilerPreset } from '@vitejs/plugin-react'
-import { defineConfig } from 'vite'
+import { cloudflare } from "@cloudflare/vite-plugin";
+import babel from "@rolldown/plugin-babel";
+import { reatom } from "@reatom/vite";
+import tailwindcss from "@tailwindcss/vite";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import { defineConfig } from "vite";
 
-const srcRoot = resolve(import.meta.dirname, 'src')
+const srcRoot = resolve(import.meta.dirname, "src");
 
 // https://vite.dev/config/
 export default defineConfig({
   server: {
-    host: '127.0.0.1',
+    host: "127.0.0.1",
     port: 5173,
     strictPort: true,
   },
@@ -26,20 +26,19 @@ export default defineConfig({
   build: {
     // Font files must stay same-origin URLs; CSP font-src is 'self' (no data:).
     assetsInlineLimit: (filePath: string) => {
-      if (filePath.endsWith('.woff2')) return false
+      if (filePath.endsWith(".woff2")) return false;
 
-      if (filePath.endsWith('.woff')) return false
+      if (filePath.endsWith(".woff")) return false;
     },
   },
   resolve: {
     alias: {
-      '@': srcRoot,
-      '@/app': resolve(srcRoot, 'app'),
-      '@/pages': resolve(srcRoot, 'pages'),
-      '@/features': resolve(srcRoot, 'features'),
-      '@/entities': resolve(srcRoot, 'entities'),
-      '@/shared': resolve(srcRoot, 'shared'),
+      "@": srcRoot,
+      "@/app": resolve(srcRoot, "app"),
+      "@/pages": resolve(srcRoot, "pages"),
+      "@/features": resolve(srcRoot, "features"),
+      "@/entities": resolve(srcRoot, "entities"),
+      "@/shared": resolve(srcRoot, "shared"),
     },
   },
-})
-
+});

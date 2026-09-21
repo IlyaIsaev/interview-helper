@@ -178,12 +178,12 @@ full explanation.
 
 ### Decision summary
 
-| Project state | Recommended location |
-| --- | --- |
-| No entities layer (yet), simple token + minimal user info | `shared/auth` |
-| Entities layer exists, auth and profile tightly coupled | `entities/user` |
-| Complex token logic, no profile reuse yet | `shared/auth` (split from `shared/api`) |
-| Token storage in a single page, widget, or feature slice | Avoid; promote to Shared or Entities |
+| Project state                                             | Recommended location                    |
+| --------------------------------------------------------- | --------------------------------------- |
+| No entities layer (yet), simple token + minimal user info | `shared/auth`                           |
+| Entities layer exists, auth and profile tightly coupled   | `entities/user`                         |
+| Complex token logic, no profile reuse yet                 | `shared/auth` (split from `shared/api`) |
+| Token storage in a single page, widget, or feature slice  | Avoid; promote to Shared or Entities    |
 
 A `user` entity created **only** to wrap a login response is premature.
 Wait until profile data is consumed for non-auth purposes (avatars in
@@ -268,7 +268,7 @@ A new piece of business logic needs a home.
 - **Mirroring every API endpoint with an entity.** API endpoints belong in
   `shared/api`. Entities exist for business logic, not for paralleling the
   backend structure.
-- **Creating a `user` entity *only* to wrap a login response.** A `user`
+- **Creating a `user` entity _only_ to wrap a login response.** A `user`
   entity is justified when profile data is reused across non-auth flows
   (avatars in comments, names in posts) or when token logic is genuinely
   tied to user business logic. Until that reuse appears, `shared/auth`

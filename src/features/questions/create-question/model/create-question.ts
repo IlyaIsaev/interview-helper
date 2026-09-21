@@ -1,4 +1,4 @@
-import { action, reatomBoolean, reatomForm, withCallHook, wrap } from '@reatom/core';
+import { action, reatomBoolean, reatomForm, withCallHook, wrap } from "@reatom/core";
 
 import {
   addToQuestions,
@@ -7,14 +7,11 @@ import {
   questionFieldsSchema,
   questionsQuery,
   refetchQuestions,
-} from '@/entities/questions/question';
-import { clientApi } from '@/shared/api';
-import { markdownPlainText, registerFormSchemaValidation, toast } from '@/shared/ui';
+} from "@/entities/questions/question";
+import { clientApi } from "@/shared/api";
+import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
 
-export const isCreateQuestionDialogOpen = reatomBoolean(
-  false,
-  'isCreateQuestionDialogOpen',
-);
+export const isCreateQuestionDialogOpen = reatomBoolean(false, "isCreateQuestionDialogOpen");
 
 export const openCreateQuestion = isCreateQuestionDialogOpen.setTrue;
 
@@ -22,12 +19,12 @@ export const closeCreateQuestionDialog = action(() => {
   isCreateQuestionDialogOpen.setFalse();
 
   createQuestionForm.reset();
-}, 'closeCreateQuestionDialog');
+}, "closeCreateQuestionDialog");
 
-const markdownImportInvalidMessage = 'The file must start with a heading.';
+const markdownImportInvalidMessage = "The file must start with a heading.";
 
 export const importQuestionFromMarkdown = action(async (file: File) => {
-  if (!file.name.toLowerCase().endsWith('.md')) {
+  if (!file.name.toLowerCase().endsWith(".md")) {
     toast.error(markdownImportInvalidMessage);
 
     return;
@@ -45,15 +42,15 @@ export const importQuestionFromMarkdown = action(async (file: File) => {
   createQuestionForm.fields.question.change(parsed.question);
 
   createQuestionForm.fields.answer.change(parsed.answer);
-}, 'importQuestionFromMarkdown');
+}, "importQuestionFromMarkdown");
 
 export const createQuestionForm = reatomForm(
   {
-    question: '',
-    answer: '',
+    question: "",
+    answer: "",
   },
   {
-    name: 'createQuestionForm',
+    name: "createQuestionForm",
     validateOnBlur: false,
     validateOnChange: true,
     schema: questionFieldsSchema,
@@ -61,7 +58,7 @@ export const createQuestionForm = reatomForm(
       try {
         return await wrap(clientApi.createQuestion({ question, answer }));
       } catch {
-        toast.error('Could not create the question. Try again later.', {
+        toast.error("Could not create the question. Try again later.", {
           description: markdownPlainText(question),
         });
       }
@@ -74,10 +71,7 @@ registerFormSchemaValidation(createQuestionForm, [
   createQuestionForm.fields.answer,
 ]);
 
-const syncCreatedQuestion = action(async (createdQuestion: {
-  id: string;
-  question: string;
-}) => {
+const syncCreatedQuestion = action(async (createdQuestion: { id: string; question: string }) => {
   if (questionsQuery().length === 0) {
     addToQuestions({
       id: createdQuestion.id,
@@ -86,7 +80,7 @@ const syncCreatedQuestion = action(async (createdQuestion: {
   }
 
   await wrap(refetchQuestions());
-}, 'syncCreatedQuestion');
+}, "syncCreatedQuestion");
 
 createQuestionForm.submit.onFulfill.extend(
   withCallHook(({ payload: createdQuestion }) => {
@@ -98,7 +92,7 @@ createQuestionForm.submit.onFulfill.extend(
 
     syncCreatedQuestion(createdQuestion);
 
-    toast.success('Question created.', {
+    toast.success("Question created.", {
       description: markdownPlainText(createdQuestion.question),
     });
   }),

@@ -36,17 +36,17 @@ For Vite users:
 `vite.config.js`:
 
 ```js
-import { defineConfig } from 'vite'
-import { reatom } from '@reatom/vite'
+import { defineConfig } from "vite";
+import { reatom } from "@reatom/vite";
 
 export default defineConfig({
   plugins: [reatom()],
   esbuild: {
-    jsxFactory: 'h',
-    jsxFragment: 'hf',
+    jsxFactory: "h",
+    jsxFragment: "hf",
     jsxInject: `import { h, hf } from "@reatom/jsx"`,
   },
-})
+});
 ```
 
 `@reatom/vite` also wires routing and `mount()` hot updates — see [Hot module replacement](#hot-module-replacement-vite).
@@ -62,7 +62,7 @@ You can integrate `@reatom/jsx` into existing React or other JSX projects.
 ```tsx
 // @jsxRuntime classic
 // @jsx h
-import { h } from '@reatom/jsx'
+import { h } from "@reatom/jsx";
 ```
 
 This enables you to gradually migrate or optimize parts of your app without conflict with existing tooling.
@@ -88,22 +88,22 @@ const Input = () => <input value={value} on:input={onInput} />
 Mount your app:
 
 ```tsx
-import { connectLogger, context, clearStack } from '@reatom/core'
-import { mount } from '@reatom/jsx'
-import { App } from './App'
+import { connectLogger, context, clearStack } from "@reatom/core";
+import { mount } from "@reatom/jsx";
+import { App } from "./App";
 
 // Disable default global context to enforce explicit context usage (recommended)
-clearStack()
+clearStack();
 
 // Create a root context for the application
-const rootContext = context.start()
+const rootContext = context.start();
 
-if (import.meta.env.MODE === 'development') {
-  connectLogger()
+if (import.meta.env.MODE === "development") {
+  connectLogger();
 }
 
 // Mount the app within the created context
-const { unmount } = mount(document.getElementById('app')!, <App />)
+const { unmount } = mount(document.getElementById("app")!, <App />);
 
 // Later, to unmount and cleanup:
 // unmount()
@@ -125,14 +125,14 @@ Prefer [`@reatom/vite`](https://www.reatom.dev/reference/vite) — add `reatom()
 Or handle it manually: call `unmount()` from the previous `mount` inside `import.meta.hot.dispose` so the updated module can mount a fresh tree:
 
 ```tsx
-const root = document.getElementById('app')!
-const { unmount } = mount(root, <App />)
+const root = document.getElementById("app")!;
+const { unmount } = mount(root, <App />);
 
 if (import.meta.hot) {
   import.meta.hot.dispose(() => {
-    unmount()
-  })
-  import.meta.hot.accept()
+    unmount();
+  });
+  import.meta.hot.accept();
 }
 ```
 
@@ -196,17 +196,17 @@ Supported props:
 - `model:field`: binds a `reatomField` / atomized field from `reatomForm` (change, focus, disabled, elementRef)
 
 ```tsx
-const value = atom('')
-const Input = () => <input model:value={value} />
+const value = atom("");
+const Input = () => <input model:value={value} />;
 ```
 
 Components run once on creation, so it's safe to define atoms or any setup logic inside:
 
 ```tsx
 const Input = () => {
-  const value = atom('')
-  return <input model:value={value} />
-}
+  const value = atom("");
+  return <input model:value={value} />;
+};
 ```
 
 ### Forms
@@ -219,39 +219,39 @@ For real forms — validation, submit, focus/dirty state — use `reatomForm` fr
 Use `model:value` / `model:checked` for simple controls (search, toggles). Use `model:field` for form fields. See the [forms handbook](https://v1001.reatom.dev/handbook/forms/).
 
 ```ts title="loginForm.ts"
-import { reatomForm } from '@reatom/core'
+import { reatomForm } from "@reatom/core";
 
 export const loginForm = reatomForm(
   {
-    username: '',
-    password: '',
-    passwordDouble: '',
+    username: "",
+    password: "",
+    passwordDouble: "",
   },
   {
     validate({ password, passwordDouble }) {
       if (password !== passwordDouble) {
-        return 'Passwords do not match'
+        return "Passwords do not match";
       }
     },
     onSubmit: async (values) => api.login(values),
     validateOnBlur: true,
-    name: 'loginForm',
+    name: "loginForm",
   },
-)
+);
 ```
 
 ```tsx title="LoginForm.jsx"
-import { css } from '@reatom/jsx'
-import { loginForm } from './loginForm'
+import { css } from "@reatom/jsx";
+import { loginForm } from "./loginForm";
 
 const formStyles = css`
-  &[data-submitting] [type='submit'] {
+  &[data-submitting] [type="submit"] {
     color: transparent;
     position: relative;
     pointer-events: none;
   }
-  &[data-submitting] [type='submit']::after {
-    content: '';
+  &[data-submitting] [type="submit"]::after {
+    content: "";
     position: absolute;
     inset: 0;
     margin: auto;
@@ -267,14 +267,11 @@ const formStyles = css`
       transform: rotate(360deg);
     }
   }
-`
+`;
 
 export const LoginForm = () => (
   <form model={loginForm} css={formStyles}>
-    <input
-      model:field={loginForm.fields.username}
-      placeholder="Enter your username"
-    />
+    <input model:field={loginForm.fields.username} placeholder="Enter your username" />
     <span>{() => loginForm.fields.username.validation().error}</span>
 
     <input
@@ -291,7 +288,7 @@ export const LoginForm = () => (
 
     <button type="submit">Login</button>
   </form>
-)
+);
 ```
 
 `<form model={form}>` wires submit (`preventDefault` + `form.submit()`) and toggles `data-submitting`, `data-submitted`, and `data-submit-error` on the form for CSS. The submit button needs no extra props — the spinner above is CSS-only while `data-submitting` is set.
@@ -301,7 +298,7 @@ export const LoginForm = () => (
 Use `style={{ key: value }}` for inline styles. Falsy values like `false`, `null`, and `undefined` remove the style.
 
 ```tsx
-<div style={{ top: 0, display: hidden() && 'none' }} />
+<div style={{ top: 0, display: hidden() && "none" }} />
 ```
 
 Avoid replacing the full style object — prefer updates via static keys:
@@ -315,11 +312,7 @@ Avoid replacing the full style object — prefer updates via static keys:
 ✅ **Use:**
 
 ```tsx
-<div
-  style={() =>
-    flag() ? { top: 0, bottom: undefined } : { top: undefined, bottom: 0 }
-  }
-/>
+<div style={() => (flag() ? { top: 0, bottom: undefined } : { top: undefined, bottom: 0 })} />
 ```
 
 ### `style:*` props
@@ -328,12 +321,7 @@ Set individual styles via `style:*`:
 
 ```tsx
 // <div style="top: 10px; right: 0;"></div>
-<div
-  style:top={atom('10px')}
-  style:right={0}
-  style:bottom={undefined}
-  style:left={null}
-></div>
+<div style:top={atom("10px")} style:right={0} style:bottom={undefined} style:left={null}></div>
 ```
 
 Values can be primitives or reactive (`atom`, `() => string`, etc.). Numbers are passed as-is (no automatic `px`).
@@ -425,26 +413,26 @@ Your design tokens and utilities:
 ```ts title="styles.ts"
 // Tokens
 export const colors = {
-  primary: '#3b82f6',
-  surface: '#f8fafc',
-  text: '#1e293b',
-}
-export const space = [0, 4, 8, 16, 24, 32, 48] as const
-export type Size = 0 | 1 | 2 | 3 | 4 | 5 | 6
+  primary: "#3b82f6",
+  surface: "#f8fafc",
+  text: "#1e293b",
+};
+export const space = [0, 4, 8, 16, 24, 32, 48] as const;
+export type Size = 0 | 1 | 2 | 3 | 4 | 5 | 6;
 
 // Utilities — just strings and functions
-export const flex = 'display: flex;'
-export const flexCenter = 'justify-content: center; align-items: center;'
-export const rounded = 'border-radius: 8px;'
+export const flex = "display: flex;";
+export const flexCenter = "justify-content: center; align-items: center;";
+export const rounded = "border-radius: 8px;";
 
-export const p = (n: Size) => `padding: ${space[n]}px;`
-export const px = (n: Size) => `padding-inline: ${space[n]}px;`
-export const py = (n: Size) => `padding-block: ${space[n]}px;`
-export const bg = (color: string) => `background: ${color};`
-export const text = (color: string) => `color: ${color};`
+export const p = (n: Size) => `padding: ${space[n]}px;`;
+export const px = (n: Size) => `padding-inline: ${space[n]}px;`;
+export const py = (n: Size) => `padding-block: ${space[n]}px;`;
+export const bg = (color: string) => `background: ${color};`;
+export const text = (color: string) => `color: ${color};`;
 
-export const card = bg(colors.surface) + rounded + p(4)
-export const center = flex + flexCenter
+export const card = bg(colors.surface) + rounded + p(4);
+export const center = flex + flexCenter;
 ```
 
 This gives you the composability of utility-first CSS with full CSS power — all type-safe, all just JavaScript.
@@ -455,7 +443,7 @@ We have built-in [class names parsing](#class-or-classname-props) and a reactive
 
 ```tsx
 const Accordion = ({ title, children }) => {
-  const open = atom(false)
+  const open = atom(false);
 
   return (
     <details
@@ -476,8 +464,8 @@ const Accordion = ({ title, children }) => {
         <div css="overflow: hidden;">{children}</div>
       </article>
     </details>
-  )
-}
+  );
+};
 ```
 
 Works with ARIA and standard attributes — accessible and styleable in one:
@@ -491,10 +479,7 @@ Works with ARIA and standard attributes — accessible and styleable in one:
 
 ```tsx
 // Invalid form field
-<input
-  aria-invalid={hasError}
-  css="&[aria-invalid='true'] { border-color: red; }"
-/>
+<input aria-invalid={hasError} css="&[aria-invalid='true'] { border-color: red; }" />
 ```
 
 ```tsx
@@ -503,7 +488,7 @@ Works with ARIA and standard attributes — accessible and styleable in one:
   role="tab"
   aria-selected={selected}
   css={`
-    &[aria-selected='true'] {
+    &[aria-selected="true"] {
       border-bottom: 2px solid currentColor;
     }
   `}
@@ -518,7 +503,7 @@ Works with ARIA and standard attributes — accessible and styleable in one:
   role="button"
   aria-disabled={disabled}
   css={`
-    &[aria-disabled='true'] {
+    &[aria-disabled="true"] {
       opacity: 0.5;
       pointer-events: none;
     }
@@ -631,9 +616,9 @@ Performance aside, the linked-list methods are simply nicer to live with. `creat
 `.reatomMap()` keeps a parallel linked list of views, tied back to the source nodes through a `WeakMap`. Since that mapping is stable, `move`, `swap`, and `remove` on the source quietly reuse the matching view rows. The rule to remember: edit the _source_ list, never the mapped view. For example:
 
 ```tsx
-import { atom, reatomLinkedList } from '@reatom/core'
+import { atom, reatomLinkedList } from "@reatom/core";
 
-const todos = reatomLinkedList((title: string) => atom(title), 'todos')
+const todos = reatomLinkedList((title: string) => atom(title), "todos");
 
 const TodoList = () => (
   <ul>
@@ -644,7 +629,7 @@ const TodoList = () => (
       </li>
     ))}
   </ul>
-)
+);
 ```
 
 Examples: [drag-and-drop](https://github.com/reatom/reatom/tree/v1001/examples/reatom-jsx-dnd), [gallery](https://github.com/reatom/reatom/tree/v1001/examples/reatom-jsx-gallery), [`reatomFieldArray`](https://v1001.reatom.dev/handbook/forms/concepts/field-array/) for dynamic form rows.
@@ -702,15 +687,13 @@ If you need to inject raw SVG markup, use one of the following approaches:
 
 ```tsx
 const SvgIcon = ({ svg }: { svg: string }) =>
-  new DOMParser()
-    .parseFromString(svg, 'image/svg+xml')
-    .children.item(0) as SVGElement
+  new DOMParser().parseFromString(svg, "image/svg+xml").children.item(0) as SVGElement;
 ```
 
 **Option 2**: use `prop:outerHTML`
 
 ```tsx
-const SvgIcon = ({ svg }: { svg: string }) => <svg:svg prop:outerHTML={svg} />
+const SvgIcon = ({ svg }: { svg: string }) => <svg:svg prop:outerHTML={svg} />;
 ```
 
 ### `ref` props
@@ -720,8 +703,8 @@ Use the `ref` prop to get access to the DOM element and register mount/unmount s
 ```tsx
 <button
   ref={(el) => {
-    el.focus()
-    return (el) => el.blur()
+    el.focus();
+    return (el) => el.blur();
   }}
 />
 ```
@@ -731,14 +714,14 @@ Mount refs run child-first; unmount refs run parent-first:
 ```tsx
 <div
   ref={() => {
-    console.log('mount parent')
-    return () => console.log('unmount parent')
+    console.log("mount parent");
+    return () => console.log("unmount parent");
   }}
 >
   <span
     ref={() => {
-      console.log('mount child')
-      return () => console.log('unmount child')
+      console.log("mount child");
+      return () => console.log("unmount child");
     }}
   />
 </div>
@@ -760,12 +743,12 @@ By default, a reactive render or prop failure keeps the last good DOM, reports t
 Use `<ErrorBoundary>` to swap a subtree for a fallback:
 
 ```tsx
-import { addCallHook } from '@reatom/core'
-import { ErrorBoundary, jsxError } from '@reatom/jsx'
+import { addCallHook } from "@reatom/core";
+import { ErrorBoundary, jsxError } from "@reatom/jsx";
 
 addCallHook(jsxError, ({ error, phase, name }) => {
   // Sentry / analytics
-})
+});
 
 const App = () => (
   <ErrorBoundary
@@ -780,7 +763,7 @@ const App = () => (
   >
     {() => <RiskyView />}
   </ErrorBoundary>
-)
+);
 ```
 
 - Prefer lazy children `{() => <Child />}` (or an atom) so construction-time throws are caught. Eager element children are created before the boundary runs.
@@ -804,17 +787,17 @@ Style failed nodes with `[data-reatom-error]` when you rely on the hybrid defaul
 - **Functions and atoms** are tracked reactively and automatically recomputed on changes.
 
 ```ts
-reatomClassName('my-class') // Computed<'my-class'>
+reatomClassName("my-class"); // Computed<'my-class'>
 
-reatomClassName(['first', atom('second')]) // Computed<'first second'>
+reatomClassName(["first", atom("second")]); // Computed<'first second'>
 
 /**
  * The `active` class will be determined by the truthiness of the data property
  * `isActiveAtom`.
  */
-reatomClassName({ active: isActiveAtom }) // Computed<'active' | ''>
+reatomClassName({ active: isActiveAtom }); // Computed<'active' | ''>
 
-reatomClassName(() => (isActiveAtom() ? 'active' : undefined)) // Computed<'active' | ''>
+reatomClassName(() => (isActiveAtom() ? "active" : undefined)); // Computed<'active' | ''>
 ```
 
 The `reatomClassName` function supports various complex data combinations, making it easier to declaratively describe classes for complex UI components.
@@ -825,14 +808,14 @@ The `reatomClassName` function supports various complex data combinations, makin
  *   Computed<'button button--size-medium button--theme-primary button--is-active'>
  */
 reatomClassName([
-  'button',
+  "button",
   `button--size-${props.size}`,
   `button--theme-${props.theme}`,
   {
-    'button--is-disabled': props.isDisabled,
-    'button--is-active': props.isActive() && !props.isDisabled(),
+    "button--is-disabled": props.isDisabled,
+    "button--is-active": props.isActive() && !props.isDisabled(),
   },
-])
+]);
 ```
 
 ### `css` template literal
@@ -840,13 +823,13 @@ reatomClassName([
 You can import `css` function from `@reatom/jsx` to describe separate css-in-js styles with syntax highlight and Prettier support. Also, this function skips all falsy values, except `0`.
 
 ```tsx
-import { css } from '@reatom/jsx'
+import { css } from "@reatom/jsx";
 
 const styles = css`
   color: red;
   background: blue;
-  ${somePredicate && 'border: 0;'}
-`
+  ${somePredicate && "border: 0;"}
+`;
 ```
 
 > You can use this with the `css` or `style` props.
@@ -856,18 +839,13 @@ const styles = css`
 You can use `<Bind>` component to use all `@reatom/jsx` features on top of existed element. For example, there are some library, which creates an element and returns it to you and you want to add some reactive properties to it.
 
 ```tsx
-import { Bind } from '@reatom/jsx'
+import { Bind } from "@reatom/jsx";
 
 const MyComponent = () => {
-  const container = new SomeLibrary()
+  const container = new SomeLibrary();
 
-  return (
-    <Bind
-      element={container}
-      class={() => (visible() ? 'active' : 'disabled')}
-    />
-  )
-}
+  return <Bind element={container} class={() => (visible() ? "active" : "disabled")} />;
+};
 ```
 
 ## TypeScript
@@ -879,21 +857,21 @@ JSX components in `@reatom/jsx` are plain functions and integrate seamlessly wit
 If you want to define props for a specific HTML element you should use it name in the type name, like in the code below.
 
 ```tsx
-import { type JSX } from '@reatom/jsx'
+import { type JSX } from "@reatom/jsx";
 
 // allow only plain data types
 interface InputProps extends JSX.InputHTMLAttributes {
-  defaultValue?: string
+  defaultValue?: string;
 }
 // allow plain data types and atoms
-type InputProps = JSX.IntrinsicElements['input'] & {
-  defaultValue?: string
-}
+type InputProps = JSX.IntrinsicElements["input"] & {
+  defaultValue?: string;
+};
 
 const Input = ({ defaultValue, ...props }: InputProps) => {
-  props.value ??= defaultValue
-  return <input {...props} />
-}
+  props.value ??= defaultValue;
+  return <input {...props} />;
+};
 ```
 
 > Use `JSX.IntrinsicElements['tagName']` to get the correct typing for a given element (`input`, `button`, `div`, etc).
@@ -905,26 +883,26 @@ You can annotate event handlers explicitly with built-in types.
 ```tsx
 const Form = () => {
   const handleSubmit = (event: Event) => {
-    event.preventDefault()
-  }
+    event.preventDefault();
+  };
 
   const handleInput = (event: JSX.InputEvent) => {
-    const value: number = event.currentTarget.valueAsNumber
+    const value: number = event.currentTarget.valueAsNumber;
     // e.g. valueAtom.set(value)
-  }
+  };
 
   const handleSelect = (event: JSX.TargetedEvent<HTMLSelectElement>) => {
-    const value: string = event.currentTarget.value
+    const value: string = event.currentTarget.value;
     // e.g. selectAtom.set(value)
-  }
+  };
 
   return (
     <form on:submit={handleSubmit}>
       <input on:input={handleInput} />
       <select on:input={handleSelect} />
     </form>
-  )
-}
+  );
+};
 ```
 
 ### Extending JSX typings
@@ -935,7 +913,7 @@ You may have custom elements that you'd like to use in JSX, or you may wish to a
 
 ```tsx
 function MyComponent() {
-  return <loading-bar showing />
+  return <loading-bar showing />;
   //       ~~~~~~~~~~~
   //    💥 Property 'loading-bar' does not exist...
 }
@@ -949,20 +927,20 @@ To fix:
 declare global {
   namespace JSX {
     interface IntrinsicElements {
-      'loading-bar': { showing?: boolean | null | undefined }
+      "loading-bar": { showing?: boolean | null | undefined };
     }
   }
 }
 
 // This empty export is important! It tells TS to treat this as a module
-export {}
+export {};
 ```
 
 #### Add custom HTML attributes
 
 ```tsx
 function MyComponent() {
-  return <div custom="value" />
+  return <div custom="value" />;
   //        ~~~~~~
   //     💥 Property 'custom' does not exist...
 }
@@ -976,13 +954,13 @@ To fix:
 declare global {
   namespace JSX {
     interface HTMLAttributes {
-      custom?: string | null | undefined
+      custom?: string | null | undefined;
     }
   }
 }
 
 // This empty export is important! It tells TS to treat this as a module
-export {}
+export {};
 ```
 
 > Don't forget the `export {}` at the bottom — it makes the file a module so TypeScript merges types correctly.

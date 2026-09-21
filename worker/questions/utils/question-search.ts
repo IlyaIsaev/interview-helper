@@ -1,7 +1,7 @@
-import { clone } from 'es-toolkit';
-import { filter, pipe } from 'es-toolkit/fp';
+import { clone } from "es-toolkit";
+import { filter, pipe } from "es-toolkit/fp";
 
-import { markdownPlainText } from '@/shared/lib/markdown-plain-text';
+import { markdownPlainText } from "@/shared/lib/markdown-plain-text";
 
 type SearchableQuestion = {
   question: string;

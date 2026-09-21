@@ -1,10 +1,10 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
-import { Plus } from 'lucide-react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
+import { Plus } from "lucide-react";
 
-import { Button } from '@/shared/ui';
+import { Button } from "@/shared/ui";
 
-import { openCreateQuestion } from '../model/create-question';
+import { openCreateQuestion } from "../model/create-question";
 
 export const CreateQuestionButton = reatomComponent(() => {
   const handleOpenCreateQuestion = wrap(openCreateQuestion);
@@ -21,4 +21,4 @@ export const CreateQuestionButton = reatomComponent(() => {
       <Plus />
     </Button>
   );
-}, 'CreateQuestionButton');
+}, "CreateQuestionButton");

@@ -1,9 +1,9 @@
-import { action, computed, urlAtom } from '@reatom/core';
-import { filter, pipe, sample } from 'es-toolkit/fp';
+import { action, computed, urlAtom } from "@reatom/core";
+import { filter, pipe, sample } from "es-toolkit/fp";
 
-import { QUESTIONS_PATH, questionPath } from '@/shared/config';
+import { QUESTIONS_PATH, questionPath } from "@/shared/config";
 
-import { questions, type Question } from './questions';
+import { questions, type Question } from "./questions";
 
 const currentQuestionId = computed(() => {
   const { pathname } = urlAtom();
@@ -13,10 +13,10 @@ const currentQuestionId = computed(() => {
 
   const questionId = pathname.slice(prefix.length);
 
-  if (questionId.length === 0 || questionId.includes('/')) return null;
+  if (questionId.length === 0 || questionId.includes("/")) return null;
 
   return questionId;
-}, 'currentQuestionId');
+}, "currentQuestionId");
 
 const isOtherQuestion = (openedQuestionId: string) => (question: Question) =>
   question.id !== openedQuestionId;
@@ -27,7 +27,7 @@ export const otherQuestions = computed(() => {
   if (!openedQuestionId) return [];
 
   return pipe(questions() ?? [], filter(isOtherQuestion(openedQuestionId)));
-}, 'otherQuestions');
+}, "otherQuestions");
 
 export const openNextQuestion = action(() => {
   const nextQuestion = pipe(otherQuestions(), sample());
@@ -35,4 +35,4 @@ export const openNextQuestion = action(() => {
   if (!nextQuestion) return;
 
   urlAtom.go(questionPath(nextQuestion.id));
-}, 'openNextQuestion');
+}, "openNextQuestion");

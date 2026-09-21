@@ -127,9 +127,7 @@ export const questionsRoute = protectedRoute.reatomRoute(
 
       questionsQuery.set(questionSearch().trim());
 
-      const { questions: nextQuestions } = await wrap(
-        clientApi.loadQuestions(questionsQuery()),
-      );
+      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(questionsQuery()));
 
       initQuestions(nextQuestions);
 
@@ -190,9 +188,7 @@ export const theoryRoute = protectedRoute.reatomRoute(
 
       questionsQuery.set(theoryQuestionSearch().trim());
 
-      const { questions: nextQuestions } = await wrap(
-        clientApi.loadQuestions(questionsQuery()),
-      );
+      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(questionsQuery()));
 
       initQuestions(nextQuestions);
 

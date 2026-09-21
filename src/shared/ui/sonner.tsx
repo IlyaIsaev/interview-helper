@@ -1,12 +1,12 @@
-import type { CSSProperties } from 'react'
+import type { CSSProperties } from "react";
 import {
   CircleCheckIcon,
   InfoIcon,
   Loader2Icon,
   OctagonXIcon,
   TriangleAlertIcon,
-} from 'lucide-react'
-import { Toaster as Sonner, type ToasterProps } from 'sonner'
+} from "lucide-react";
+import { Toaster as Sonner, type ToasterProps } from "sonner";
 
 function Toaster(props: ToasterProps) {
   return (
@@ -20,25 +20,25 @@ function Toaster(props: ToasterProps) {
         loading: <Loader2Icon className="size-4 animate-spin" />,
       }}
       toastOptions={{
-        className: 'rounded-none font-mono text-ui',
+        className: "rounded-none font-mono text-ui",
         classNames: {
-          description: 'line-clamp-4 whitespace-pre-wrap break-words',
+          description: "line-clamp-4 whitespace-pre-wrap break-words",
         },
       }}
       style={
         {
-          '--normal-bg': 'hsl(var(--popover))',
-          '--normal-text': 'hsl(var(--popover-foreground))',
-          '--normal-border': 'hsl(var(--border))',
-          '--error-bg': 'hsl(var(--destructive))',
-          '--error-text': 'hsl(var(--destructive-foreground))',
-          '--error-border': 'hsl(var(--destructive))',
-          '--border-radius': 'var(--radius)',
+          "--normal-bg": "hsl(var(--popover))",
+          "--normal-text": "hsl(var(--popover-foreground))",
+          "--normal-border": "hsl(var(--border))",
+          "--error-bg": "hsl(var(--destructive))",
+          "--error-text": "hsl(var(--destructive-foreground))",
+          "--error-border": "hsl(var(--destructive))",
+          "--border-radius": "var(--radius)",
         } as CSSProperties
       }
       {...props}
     />
-  )
+  );
 }
 
-export { Toaster }
+export { Toaster };

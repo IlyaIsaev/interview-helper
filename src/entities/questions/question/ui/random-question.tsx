@@ -1,18 +1,18 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
 
-import { cn } from '@/shared/lib';
-import { Button, Markdown } from '@/shared/ui';
+import { cn } from "@/shared/lib";
+import { Button, Markdown } from "@/shared/ui";
 
-import { openNextQuestion, otherQuestions } from '../model/next-question';
-import { question } from '../model/question';
-import { isAnswerVisible, showAnswer } from '../model/show-answer';
+import { openNextQuestion, otherQuestions } from "../model/next-question";
+import { question } from "../model/question";
+import { isAnswerVisible, showAnswer } from "../model/show-answer";
 
 const randomQuestionClassName = cn(
-  'mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 pt-10 pb-4',
+  "mx-auto flex h-full min-h-0 w-full max-w-[80ch] flex-1 flex-col gap-4 px-4 pt-10 pb-4",
 );
 
-const questionAnswerColumnClassName = cn('flex min-h-0 flex-1 flex-col');
+const questionAnswerColumnClassName = cn("flex min-h-0 flex-1 flex-col");
 
 export const RandomQuestion = reatomComponent(() => {
   const openedQuestion = question();
@@ -20,9 +20,7 @@ export const RandomQuestion = reatomComponent(() => {
   if (!openedQuestion) {
     return (
       <section className={randomQuestionClassName}>
-        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
-          question not found
-        </p>
+        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">question not found</p>
       </section>
     );
   }
@@ -35,10 +33,7 @@ export const RandomQuestion = reatomComponent(() => {
     <section className={randomQuestionClassName}>
       <div className={questionAnswerColumnClassName}>
         <Markdown className="shrink-0">{openedQuestion.question}</Markdown>
-        <div
-          className={cn('shrink-0', isAnswerVisible() ? 'h-6' : 'h-4')}
-          aria-hidden="true"
-        />
+        <div className={cn("shrink-0", isAnswerVisible() ? "h-6" : "h-4")} aria-hidden="true" />
         {isAnswerVisible() ? (
           <div className="min-h-0 flex-1 overflow-y-auto">
             <Markdown>{openedQuestion.answer}</Markdown>
@@ -67,4 +62,4 @@ export const RandomQuestion = reatomComponent(() => {
       ) : null}
     </section>
   );
-}, 'RandomQuestion');
+}, "RandomQuestion");

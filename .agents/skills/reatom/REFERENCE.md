@@ -1,6 +1,6 @@
 ---
-title: 'Reatom full framework documentation summary'
-description: 'A short overview of all Reatom features'
+title: "Reatom full framework documentation summary"
+description: "A short overview of all Reatom features"
 ---
 
 # Reatom full framework documentation summary
@@ -30,51 +30,43 @@ Reatom build on top of main single main primitive - "atom", that manage **immuta
 ### Minimal core example
 
 ```ts
-import { atom, computed, action, effect, wrap } from '@reatom/core'
+import { atom, computed, action, effect, wrap } from "@reatom/core";
 
 // define simple changeable state
-const list = atom<Item[]>([], 'list')
+const list = atom<Item[]>([], "list");
 // put the atom name in the second argument for better debugging
 
 // define action for imperative side effects or complex mappings
 const fetchList = action(async (filters: { page: number }) => {
-  return await wrap(api.getList(filters))
-}, 'list.fetch')
+  return await wrap(api.getList(filters));
+}, "list.fetch");
 // note how we chain relative atoms and actions names
 
 // extend atom with actions or just methods
-const page = atom(0, 'list.page').extend(
-  (target /* <-- target is the extendable atom */) => ({
-    reset() {
-      // update atom with "set" method
-      target.set(0)
-    },
-    prev() {
-      // update atom with current state mapping with callback in "set"
-      target.set((value) => Math.max(0, value - 1))
-    },
-    next() {
-      target.set((value) => value + 1)
-    },
+const page = atom(0, "list.page").extend((target /* <-- target is the extendable atom */) => ({
+  reset() {
+    // update atom with "set" method
+    target.set(0);
+  },
+  prev() {
+    // update atom with current state mapping with callback in "set"
+    target.set((value) => Math.max(0, value - 1));
+  },
+  next() {
+    target.set((value) => value + 1);
+  },
 
-    // assign other relative atoms if needed
-    isPrevAvailable: computed(
-      () => target() > 0,
-      `${target.name}.isPrevAvailable`,
-    ),
-    isNextAvailable: computed(
-      () => target() < list().length - 1,
-      `${target.name}.isNextAvailable`,
-    ),
-  }),
-)
+  // assign other relative atoms if needed
+  isPrevAvailable: computed(() => target() > 0, `${target.name}.isPrevAvailable`),
+  isNextAvailable: computed(() => target() < list().length - 1, `${target.name}.isNextAvailable`),
+}));
 
 // Run effect to fetch list when page changes
 effect(() => {
-  const filters = { page: page() }
+  const filters = { page: page() };
 
-  fetchList(filters)
-}, 'list.effect')
+  fetchList(filters);
+}, "list.effect");
 ```
 
 The code bellow shows Reatom abilities - it simple and clean.
@@ -87,9 +79,9 @@ But this example has some bad practices:
 
 ```ts
 const list = computed(async () => {
-  const filters = { page: page() }
-  return await wrap(api.getList(filters))
-}, 'list')
+  const filters = { page: page() };
+  return await wrap(api.getList(filters));
+}, "list");
 ```
 
 It's cleaner and more efficient, as the computed subscribes and refetch the list only when have a subscription. But how to get the result state from the promise and track loading and error states? Reatom provides **withAsyncData** extension for this.
@@ -97,14 +89,14 @@ It's cleaner and more efficient, as the computed subscribes and refetch the list
 ### extend example
 
 ```ts
-import { atom, computed, withAsyncData } from '@reatom/core'
+import { atom, computed, withAsyncData } from "@reatom/core";
 
-const page = atom(1, 'list.page')
+const page = atom(1, "list.page");
 
 const list = computed(async () => {
-  const filters = { page: page() }
-  return await wrap(api.getList(filters))
-}, 'list').extend(withAsyncData({ initState: [] }))
+  const filters = { page: page() };
+  return await wrap(api.getList(filters));
+}, "list").extend(withAsyncData({ initState: [] }));
 ```
 
 Now we have extra atoms and actions to manage the list resource:
@@ -144,20 +136,20 @@ Accepted options:
 - `cacheParams` - whether to enable caching of the last called parameters (false by default to prevent mem leaks), used by `retry` action
 
 ```ts
-import { action, withAsync, wrap } from '@reatom/core'
+import { action, withAsync, wrap } from "@reatom/core";
 
 const submit = action(async (payload: MyForm) => {
   const response = await wrap(
-    fetch('/api/contact', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    fetch("/api/contact", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(payload),
     }),
-  )
+  );
   if (!response.ok) {
-    throw new Error(`Failed to submit: ${response.statusText}`)
+    throw new Error(`Failed to submit: ${response.statusText}`);
   }
-}, 'myForm.submit').extend(withAsync())
+}, "myForm.submit").extend(withAsync());
 ```
 
 Key points
@@ -200,24 +192,24 @@ Good
 A nice helpers to manage typical data structures and values.
 
 ```ts
-import { reatomBoolean, reatomEnum } from '@reatom/core'
+import { reatomBoolean, reatomEnum } from "@reatom/core";
 
 // Atom with boolean state and handful actions
-const isModalOpen = reatomBoolean(false, 'isModalOpen')
-isModalOpen.setTrue()
-isModalOpen.setFalse()
-isModalOpen.toggle()
+const isModalOpen = reatomBoolean(false, "isModalOpen");
+isModalOpen.setTrue();
+isModalOpen.setFalse();
+isModalOpen.toggle();
 
 // Atom with powerful type inference, useful for replacing native enums
-const priority = reatomEnum(['low', 'medium', 'high'], 'priority')
-priority() // 'low' | 'medium' | 'high'
-priority.enum // { low: 'low', medium: 'medium', high: 'high' }
+const priority = reatomEnum(["low", "medium", "high"], "priority");
+priority(); // 'low' | 'medium' | 'high'
+priority.enum; // { low: 'low', medium: 'medium', high: 'high' }
 
 // actions
-priority.reset()
-priority.setLow()
-priority.setMedium()
-priority.setHigh()
+priority.reset();
+priority.setLow();
+priority.setMedium();
+priority.setHigh();
 ```
 
 Notes
@@ -251,19 +243,19 @@ Rule of thumb
 Simple example
 
 ```ts
-import { atom, type Atom } from '@reatom/core'
+import { atom, type Atom } from "@reatom/core";
 
-type UserDto = { id: string; name: string }
-type UserModel = { id: string; name: Atom<string> }
+type UserDto = { id: string; name: string };
+type UserModel = { id: string; name: Atom<string> };
 
-const user = atom<UserModel | null>(null, 'user').extend((target) => ({
+const user = atom<UserModel | null>(null, "user").extend((target) => ({
   fromDto(dto: UserDto) {
     const name = atom(dto.name, `user.name`).extend(
       withChangeHook((name) => api.updateUserName(dto.id, name)),
-    )
-    return user.set({ id: dto.id, name })
+    );
+    return user.set({ id: dto.id, name });
   },
-}))
+}));
 
 // after fetch:
 // user.fromDto(dto)
@@ -273,9 +265,9 @@ const user = atom<UserModel | null>(null, 'user').extend((target) => ({
 Showcase: list updates without full array recreation
 
 ```ts
-import { action, atom } from '@reatom/core'
+import { action, atom } from "@reatom/core";
 
-const users = atom<Array<UserModel>>([], 'users').extend((target) => ({
+const users = atom<Array<UserModel>>([], "users").extend((target) => ({
   fromDto(dto: Array<UserDto>) {
     return target.set(
       dto.map((user) => ({
@@ -283,13 +275,13 @@ const users = atom<Array<UserModel>>([], 'users').extend((target) => ({
         name: atom(user.name, `users#${user.id}.name`),
         // note, we can "atomize" action too!
         remove: action(() => {
-          target.set((state) => state.filter((u) => u.id !== user.id))
-          api.deleteUser(user.id)
+          target.set((state) => state.filter((u) => u.id !== user.id));
+          api.deleteUser(user.id);
         }, `users#${user.id}.remove`),
       })),
-    )
+    );
   },
-}))
+}));
 ```
 
 This pattern avoids O(n) immutable name changes for each field edit and keeps updates
@@ -333,20 +325,20 @@ Tricky:
 Example:
 
 ```ts
-import { computed, withAsyncData, withConnectHook } from '@reatom/core'
+import { computed, withAsyncData, withConnectHook } from "@reatom/core";
 
 const data = computed(async () => {
   /*  */
-}, 'data').extend(
+}, "data").extend(
   withAsyncData(),
   // polling example
   withConnectHook(async (target) => {
     while (true) {
-      await wrap(sleep(1000)) // will be aborted on disconnect
-      target.retry()
+      await wrap(sleep(1000)); // will be aborted on disconnect
+      target.retry();
     }
   }),
-)
+);
 ```
 
 ### **withChangeHook**
@@ -383,15 +375,15 @@ const date = atom(() => new Date(), 'date'))
 ```
 
 ```ts
-import { reatomSet, withInit } from '@reatom/core'
+import { reatomSet, withInit } from "@reatom/core";
 
 // Use withInit to attach lazy initial state to an existing atom
-const someSet = reatomSet(new Set<Some>(), 'someSet').extend(
+const someSet = reatomSet(new Set<Some>(), "someSet").extend(
   withInit((state) => {
-    const snapshot = localStorage.getItem('someSet')
-    return snapshot ? new Set(JSON.parse(snapshot)) : state
+    const snapshot = localStorage.getItem("someSet");
+    return snapshot ? new Set(JSON.parse(snapshot)) : state;
   }),
-)
+);
 // btw, it is better to use withLocalStorage for the store sync
 ```
 
@@ -403,27 +395,27 @@ Adds writable computed behavior to a changeable atom: it derives next state from
 reactive reads, but still lets direct writes pass through the same state.
 
 ```ts
-import { atom, withComputed } from '@reatom/core'
+import { atom, withComputed } from "@reatom/core";
 
-type Tab = { id: string }
+type Tab = { id: string };
 
-const tabs = atom<Array<Tab>>([], 'tabs')
-const currentTab = atom<Tab | null>(null, 'currentTab').extend(
+const tabs = atom<Array<Tab>>([], "tabs");
+const currentTab = atom<Tab | null>(null, "currentTab").extend(
   // focus on the last tab, when the atom initialized or the tabs list changed
   withComputed((state) => tabs().at(-1) ?? state),
-)
+);
 ```
 
 ```ts
-import { atom, withComputed } from '@reatom/core'
+import { atom, withComputed } from "@reatom/core";
 
-const search = atom('', 'search')
-const page = atom(1, 'page').extend(
+const search = atom("", "search");
+const page = atom(1, "page").extend(
   withComputed(() => {
-    search() // do not use the search state, but drop the page state on search change
-    return 1
+    search(); // do not use the search state, but drop the page state on search change
+    return 1;
   }),
-)
+);
 ```
 
 ## Event sampling and orchestration
@@ -440,9 +432,9 @@ Awaits the next atom update or action call inside an async action/effect. Resolv
 
 ```ts
 if (!formIsValid()) {
-  await wrap(take(formIsValid, (valid) => valid || throwAbort()))
+  await wrap(take(formIsValid, (valid) => valid || throwAbort()));
 }
-await wrap(fetch('/api/submit', { method: 'POST' }))
+await wrap(fetch("/api/submit", { method: "POST" }));
 ```
 
 ### **onEvent**
@@ -453,9 +445,9 @@ Bridges DOM/external events into Reatom's abort-aware context. Listeners auto-cl
 - `onEvent(target, type)` — returns a promise, resolves on next event
 
 ```ts
-const webhookPromise = onEvent(paymentEvents, 'payment.completed')
-await wrap(fetch('/api/charge', { method: 'POST', body }))
-const confirmation = await wrap(webhookPromise)
+const webhookPromise = onEvent(paymentEvents, "payment.completed");
+await wrap(fetch("/api/charge", { method: "POST", body }));
+const confirmation = await wrap(webhookPromise);
 ```
 
 ### **race** and **abortVar.createAndRun**
@@ -463,9 +455,9 @@ const confirmation = await wrap(webhookPromise)
 `abortVar.createAndRun(fn, ...args)` — runs `fn` and returns a `ControlledPromise` with an attached `AbortController`. `race(...controlledPromises)` — resolves with the first to settle, aborts all others with reason `"race"`. All code after `wrap` in losing functions never executes.
 
 ```ts
-const a = abortVar.createAndRun(translateGoogle, text, lang)
-const b = abortVar.createAndRun(translateDeepL, text, lang)
-const result = await wrap(race(a, b))
+const a = abortVar.createAndRun(translateGoogle, text, lang);
+const b = abortVar.createAndRun(translateDeepL, text, lang);
+const result = await wrap(race(a, b));
 ```
 
 ### **withAbort** strategies
@@ -485,12 +477,12 @@ Returns a promise that resolves/rejects with the current action or atom frame's 
 
 ```ts
 const processOrder = action(async (orderId: string) => {
-  framePromise().catch((error) => showErrorNotification(error))
+  framePromise().catch((error) => showErrorNotification(error));
 
-  const order = await wrap(fetchOrder(orderId))
-  await wrap(chargeCustomer(order))
-  return order
-}, 'processOrder')
+  const order = await wrap(fetchOrder(orderId));
+  await wrap(chargeCustomer(order));
+  return order;
+}, "processOrder");
 ```
 
 ### **ifChanged** and **getCalls**
@@ -503,48 +495,39 @@ Use inside **computed** or **effect** to react only to actual changes or new cal
 ### Combined example
 
 ```ts
-import {
-  action,
-  atom,
-  effect,
-  getCalls,
-  ifChanged,
-  onEvent,
-  take,
-  wrap,
-} from '@reatom/core'
+import { action, atom, effect, getCalls, ifChanged, onEvent, take, wrap } from "@reatom/core";
 
-type CheckoutRequest = { orderId: string; requestedAt: number }
+type CheckoutRequest = { orderId: string; requestedAt: number };
 
 const checkoutRequested = action((orderId: string): CheckoutRequest => {
-  return { orderId, requestedAt: Date.now() }
-}, 'checkout.requested')
-const confirmButton = atom<HTMLButtonElement | null>(null, 'confirmButton')
-const lastOrderId = atom('', 'lastOrderId')
+  return { orderId, requestedAt: Date.now() };
+}, "checkout.requested");
+const confirmButton = atom<HTMLButtonElement | null>(null, "confirmButton");
+const lastOrderId = atom("", "lastOrderId");
 
 const checkoutFlow = action(async () => {
-  const request = await wrap(take(checkoutRequested))
-  const response = await wrap(fetch(`/api/orders/${request.orderId}/pay`))
-  const payload: { receiptId: string } = await wrap(response.json())
-  const element = confirmButton()
+  const request = await wrap(take(checkoutRequested));
+  const response = await wrap(fetch(`/api/orders/${request.orderId}/pay`));
+  const payload: { receiptId: string } = await wrap(response.json());
+  const element = confirmButton();
   if (element) {
-    await wrap(onEvent(element, 'click'))
+    await wrap(onEvent(element, "click"));
   }
-  lastOrderId.set(payload.receiptId)
-  return payload.receiptId
-}, 'checkout.flow')
+  lastOrderId.set(payload.receiptId);
+  return payload.receiptId;
+}, "checkout.flow");
 
 effect(() => {
   ifChanged(lastOrderId, (nextId) => {
-    if (nextId) console.log({ lastOrderId: nextId })
-  })
-}, 'checkout.lastOrderId')
+    if (nextId) console.log({ lastOrderId: nextId });
+  });
+}, "checkout.lastOrderId");
 
 effect(() => {
   getCalls(checkoutRequested).forEach(({ payload }) => {
-    console.log({ checkoutRequested: payload.orderId })
-  })
-}, 'checkout.requested.calls')
+    console.log({ checkoutRequested: payload.orderId });
+  });
+}, "checkout.requested.calls");
 ```
 
 Tricky
@@ -560,22 +543,22 @@ Tricky
 host atom. **memoKey** stores arbitrary per-atom values by key.
 
 ```ts
-import { computed, memo, memoKey } from '@reatom/core'
+import { computed, memo, memoKey } from "@reatom/core";
 
-type Order = { total: number }
-type ApiClient = { baseUrl: string }
+type Order = { total: number };
+type ApiClient = { baseUrl: string };
 
-const orders = computed((): Order[] => [], 'orders')
+const orders = computed((): Order[] => [], "orders");
 
 const stats = computed(() => {
-  const items = orders()
-  const total = memo(() => items.reduce((sum, item) => sum + item.total, 0))
-  return { total }
-}, 'orders.stats')
+  const items = orders();
+  const total = memo(() => items.reduce((sum, item) => sum + item.total, 0));
+  return { total };
+}, "orders.stats");
 
 const client = computed(() => {
-  return memoKey('client', (): ApiClient => ({ baseUrl: '/api' }))
-}, 'api.client')
+  return memoKey("client", (): ApiClient => ({ baseUrl: "/api" }));
+}, "api.client");
 ```
 
 Tricky
@@ -597,42 +580,42 @@ Key primitives
 ### Base form with schema and submit
 
 ```ts
-import { reatomField, reatomForm, wrap } from '@reatom/core'
-import { z } from 'zod'
+import { reatomField, reatomForm, wrap } from "@reatom/core";
+import { z } from "zod";
 
-type AuthResult = { token: string }
+type AuthResult = { token: string };
 
 const registerForm = reatomForm(
   {
-    email: '',
-    password: '',
-    confirmPassword: reatomField('', {
+    email: "",
+    password: "",
+    confirmPassword: reatomField("", {
       validate({ state }) {
         if (state.length > 0 && state === registerForm.fields.password()) {
-          return undefined
+          return undefined;
         }
-        return 'Passwords do not match'
+        return "Passwords do not match";
       },
     }),
-    handle: reatomField('', {
+    handle: reatomField("", {
       async validate({ state }) {
         // this function executes in abortable context
-        await wrap(sleep(300)) // debounce
+        await wrap(sleep(300)); // debounce
 
-        const response = await wrap(fetch(`/users/${state}`))
+        const response = await wrap(fetch(`/users/${state}`));
 
         if (response.status === 200) {
-          return 'Handle already taken'
+          return "Handle already taken";
         }
         if (response.status === 404) {
-          return undefined
+          return undefined;
         }
-        return 'Error checking handle'
+        return "Error checking handle";
       },
     }),
   },
   {
-    name: 'registerForm',
+    name: "registerForm",
     validateOnBlur: true,
     schema: z.object({
       email: z.string().email(),
@@ -641,17 +624,17 @@ const registerForm = reatomForm(
     }),
     onSubmit: async (values): Promise<AuthResult> => {
       const response = await wrap(
-        fetch('/api/register', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
+        fetch("/api/register", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
           body: JSON.stringify(values),
         }),
-      )
-      const payload: AuthResult = await wrap(response.json())
-      return payload
+      );
+      const payload: AuthResult = await wrap(response.json());
+      return payload;
     },
   },
-)
+);
 ```
 
 Reactive validation note
@@ -668,19 +651,19 @@ Submit notes
 ### React binding
 
 ```tsx
-import { reatomComponent, bindField } from '@reatom/react'
-import { registerForm } from './registerForm'
+import { reatomComponent, bindField } from "@reatom/react";
+import { registerForm } from "./registerForm";
 
 export const RegisterForm = reatomComponent(() => {
-  const { fields, submit, validation } = registerForm
-  const ready = submit.ready()
-  const error = submit.error()
+  const { fields, submit, validation } = registerForm;
+  const ready = submit.ready();
+  const error = submit.error();
 
   return (
     <form
       onSubmit={(event) => {
-        event.preventDefault()
-        submit()
+        event.preventDefault();
+        submit();
       }}
     >
       <input type="email" {...bindField(fields.email)} />
@@ -692,8 +675,8 @@ export const RegisterForm = reatomComponent(() => {
       {validation().errors.length > 0 && <div>Fix validation errors</div>}
       {error && <div>{error.message}</div>}
     </form>
-  )
-}, 'RegisterForm')
+  );
+}, "RegisterForm");
 ```
 
 Tricky
@@ -708,53 +691,53 @@ Tricky
 ### Routes, nesting, search, validation
 
 ```ts
-import { reatomRoute, urlAtom, wrap } from '@reatom/core'
-import { z } from 'zod'
+import { reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { z } from "zod";
 
 // simple path — returns {} when matched, null when not
-const homeRoute = reatomRoute('')
+const homeRoute = reatomRoute("");
 // path with params — returns { userId: string } or null
-const userRoute = reatomRoute('users/:userId')
+const userRoute = reatomRoute("users/:userId");
 // optional param
-const postRoute = reatomRoute('posts/:postId?')
+const postRoute = reatomRoute("posts/:postId?");
 
 // reading state
-userRoute() // { userId: '123' } | null
-userRoute.exact() // true only when URL is exactly /users/123
-userRoute.match() // true when URL starts with /users/123
+userRoute(); // { userId: '123' } | null
+userRoute.exact(); // true only when URL is exactly /users/123
+userRoute.match(); // true when URL starts with /users/123
 
 // navigation
-userRoute.go({ userId: '123' }) // push to /users/123
-userRoute.go({ userId: '123' }, true) // replace history entry
-userRoute.path({ userId: '123' }) // build URL string without navigating
+userRoute.go({ userId: "123" }); // push to /users/123
+userRoute.go({ userId: "123" }, true); // replace history entry
+userRoute.path({ userId: "123" }); // build URL string without navigating
 // urlAtom intercepts <a> clicks for SPA navigation by default, use .path() in href
 
 // nested routes — chain .reatomRoute(), paths auto-compose, params inherit
-const dashboardRoute = reatomRoute('dashboard')
-const usersRoute = dashboardRoute.reatomRoute('users')
-const userEditRoute = usersRoute.reatomRoute(':userId').reatomRoute('edit')
+const dashboardRoute = reatomRoute("dashboard");
+const usersRoute = dashboardRoute.reatomRoute("users");
+const userEditRoute = usersRoute.reatomRoute(":userId").reatomRoute("edit");
 // userEditRoute.go({ userId: '123' }) → /dashboard/users/123/edit
 
 // search params with zod — query string validation and transform
 const goodsRoute = reatomRoute({
-  path: 'goods/:category',
-  search: z.object({ sort: z.enum(['asc', 'desc']).optional() }),
-})
+  path: "goods/:category",
+  search: z.object({ sort: z.enum(["asc", "desc"]).optional() }),
+});
 // goodsRoute.go({ category: 'tech', sort: 'asc' }) → /goods/tech?sort=asc
 // goodsRoute() → { category: 'tech', sort: 'asc' }
 
 // search-only routes (no path) preserve current pathname — great for global modals
 const dialogRoute = reatomRoute({
-  search: z.object({ dialog: z.enum(['login', 'signup']).optional() }),
-})
+  search: z.object({ dialog: z.enum(["login", "signup"]).optional() }),
+});
 // user at /profile/123 → dialogRoute.go({ dialog: 'login' }) → /profile/123?dialog=login
 // nested search-only routes navigate to parent path if user is elsewhere
 
 // params validation and transform with zod (or any Standard Schema)
 const issueRoute = reatomRoute({
-  path: 'issue/:issueId',
+  path: "issue/:issueId",
   params: z.object({ issueId: z.string().regex(/^\d+$/).transform(Number) }),
-})
+});
 // issueRoute.go({ issueId: '123' }) → issueRoute() returns { issueId: 123 } (number!)
 // if validation fails → route returns null
 // URL params are always strings — use .transform() or z.coerce for type conversion
@@ -795,30 +778,30 @@ Setup logging system:
 
 ```ts
 // setup.ts — import this file before others in the repo root!
-import { connectLogger, log } from '@reatom/core'
-if (import.meta.env.MODE === 'development') connectLogger()
+import { connectLogger, log } from "@reatom/core";
+if (import.meta.env.MODE === "development") connectLogger();
 declare global {
-  var LOG: typeof log
+  var LOG: typeof log;
 }
-globalThis.LOG = log
+globalThis.LOG = log;
 ```
 
 `log` forwards args to `console.log` when `connectLogger()` is active. Helpers:
 
 ```ts
-LOG('debug', payload) // group title: "LOG"
-LOG.label('fetch payload', response) // group title: "fetch payload"
-LOG.state('user', data) // logs only when `data` changes for that name
+LOG("debug", payload); // group title: "LOG"
+LOG.label("fetch payload", response); // group title: "fetch payload"
+LOG.state("user", data); // logs only when `data` changes for that name
 ```
 
 Routes:
 
 ```ts
 // routes.ts
-import { computed, reatomRoute, withAsyncData, wrap } from '@reatom/core'
-import { z } from 'zod'
+import { computed, reatomRoute, withAsyncData, wrap } from "@reatom/core";
+import { z } from "zod";
 
-type User = { id: string; name: string; role: string }
+type User = { id: string; name: string; role: string };
 
 // layout — no path, always active, renders outlet
 export const layoutRoute = reatomRoute({
@@ -827,65 +810,63 @@ export const layoutRoute = reatomRoute({
     return html`<div>
       <header>My App</header>
       <main>${outlet()}</main>
-    </div>`
+    </div>`;
   },
-})
+});
 
 // public login page
 export const loginRoute = layoutRoute.reatomRoute({
-  path: 'login',
+  path: "login",
   render() {
-    return html`<form>Login Form</form>`
+    return html`<form>Login Form</form>`;
   },
-})
+});
 
 // auth state
 const user = computed(async () => {
-  const token = localStorage.getItem('token')
-  if (!token) return null
-  return await wrap(fetch('/api/me').then((r) => r.json()))
-}, 'user').extend(withAsyncData())
+  const token = localStorage.getItem("token");
+  if (!token) return null;
+  return await wrap(fetch("/api/me").then((r) => r.json()));
+}, "user").extend(withAsyncData());
 
 // protected route — blocks all children when not authenticated
 export const protectedRoute = layoutRoute.reatomRoute({
   layout: true,
   params() {
-    const userData = user.data()
+    const userData = user.data();
     if (!userData) {
-      if (user.ready() && !loginRoute.match()) loginRoute.go()
-      return null
+      if (user.ready() && !loginRoute.match()) loginRoute.go();
+      return null;
     }
-    if (loginRoute.match()) dashboardRoute.go()
-    return userData
+    if (loginRoute.match()) dashboardRoute.go();
+    return userData;
   },
   render(self) {
-    return self.outlet()
+    return self.outlet();
   },
-})
+});
 
 export const dashboardRoute = protectedRoute.reatomRoute({
-  path: 'dashboard',
+  path: "dashboard",
   render() {
-    return html`<h1>Dashboard</h1>`
+    return html`<h1>Dashboard</h1>`;
   },
-})
+});
 
 // users list with search params and loader
 export const usersRoute = protectedRoute.reatomRoute({
-  path: 'users',
+  path: "users",
   search: z.object({
     q: z.string().optional(),
-    page: z.string().regex(/^\d+$/).transform(Number).default('1'),
+    page: z.string().regex(/^\d+$/).transform(Number).default("1"),
   }),
   async loader({ q, page }) {
-    const response = await wrap(
-      fetch(`/api/users?q=${encodeURIComponent(q ?? '')}&page=${page}`),
-    )
-    return await wrap(response.json())
+    const response = await wrap(fetch(`/api/users?q=${encodeURIComponent(q ?? "")}&page=${page}`));
+    return await wrap(response.json());
   },
   render(self) {
-    const { isPending, data } = self.status()
-    if (isPending) return html`<div>Loading users...</div>`
+    const { isPending, data } = self.status();
+    if (isPending) return html`<div>Loading users...</div>`;
     return html`<section>
       <h1>Users</h1>
       <ul>
@@ -896,45 +877,45 @@ export const usersRoute = protectedRoute.reatomRoute({
             </li>`,
         )}
       </ul>
-    </section>`
+    </section>`;
   },
-})
+});
 
 // user detail with validated params and loader
 export const userRoute = usersRoute.reatomRoute({
-  path: ':userId',
+  path: ":userId",
   params: z.object({ userId: z.string().regex(/^\d+$/) }),
   async loader({ userId }) {
-    const response = await wrap(fetch(`/api/users/${userId}`))
-    return (await wrap(response.json())) as User
+    const response = await wrap(fetch(`/api/users/${userId}`));
+    return (await wrap(response.json())) as User;
   },
   render(self) {
-    const { isFirstPending, data, error } = self.status()
+    const { isFirstPending, data, error } = self.status();
     // do not show loading for revalidation
-    if (isFirstPending) return html`<div>Loading user...</div>`
-    if (error) return html`<div>Error: ${error.message}</div>`
+    if (isFirstPending) return html`<div>Loading user...</div>`;
+    if (error) return html`<div>Error: ${error.message}</div>`;
     return html`<section>
       <h2>${user.name}</h2>
       <div>${user.role}</div>
-    </section>`
+    </section>`;
   },
-})
+});
 
 // modal gate — state in memory, no URL pollution
 export const confirmModal = protectedRoute.reatomRoute({
   params({ message }: { message?: string }) {
-    return message ? { message } : null
+    return message ? { message } : null;
   },
   render(self) {
-    return html`<dialog open>${self().message}</dialog>`
+    return html`<dialog open>${self().message}</dialog>`;
   },
-})
+});
 // confirmModal.go({ message: 'Sure?' }) → opens, confirmModal.go() → closes
 ```
 
 ```ts
 // App.ts — entire app rendering from root route
-const App = computed(() => html`${layoutRoute.render()}`)
+const App = computed(() => html`${layoutRoute.render()}`);
 ```
 
 Route loaders are async computed with auto-cancel. The **factory pattern** (creating atoms/forms inside loaders) gives global accessibility with automatic cleanup — best of both local and global state.
@@ -944,34 +925,32 @@ Route loaders are async computed with auto-cancel. The **factory pattern** (crea
 ### **withSearchParams** for list filters
 
 ```ts
-import { atom, withSearchParams } from '@reatom/core'
+import { atom, withSearchParams } from "@reatom/core";
 
-type Sort = 'popular' | 'new' | 'price'
+type Sort = "popular" | "new" | "price";
 
-const query = atom('', 'catalog.query').extend(withSearchParams('q'))
-const page = atom(1, 'catalog.page').extend(
-  withSearchParams('page', {
-    parse: (value) => Number(value ?? '1'),
+const query = atom("", "catalog.query").extend(withSearchParams("q"));
+const page = atom(1, "catalog.page").extend(
+  withSearchParams("page", {
+    parse: (value) => Number(value ?? "1"),
     serialize: (value) => (value === 1 ? undefined : String(value)),
   }),
-)
-const sort = atom<Sort>('popular', 'catalog.sort').extend(
-  withSearchParams('sort', (value) =>
-    value === 'new' || value === 'price' || value === 'popular'
-      ? value
-      : 'popular',
+);
+const sort = atom<Sort>("popular", "catalog.sort").extend(
+  withSearchParams("sort", (value) =>
+    value === "new" || value === "price" || value === "popular" ? value : "popular",
   ),
-)
+);
 ```
 
 ### **withLocalStorage** for preferences
 
 ```ts
-import { atom, withLocalStorage } from '@reatom/core'
+import { atom, withLocalStorage } from "@reatom/core";
 
-type Theme = 'light' | 'dark'
+type Theme = "light" | "dark";
 
-const theme = atom<Theme>('light', 'theme').extend(withLocalStorage('theme'))
+const theme = atom<Theme>("light", "theme").extend(withLocalStorage("theme"));
 ```
 
 ## Suspense notes
@@ -997,31 +976,24 @@ Transactions support optimistic updates with rollback.
 Example
 
 ```ts
-import {
-  action,
-  atom,
-  withAsync,
-  withRollback,
-  withTransaction,
-  wrap,
-} from '@reatom/core'
+import { action, atom, withAsync, withRollback, withTransaction, wrap } from "@reatom/core";
 
-type Todo = { id: string; title: string }
+type Todo = { id: string; title: string };
 
-const todos = atom<Todo[]>([], 'todos').extend(withRollback())
+const todos = atom<Todo[]>([], "todos").extend(withRollback());
 
 const saveTodo = action(async (todo: Todo) => {
-  todos.set((items) => [...items, todo])
+  todos.set((items) => [...items, todo]);
   const response = await wrap(
-    fetch('/api/todos', {
-      method: 'POST',
-      headers: { 'content-type': 'application/json' },
+    fetch("/api/todos", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
       body: JSON.stringify(todo),
     }),
-  )
-  const result: Todo = await wrap(response.json())
-  return result
-}, 'todos.save').extend(withAsync(), withTransaction())
+  );
+  const result: Todo = await wrap(response.json());
+  return result;
+}, "todos.save").extend(withAsync(), withTransaction());
 ```
 
 ## SSR and testing

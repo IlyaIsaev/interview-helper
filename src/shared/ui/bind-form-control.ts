@@ -1,9 +1,9 @@
-import type { FieldAtom } from '@reatom/core';
-import { memoKey, notify, wrap } from '@reatom/core';
-import { bindField } from '@reatom/react';
-import { omit, pipe } from 'es-toolkit/fp';
+import type { FieldAtom } from "@reatom/core";
+import { memoKey, notify, wrap } from "@reatom/core";
+import { bindField } from "@reatom/react";
+import { omit, pipe } from "es-toolkit/fp";
 
-import { triggerFieldSchemaValidation } from './form-schema-validation';
+import { triggerFieldSchemaValidation } from "./form-schema-validation";
 
 type FieldBlurSession = {
   editedDuringFocus: boolean;
@@ -11,7 +11,7 @@ type FieldBlurSession = {
 
 export const bindFormControl = <TState, TValue>(
   field: FieldAtom<TState, TValue>,
-): Omit<ReturnType<typeof bindField<TValue>>, 'error'> => {
+): Omit<ReturnType<typeof bindField<TValue>>, "error"> => {
   const bound = bindField(field);
   const baseOnFocus = bound.onFocus;
   const baseOnChange = bound.onChange;
@@ -19,7 +19,7 @@ export const bindFormControl = <TState, TValue>(
     editedDuringFocus: false,
   }));
 
-  return pipe(bound, omit(['error', 'onBlur', 'onFocus', 'onChange']), (controls) => ({
+  return pipe(bound, omit(["error", "onBlur", "onFocus", "onChange"]), (controls) => ({
     ...controls,
     onFocus: wrap(() => {
       session.editedDuringFocus = false;

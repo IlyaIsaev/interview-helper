@@ -1,5 +1,5 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
 
 import {
   Button,
@@ -9,13 +9,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
 import {
   closeDeleteQuestionDialog,
   deleteQuestion,
   isDeleteQuestionDialogOpen,
-} from '../model/delete-question';
+} from "../model/delete-question";
 
 export const DeleteQuestion = reatomComponent(() => {
   const isDialogOpen = isDeleteQuestionDialogOpen();
@@ -31,19 +31,13 @@ export const DeleteQuestion = reatomComponent(() => {
     <Dialog open={isDialogOpen} onOpenChange={handleDialogOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="text-xs uppercase tracking-[1.5px]">
-            Delete question
-          </DialogTitle>
+          <DialogTitle className="text-xs uppercase tracking-[1.5px]">Delete question</DialogTitle>
           <DialogDescription className="text-ui text-muted-foreground">
             This cannot be undone.
           </DialogDescription>
         </DialogHeader>
         <DialogFooter>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={wrap(closeDeleteQuestionDialog)}
-          >
+          <Button type="button" variant="outline" onClick={wrap(closeDeleteQuestionDialog)}>
             Cancel
           </Button>
           <Button
@@ -58,4 +52,4 @@ export const DeleteQuestion = reatomComponent(() => {
       </DialogContent>
     </Dialog>
   );
-}, 'DeleteQuestion');
+}, "DeleteQuestion");

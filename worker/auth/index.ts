@@ -1,14 +1,11 @@
-import { betterAuth } from 'better-auth';
-import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { Hono } from 'hono';
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { Hono } from "hono";
 
-import { createDatabase } from '../db/client';
-import * as schema from '../db/schema';
+import { createDatabase } from "../db/client";
+import * as schema from "../db/schema";
 
-const LOCAL_DEV_ORIGINS = [
-  'http://127.0.0.1:5173',
-  'http://localhost:5173',
-] as const;
+const LOCAL_DEV_ORIGINS = ["http://127.0.0.1:5173", "http://localhost:5173"] as const;
 
 export const trustedOriginsFor = (betterAuthUrl: string): Array<string> => {
   const origin = new URL(betterAuthUrl).origin;
@@ -23,11 +20,11 @@ export const isTrustedAuthOrigin = (origin: string, betterAuthUrl: string): bool
 
 const authForEnv = (env: Env) =>
   betterAuth({
-    appName: 'interview-helper',
+    appName: "interview-helper",
     baseURL: env.BETTER_AUTH_URL,
     secret: env.BETTER_AUTH_SECRET,
     database: drizzleAdapter(createDatabase(env.DB), {
-      provider: 'sqlite',
+      provider: "sqlite",
       schema,
     }),
     emailAndPassword: {
@@ -37,24 +34,21 @@ const authForEnv = (env: Env) =>
     rateLimit: {
       enabled: true,
       customRules: {
-        '/sign-up/email': false,
-        '/sign-in/email': false,
-        '/api/auth/sign-up/email': false,
-        '/api/auth/sign-in/email': false,
+        "/sign-up/email": false,
+        "/sign-in/email": false,
+        "/api/auth/sign-up/email": false,
+        "/api/auth/sign-in/email": false,
       },
     },
     advanced: {
       ipAddress: {
-        ipAddressHeaders: ['cf-connecting-ip'],
+        ipAddressHeaders: ["cf-connecting-ip"],
       },
     },
   });
 
-export const createAuth = (env: Env): ReturnType<typeof authForEnv> =>
-  authForEnv(env);
+export const createAuth = (env: Env): ReturnType<typeof authForEnv> => authForEnv(env);
 
-export const auth = new Hono<{ Bindings: Env }>().on(
-  ['GET', 'POST'],
-  '/*',
-  (context) => createAuth(context.env).handler(context.req.raw),
+export const auth = new Hono<{ Bindings: Env }>().on(["GET", "POST"], "/*", (context) =>
+  createAuth(context.env).handler(context.req.raw),
 );

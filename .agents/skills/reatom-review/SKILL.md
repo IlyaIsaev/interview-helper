@@ -200,19 +200,19 @@ When reviewing docs, tutorials, READMEs, generated summaries, or examples, activ
 Problem:
 
 ```ts
-const users = atom<User[]>([], 'users')
+const users = atom<User[]>([], "users");
 
 effect(async () => {
-  users.set(await api.getUsers(page()))
-}, 'users.fetch')
+  users.set(await api.getUsers(page()));
+}, "users.fetch");
 ```
 
 Fix:
 
 ```ts
 const users = computed(async () => {
-  return await wrap(api.getUsers(page()))
-}, 'users').extend(withAsyncData({ initState: [] }))
+  return await wrap(api.getUsers(page()));
+}, "users").extend(withAsyncData({ initState: [] }));
 ```
 
 Why: query data should be lazy, abort-aware, and expose `data`, `ready`, `error`, `status`, `retry`, and `reset`.
@@ -222,16 +222,16 @@ Why: query data should be lazy, abort-aware, and expose `data`, `ready`, `error`
 Problem:
 
 ```ts
-const response = await wrap(fetch(url)).then((res) => res.json())
-data.set(response)
+const response = await wrap(fetch(url)).then((res) => res.json());
+data.set(response);
 ```
 
 Fix:
 
 ```ts
-const response = await wrap(fetch(url))
-const payload: Payload = await wrap(response.json())
-data.set(payload)
+const response = await wrap(fetch(url));
+const payload: Payload = await wrap(response.json());
+data.set(payload);
 ```
 
 Why: each async boundary is visible to Reatom and preserves tracing/cancellation.
@@ -258,9 +258,9 @@ Alternative fix when the callback is passed to an external API:
 
 ```ts
 button.addEventListener(
-  'click',
+  "click",
   wrap(() => counter.set((value) => value + 1)),
-)
+);
 ```
 
 Why: `wrap(fn)` decorates `fn` for external callers; it does not execute `fn`. Inside an action/effect/async computed — including `finally` after `await wrap(...)` — context is already restored; call atoms directly.
@@ -291,12 +291,12 @@ Problem:
 
 ```ts
 const save = action(async (form: FormState) => {
-  const response = await fetch('/api/save', {
-    method: 'POST',
+  const response = await fetch("/api/save", {
+    method: "POST",
     body: JSON.stringify(form),
-  })
-  savedId.set(await response.text())
-}, 'form.save')
+  });
+  savedId.set(await response.text());
+}, "form.save");
 ```
 
 Fix:
@@ -304,14 +304,14 @@ Fix:
 ```ts
 const save = action(async (form: FormState) => {
   const response = await wrap(
-    fetch('/api/save', {
-      method: 'POST',
+    fetch("/api/save", {
+      method: "POST",
       body: JSON.stringify(form),
     }),
-  )
-  const savedIdText: string = await wrap(response.text())
-  savedId.set(savedIdText)
-}, 'form.save')
+  );
+  const savedIdText: string = await wrap(response.text());
+  savedId.set(savedIdText);
+}, "form.save");
 ```
 
 Why: the state update runs after async work, so the async boundary must preserve Reatom context.
@@ -321,28 +321,28 @@ Why: the state update runs after async work, so the async boundary must preserve
 Problem:
 
 ```ts
-addEventListener('online', () => {
-  online.set(true)
-})
+addEventListener("online", () => {
+  online.set(true);
+});
 ```
 
 Fix:
 
 ```ts
-onEvent(globalThis, 'online', () => {
-  online.set(true)
-})
+onEvent(globalThis, "online", () => {
+  online.set(true);
+});
 ```
 
 Alternative fix when a raw callback API must be used:
 
 ```ts
 addEventListener(
-  'online',
+  "online",
   wrap(() => {
-    online.set(true)
+    online.set(true);
   }),
-)
+);
 ```
 
 Why: callbacks are async entry points too. Preserve context or use Reatom's abort-aware event helper.
@@ -353,18 +353,18 @@ Problem:
 
 ```ts
 const confirm = action(async (button: HTMLButtonElement) => {
-  await onEvent(button, 'click')
-  confirmed.set(true)
-}, 'confirm')
+  await onEvent(button, "click");
+  confirmed.set(true);
+}, "confirm");
 ```
 
 Fix:
 
 ```ts
 const confirm = action(async (button: HTMLButtonElement) => {
-  await wrap(onEvent(button, 'click'))
-  confirmed.set(true)
-}, 'confirm')
+  await wrap(onEvent(button, "click"));
+  confirmed.set(true);
+}, "confirm");
 ```
 
 Why: `onEvent(...)` returns a promise. Await it through `wrap` inside async actions/effects.
@@ -375,10 +375,10 @@ Problem:
 
 ```ts
 const user = computed(async () => {
-  const response = await wrap(fetch(`/api/users/${userId()}`))
-  const payload: unknown = await wrap(response.json())
-  return parseUser(payload)
-}, 'user').extend(withAsyncData())
+  const response = await wrap(fetch(`/api/users/${userId()}`));
+  const payload: unknown = await wrap(response.json());
+  return parseUser(payload);
+}, "user").extend(withAsyncData());
 ```
 
 Fix:
@@ -389,10 +389,10 @@ const user = computed(async () => {
     fetch(`/api/users/${userId()}`, {
       signal: abortVar.require().signal,
     }),
-  )
-  const payload: unknown = await wrap(response.json())
-  return parseUser(payload)
-}, 'user').extend(withAsyncData())
+  );
+  const payload: unknown = await wrap(response.json());
+  return parseUser(payload);
+}, "user").extend(withAsyncData());
 ```
 
 Why: `withAsyncData`, route loaders, `withAbort`, and abort-aware effects can cancel the Reatom frame; fetch should receive the same abort signal.
@@ -403,28 +403,28 @@ Problem:
 
 ```ts
 const submit = action(async () => {
-  await wrap(api.save(form()))
-}, 'form.submit').extend(withAsync())
+  await wrap(api.save(form()));
+}, "form.submit").extend(withAsync());
 
-const status = submit.status()
+const status = submit.status();
 ```
 
 Fix:
 
 ```ts
 const submit = action(async () => {
-  await wrap(api.save(form()))
-}, 'form.submit').extend(withAsync({ status: true }))
+  await wrap(api.save(form()));
+}, "form.submit").extend(withAsync({ status: true }));
 
-const status = submit.status()
+const status = submit.status();
 ```
 
 Alternative fix:
 
 ```ts
-const ready = submit.ready()
-const pending = submit.pending()
-const error = submit.error()
+const ready = submit.ready();
+const pending = submit.pending();
+const error = submit.error();
 ```
 
 Why: `status` is disabled by default for async extensions. Use `{ status: true }` only when the full status model is needed.
@@ -434,15 +434,15 @@ Why: `status` is disabled by default for async extensions. Use `{ status: true }
 Problem:
 
 ```ts
-const query = atom('', 'search.query')
-const setQuery = action((next: string) => query.set(next), 'search.query.set')
+const query = atom("", "search.query");
+const setQuery = action((next: string) => query.set(next), "search.query.set");
 ```
 
 Fix:
 
 ```ts
-const query = atom('', 'search.query')
-query.set('next value')
+const query = atom("", "search.query");
+query.set("next value");
 ```
 
 Why: simple local updates do not need forwarding actions. Use actions for side effects and state-changing flows, not for pure data mapping.
@@ -453,23 +453,19 @@ Problem:
 
 ```ts
 export function resolveDownloadUrl(image: ReatomImage): string {
-  return image.fullImageUrl.data() ?? image.thumbnail.data()?.url ?? ''
+  return image.fullImageUrl.data() ?? image.thumbnail.data()?.url ?? "";
 }
 
-const downloadUrl = computed(
-  () => resolveDownloadUrl(imageModel),
-  `${name}.display.downloadUrl`,
-)
+const downloadUrl = computed(() => resolveDownloadUrl(imageModel), `${name}.display.downloadUrl`);
 ```
 
 Fix:
 
 ```ts
 const downloadUrl = computed(
-  () =>
-    imageModel.fullImageUrl.data() ?? imageModel.thumbnail.data()?.url ?? '',
+  () => imageModel.fullImageUrl.data() ?? imageModel.thumbnail.data()?.url ?? "",
   `${name}.display.downloadUrl`,
-)
+);
 ```
 
 Alternative fix when the same derivation is reused in tests or non-Reatom code: keep a pure function on plain data (URLs, DTOs), not on atom-bearing models; let the computed map atoms to that shape.
@@ -487,7 +483,7 @@ export const getFolderTreeNodeUi = (folderPath: string) => ({
     () => currentFolder()?.path === folderPath,
     `folderTree.${folderPath}.isSelected`,
   ),
-})
+});
 ```
 
 Fix:
@@ -499,7 +495,7 @@ export const reatomFolderTreeNodeUi = (folderPath: string) => ({
     () => currentFolder()?.path === folderPath,
     `folderTree.${folderPath}.isSelected`,
   ),
-})
+});
 ```
 
 Why: Reatom factories create traced atoms and actions; `reatom*` signals that contract and matches core helpers like `reatomBoolean`, `reatomRoute`, and `reatomForm`. Plain `get*` / `create*` names hide lifecycle and naming rules for nested units.
@@ -509,21 +505,18 @@ Why: Reatom factories create traced atoms and actions; `reatom*` signals that co
 Problem:
 
 ```ts
-export const search = atom('', 'search')
-export const searchIsEmpty = computed(
-  () => search().trim() === '',
-  'search.isEmpty',
-)
-export const clearSearch = action(() => search.set(''), 'search.clear')
+export const search = atom("", "search");
+export const searchIsEmpty = computed(() => search().trim() === "", "search.isEmpty");
+export const clearSearch = action(() => search.set(""), "search.clear");
 ```
 
 Fix:
 
 ```ts
-export const search = atom('', 'search').extend((target) => ({
-  isEmpty: computed(() => target().trim() === '', `${target.name}.isEmpty`),
-  clear: action(() => target.set(''), `${target.name}.clear`),
-}))
+export const search = atom("", "search").extend((target) => ({
+  isEmpty: computed(() => target().trim() === "", `${target.name}.isEmpty`),
+  clear: action(() => target.set(""), `${target.name}.clear`),
+}));
 ```
 
 Why: relative states and actions should live on the parent model, like `reatomBoolean` groups boolean actions and `reatomRoute` attaches `go`, `loader`, `render`, and child route helpers.
@@ -533,27 +526,27 @@ Why: relative states and actions should live on the parent model, like `reatomBo
 Problem:
 
 ```ts
-const users = atom<UserDto[]>([], 'users')
-const selectedUserIds = atom<Set<string>>(new Set(), 'users.selectedIds')
+const users = atom<UserDto[]>([], "users");
+const selectedUserIds = atom<Set<string>>(new Set(), "users.selectedIds");
 ```
 
 Fix:
 
 ```ts
 type UserModel = UserDto & {
-  selected: Atom<boolean>
-}
+  selected: Atom<boolean>;
+};
 
-const users = atom<UserModel[]>([], 'users').extend((target) => ({
+const users = atom<UserModel[]>([], "users").extend((target) => ({
   fromDto(items: UserDto[]) {
     target.set(
       items.map((item) => ({
         ...item,
         selected: atom(false, `users#${item.id}.selected`),
       })),
-    )
+    );
   },
-}))
+}));
 ```
 
 Why: mutable per-item state belongs near the item to avoid parallel structures and broad list updates.
@@ -564,8 +557,8 @@ Problem:
 
 ```tsx
 export function UsersPage() {
-  if (!usersRoute.match()) return null
-  return <Users />
+  if (!usersRoute.match()) return null;
+  return <Users />;
 }
 ```
 
@@ -607,19 +600,19 @@ Fix (preferred — route/feature init):
 ```ts
 // models/lightbox.ts
 export const openLightbox = action((model: GalleryImageModel) => {
-  lightboxImage.set(() => model)
-  lightboxOpen.setTrue()
-  startSlideshowSession()
-}, 'openLightbox')
+  lightboxImage.set(() => model);
+  lightboxOpen.setTrue();
+  startSlideshowSession();
+}, "openLightbox");
 
 export const startSlideshowSession = action(() => {
   effect(async () => {
     while (slideshowPlaying()) {
-      await wrap(sleep(slideshowInterval()))
-      navigateLightbox(1)
+      await wrap(sleep(slideshowInterval()));
+      navigateLightbox(1);
     }
-  }, 'slideshow.autoAdvance')
-}, 'slideshow.startSession')
+  }, "slideshow.autoAdvance");
+}, "slideshow.startSession");
 ```
 
 Alternative fix (acceptable — mount in the feature component):
@@ -645,31 +638,31 @@ Why: `effect(...)` self-subscribes at creation, so a module-level effect is conn
 Problem:
 
 ```ts
-export const slideshowPlaying = reatomBoolean(false, 'slideshowPlaying').extend(
+export const slideshowPlaying = reatomBoolean(false, "slideshowPlaying").extend(
   withConnectHook(() => {
     effect(async () => {
       while (slideshowPlaying()) {
-        await wrap(sleep(slideshowInterval()))
-        navigateLightbox(1)
+        await wrap(sleep(slideshowInterval()));
+        navigateLightbox(1);
       }
-    }, 'slideshow.autoAdvance')
+    }, "slideshow.autoAdvance");
   }),
-)
+);
 ```
 
 Fix (scope anchor the effect does not read):
 
 ```ts
-export const lightboxOpen = reatomBoolean(false, 'lightboxOpen').extend(
+export const lightboxOpen = reatomBoolean(false, "lightboxOpen").extend(
   withConnectHook(() => {
     effect(async () => {
       while (peek(slideshowPlaying)) {
-        await wrap(sleep(slideshowInterval()))
-        navigateLightbox(1)
+        await wrap(sleep(slideshowInterval()));
+        navigateLightbox(1);
       }
-    }, 'slideshow.autoAdvance')
+    }, "slideshow.autoAdvance");
   }),
-)
+);
 ```
 
 Better fix (explicit init at feature open):
@@ -678,11 +671,11 @@ Better fix (explicit init at feature open):
 export const startSlideshowSession = action(() => {
   effect(async () => {
     while (slideshowPlaying()) {
-      await wrap(sleep(slideshowInterval()))
-      navigateLightbox(1)
+      await wrap(sleep(slideshowInterval()));
+      navigateLightbox(1);
     }
-  }, 'slideshow.autoAdvance')
-}, 'slideshow.startSession')
+  }, "slideshow.autoAdvance");
+}, "slideshow.startSession");
 ```
 
 Why: a connect hook runs when its target gets subscribers. If the nested effect reads that same target (directly or through a computed), connect/subscribe can feed back forever. Either attach the hook to a different scope anchor, use `peek` for gate checks only, or start the effect from route loader / init action / component mount instead.
@@ -693,21 +686,21 @@ Problem:
 
 ```ts
 const previewUrl = computed(() => {
-  const blob = imageBlob.data()
-  return blob ? URL.createObjectURL(blob) : ''
-}, 'image.previewUrl')
+  const blob = imageBlob.data();
+  return blob ? URL.createObjectURL(blob) : "";
+}, "image.previewUrl");
 ```
 
 Fix:
 
 ```ts
 const previewUrl = computed(async () => {
-  const blob = await wrap(imageBlob())
-  if (!blob) return ''
-  const url = URL.createObjectURL(blob)
-  abortVar.subscribe(() => URL.revokeObjectURL(url))
-  return url
-}, 'image.previewUrl').extend(withAsyncData({ initState: '' }))
+  const blob = await wrap(imageBlob());
+  if (!blob) return "";
+  const url = URL.createObjectURL(blob);
+  abortVar.subscribe(() => URL.revokeObjectURL(url));
+  return url;
+}, "image.previewUrl").extend(withAsyncData({ initState: "" }));
 ```
 
 Why: `URL.createObjectURL` allocates a resource. Tie revocation to the owning computed's abort/disconnect so the URL is freed when the model re-runs or disconnects, instead of leaking one URL per recomputation.
@@ -742,16 +735,16 @@ Problem:
 
 ```ts
 const users = computed(async () => {
-  return await wrap(api.getUsers())
-}, 'users').extend(withCache(), withAsyncData())
+  return await wrap(api.getUsers());
+}, "users").extend(withCache(), withAsyncData());
 ```
 
 Fix:
 
 ```ts
 const users = computed(async () => {
-  return await wrap(api.getUsers())
-}, 'users').extend(withAsyncData(), withCache())
+  return await wrap(api.getUsers());
+}, "users").extend(withAsyncData(), withCache());
 ```
 
 Why: `withAsync` / `withAsyncData` refuse to attach after `withCache` (runtime `ReatomError`), and the async middleware must observe cache hits to keep `pending`, `data`, and `status` consistent.
@@ -761,21 +754,18 @@ Why: `withAsync` / `withAsyncData` refuse to attach after `withCache` (runtime `
 Problem:
 
 ```ts
-const addToast = action((toast: Toast) => toast, 'addToast')
-const toasts = computed(
-  () => getCalls(addToast).map((call) => call.payload),
-  'toasts',
-)
+const addToast = action((toast: Toast) => toast, "addToast");
+const toasts = computed(() => getCalls(addToast).map((call) => call.payload), "toasts");
 ```
 
 Fix:
 
 ```ts
-const toasts = atom<Toast[]>([], 'toasts').extend(
+const toasts = atom<Toast[]>([], "toasts").extend(
   withActions((target) => ({
     add: (toast: Toast) => target.set((list) => [...list, toast]),
   })),
-)
+);
 ```
 
 Why: action state is an autoclearable array, wiped in the next cleanup tick. It is for reacting to calls within a transaction, not for storage; durable data belongs in atoms.
@@ -786,18 +776,18 @@ Problem:
 
 ```ts
 const resource = reatomResource(async (ctx) => {
-  const response = await ctx.schedule(fetch('/api/users'))
-  return response.json()
-}, 'users')
+  const response = await ctx.schedule(fetch("/api/users"));
+  return response.json();
+}, "users");
 ```
 
 Fix:
 
 ```ts
 const users = computed(async () => {
-  const response = await wrap(fetch('/api/users'))
-  return await wrap(response.json())
-}, 'users').extend(withAsyncData())
+  const response = await wrap(fetch("/api/users"));
+  return await wrap(response.json());
+}, "users").extend(withAsyncData());
 ```
 
 Why: current Reatom uses implicit context, `wrap`, and async computed resources.

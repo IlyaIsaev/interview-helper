@@ -23,34 +23,24 @@ Write flows as normal `async` / `await` code and make every async boundary expli
 Use for data that should be stored and read through `.data()`.
 
 ```ts
-import {
-  abortVar,
-  atom,
-  computed,
-  sleep,
-  withAsyncData,
-  wrap,
-} from '@reatom/core'
+import { abortVar, atom, computed, sleep, withAsyncData, wrap } from "@reatom/core";
 
-type SearchResult = { title: string }
+type SearchResult = { title: string };
 
 declare const api: {
-  search(
-    query: string,
-    options: { signal: AbortSignal },
-  ): Promise<Array<SearchResult>>
-}
+  search(query: string, options: { signal: AbortSignal }): Promise<Array<SearchResult>>;
+};
 
-const searchQuery = atom('', 'search.query')
+const searchQuery = atom("", "search.query");
 
 export const searchResults = computed(async () => {
-  const query = searchQuery().trim()
-  if (!query) return []
+  const query = searchQuery().trim();
+  if (!query) return [];
 
-  await wrap(sleep(300))
+  await wrap(sleep(300));
 
-  return await wrap(api.search(query, { signal: abortVar.require().signal }))
-}, 'search.results').extend(withAsyncData({ initState: [] }))
+  return await wrap(api.search(query, { signal: abortVar.require().signal }));
+}, "search.results").extend(withAsyncData({ initState: [] }));
 ```
 
 Surface:
@@ -83,17 +73,17 @@ Facts from source/tests:
 Use for commands and mutations where result data does not need a persistent `.data` atom.
 
 ```ts
-import { abortVar, action, withAbort, withAsync, wrap } from '@reatom/core'
+import { abortVar, action, withAbort, withAsync, wrap } from "@reatom/core";
 
-type TodoDraft = { title: string }
+type TodoDraft = { title: string };
 
 declare const api: {
-  saveTodo(draft: TodoDraft, options: { signal: AbortSignal }): Promise<void>
-}
+  saveTodo(draft: TodoDraft, options: { signal: AbortSignal }): Promise<void>;
+};
 
 export const saveTodo = action(async (draft: TodoDraft) => {
-  await wrap(api.saveTodo(draft, { signal: abortVar.require().signal }))
-}, 'todos.save').extend(withAsync({ status: true }), withAbort())
+  await wrap(api.saveTodo(draft, { signal: abortVar.require().signal }));
+}, "todos.save").extend(withAsync({ status: true }), withAbort());
 ```
 
 Surface:
@@ -115,18 +105,18 @@ Abort handling:
 Use `await wrap(promise)` whenever async work leaves a Reatom frame and the continuation reads or writes Reatom state.
 
 ```ts
-const response = await wrap(fetch('/api/user'))
-const user = await wrap(response.json())
-userAtom.set(user)
+const response = await wrap(fetch("/api/user"));
+const user = await wrap(response.json());
+userAtom.set(user);
 ```
 
 Use `wrap(fn)` when passing a callback to an external scheduler or event source:
 
 ```ts
 button.addEventListener(
-  'click',
+  "click",
   wrap(() => submit()),
-)
+);
 ```
 
 Do not `await fetch(...)` and then call atoms/actions.
@@ -162,40 +152,40 @@ Use `abortVar.require()` when the current frame definitely has an abort controll
 - Route loader async computed
 
 ```ts
-import { abortVar, wrap } from '@reatom/core'
+import { abortVar, wrap } from "@reatom/core";
 
 const response = await wrap(
-  fetch('/api/items', {
+  fetch("/api/items", {
     signal: abortVar.require().signal,
   }),
-)
+);
 ```
 
 Use `abortVar.subscribe()` with the `using` statement when you need an explicit subscription scope and cleanup:
 
 ```ts
-import { abortVar, wrap } from '@reatom/core'
+import { abortVar, wrap } from "@reatom/core";
 
-using subscription = abortVar.subscribe()
+using subscription = abortVar.subscribe();
 const response = await wrap(
-  fetch('/api/items', {
+  fetch("/api/items", {
     signal: subscription.controller.signal,
   }),
-)
+);
 ```
 
 Use `abortVar.spawn(fn, ...params)` to run detached work that must outlive the current frame's abort. The spawned frame becomes an abort boundary, so a parent abort (disconnect, `withAbort`, navigation) no longer propagates into it — ideal for fire-and-forget effects or for keeping an in-flight request alive after its subscriber leaves:
 
 ```ts
-import { abortVar, atom, withConnectHook, wrap } from '@reatom/core'
+import { abortVar, atom, withConnectHook, wrap } from "@reatom/core";
 
-const profile = atom<Profile | null>(null, 'profile').extend(
+const profile = atom<Profile | null>(null, "profile").extend(
   withConnectHook(() => {
     abortVar.spawn(async () => {
-      profile.set(await wrap(api.getProfile()))
-    })
+      profile.set(await wrap(api.getProfile()));
+    });
   }),
-)
+);
 ```
 
 For the opposite need — a fork with its own controller that `race` can abort or that you can `.controller.abort(reason)` — use `abortVar.createAndRun(fn, ...params)`, which returns a `ControlledPromise` carrying `.controller` (see `race`).
@@ -209,23 +199,23 @@ Sampling means awaiting future state/action/external events inside an async fram
 Use the sampling docs debounce practice: put the delay in the async flow, wrap the delay, and use abort strategy to cancel stale work. This keeps value extraction, timing, fetch, cancellation, and debug traces in one place.
 
 ```ts
-import { abortVar, action, sleep, withAbort, wrap } from '@reatom/core'
+import { abortVar, action, sleep, withAbort, wrap } from "@reatom/core";
 
 const search = action(async (query: string) => {
-  await wrap(sleep(300))
-  await wrap(api.search(query, { signal: abortVar.require().signal }))
-}, 'search').extend(withAbort())
+  await wrap(sleep(300));
+  await wrap(api.search(query, { signal: abortVar.require().signal }));
+}, "search").extend(withAbort());
 ```
 
 ### Throttle
 
 ```ts
-import { action, sleep, withAbort, wrap } from '@reatom/core'
+import { action, sleep, withAbort, wrap } from "@reatom/core";
 
 const resize = action(async () => {
-  updateLayout()
-  await wrap(sleep(100))
-}, 'layout.resize').extend(withAbort('first-in-win'))
+  updateLayout();
+  await wrap(sleep(100));
+}, "layout.resize").extend(withAbort("first-in-win"));
 ```
 
 ### take
@@ -235,18 +225,16 @@ const resize = action(async () => {
 Prefer `take` when the flow depends on future reactive state or an action event. It avoids ad hoc subscriptions, boolean flags, and callback nesting, and it creates named trace entries such as `flow.take#1` / `flow.take.validation` with start, resolve, reject, and abort logs. Pass a name when the wait is important for debugging.
 
 ```ts
-import { take, throwAbort, wrap } from '@reatom/core'
+import { take, throwAbort, wrap } from "@reatom/core";
 
-await wrap(take(form.valid, (valid) => valid || throwAbort(), 'validation'))
+await wrap(take(form.valid, (valid) => valid || throwAbort(), "validation"));
 ```
 
 For debounce-like validation flows, keep the wait and delay together:
 
 ```ts
-await wrap(sleep(300))
-await wrap(
-  take(form.valid, (valid) => valid || throwAbort(), 'validAfterDebounce'),
-)
+await wrap(sleep(300));
+await wrap(take(form.valid, (valid) => valid || throwAbort(), "validAfterDebounce"));
 ```
 
 ### onEvent
@@ -261,42 +249,42 @@ Either form wraps the listener in a named action like `_onEvent.HTMLDialogElemen
 Await one event (promise form):
 
 ```ts
-import { onEvent, wrap } from '@reatom/core'
+import { onEvent, wrap } from "@reatom/core";
 
-dialog.showModal()
-const closeEvent = await wrap(onEvent(dialog, 'close'))
+dialog.showModal();
+const closeEvent = await wrap(onEvent(dialog, "close"));
 ```
 
 Checkpoint pattern: start the listener before long work so an event firing mid-flight is not missed. Better than starting work first and hoping the event has not already fired.
 
 ```ts
-import { action, onEvent, withAbort, wrap } from '@reatom/core'
+import { action, onEvent, withAbort, wrap } from "@reatom/core";
 
 export const processPayment = action(async (orderId: string) => {
-  const webhook = onEvent(paymentEvents, 'payment.completed')
-  await wrap(api.charge(orderId))
-  return await wrap(webhook)
-}, 'payments.process').extend(withAbort())
+  const webhook = onEvent(paymentEvents, "payment.completed");
+  await wrap(api.charge(orderId));
+  return await wrap(webhook);
+}, "payments.process").extend(withAbort());
 ```
 
 Subscribe to a stream (callback form): listeners registered inside a `withConnectHook` body live and die with the atom's connection, and one `controller.abort()` tears the whole group down.
 
 ```ts
-import { abortVar, atom, onEvent, withConnectHook, wrap } from '@reatom/core'
+import { abortVar, atom, onEvent, withConnectHook, wrap } from "@reatom/core";
 
-const ticker = atom<Tick | null>(null, 'ticker').extend(
+const ticker = atom<Tick | null>(null, "ticker").extend(
   withConnectHook(async (target) => {
-    const { controller } = abortVar.subscribe()
+    const { controller } = abortVar.subscribe();
 
     if (socket.readyState !== WebSocket.OPEN) {
-      await wrap(onEvent(socket, 'open'))
+      await wrap(onEvent(socket, "open"));
     }
 
-    onEvent(socket, 'message', (event) => target.set(parse(event.data)))
-    onEvent(socket, 'close', () => controller.abort())
-    onEvent(socket, 'error', () => controller.abort())
+    onEvent(socket, "message", (event) => target.set(parse(event.data)));
+    onEvent(socket, "close", () => controller.abort());
+    onEvent(socket, "error", () => controller.abort());
   }),
-)
+);
 ```
 
 ### race
@@ -304,11 +292,11 @@ const ticker = atom<Tick | null>(null, 'ticker').extend(
 Use `race` with controlled promises, not raw `Promise.race`, when losers must stop.
 
 ```ts
-import { abortVar, race, wrap } from '@reatom/core'
+import { abortVar, race, wrap } from "@reatom/core";
 
-const cached = abortVar.createAndRun(readCache)
-const remote = abortVar.createAndRun(fetchRemote)
-const result = await wrap(race(cached, remote))
+const cached = abortVar.createAndRun(readCache);
+const remote = abortVar.createAndRun(fetchRemote);
+const result = await wrap(race(cached, remote));
 ```
 
 ### framePromise
@@ -316,15 +304,15 @@ const result = await wrap(race(cached, remote))
 `framePromise()` resolves with the current frame's outcome (action payload or atom state). Attach `.catch` / `.finally` at the top of a long action, then write the happy path flat.
 
 ```ts
-import { action, framePromise, wrap } from '@reatom/core'
+import { action, framePromise, wrap } from "@reatom/core";
 
 export const processOrder = action(async (orderId: string) => {
-  framePromise().catch((error) => showErrorNotification(error))
+  framePromise().catch((error) => showErrorNotification(error));
 
-  const order = await wrap(api.fetchOrder(orderId))
-  await wrap(api.chargeCustomer(order))
-  return order
-}, 'orders.process')
+  const order = await wrap(api.fetchOrder(orderId));
+  await wrap(api.chargeCustomer(order));
+  return order;
+}, "orders.process");
 ```
 
 Prefer it over try-catch (which nests the happy path) and native `using` (which cannot read the frame's payload/error). It binds to the running frame, not the lexical scope, so a shared helper like `withErrorLogging()` can attach `.catch` / `.finally` to its caller's outcome — impossible with `using`.
@@ -392,17 +380,17 @@ Reset rules:
 Wrong order throws at runtime:
 
 ```ts
-import { computed, withAsyncData, withCache } from '@reatom/core'
+import { computed, withAsyncData, withCache } from "@reatom/core";
 
-computed(async () => api.list(), 'list').extend(withCache(), withAsyncData())
+computed(async () => api.list(), "list").extend(withCache(), withAsyncData());
 ```
 
 Use:
 
 ```ts
-import { computed, withAsyncData, withCache } from '@reatom/core'
+import { computed, withAsyncData, withCache } from "@reatom/core";
 
-computed(async () => api.list(), 'list').extend(withAsyncData(), withCache())
+computed(async () => api.list(), "list").extend(withAsyncData(), withCache());
 ```
 
 ## Suspense Boundaries

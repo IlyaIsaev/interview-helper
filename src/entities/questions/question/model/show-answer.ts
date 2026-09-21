@@ -1,14 +1,14 @@
-import { action, atom, reatomBoolean, urlAtom, withCallHook } from '@reatom/core';
+import { action, atom, reatomBoolean, urlAtom, withCallHook } from "@reatom/core";
 
-import { questionPath } from '@/shared/config';
+import { questionPath } from "@/shared/config";
 
-import { initQuestion, openQuestion, type OpenedQuestion } from './question';
+import { initQuestion, openQuestion, type OpenedQuestion } from "./question";
 
-export const isAnswerVisible = reatomBoolean(false, 'isAnswerVisible');
+export const isAnswerVisible = reatomBoolean(false, "isAnswerVisible");
 
 export const showAnswer = isAnswerVisible.setTrue;
 
-const listedQuestionId = atom<string | null>(null, 'listedQuestionId');
+const listedQuestionId = atom<string | null>(null, "listedQuestionId");
 
 initQuestion.extend(
   withCallHook((_payload, [nextQuestion]: [OpenedQuestion | null]) => {
@@ -36,4 +36,4 @@ export const openListedQuestion = action((questionId: string) => {
   listedQuestionId.set(questionId);
 
   openQuestion(questionId);
-}, 'openListedQuestion');
+}, "openListedQuestion");

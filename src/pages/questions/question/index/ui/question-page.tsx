@@ -1,4 +1,4 @@
-import { RandomQuestion } from '@/entities/questions/question';
+import { RandomQuestion } from "@/entities/questions/question";
 
 export default function QuestionPage() {
   return <RandomQuestion />;

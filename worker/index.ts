@@ -1,28 +1,25 @@
-import { sql } from 'drizzle-orm';
-import { Hono, type Context, type Next } from 'hono';
-import { bodyLimit } from 'hono/body-limit';
-import { secureHeaders } from 'hono/secure-headers';
+import { sql } from "drizzle-orm";
+import { Hono, type Context, type Next } from "hono";
+import { bodyLimit } from "hono/body-limit";
+import { secureHeaders } from "hono/secure-headers";
 
-import { auth } from './auth';
-import { createDatabase } from './db/client';
-import { questions } from './questions';
-import { user } from './user';
+import { auth } from "./auth";
+import { createDatabase } from "./db/client";
+import { questions } from "./questions";
+import { user } from "./user";
 
 const JSON_BODY_LIMIT_BYTES = 128 * 1024;
 
 const connectingIp = (context: Context<{ Bindings: Env }>): string =>
-  context.req.header('CF-Connecting-IP') ?? 'unknown';
+  context.req.header("CF-Connecting-IP") ?? "unknown";
 
 const isAuthPostPath = (pathname: string): boolean =>
-  pathname.startsWith('/api/user') || pathname.startsWith('/api/auth/');
+  pathname.startsWith("/api/user") || pathname.startsWith("/api/auth/");
 
-const limitAuthPosts = async (
-  context: Context<{ Bindings: Env }>,
-  next: Next,
-) => {
+const limitAuthPosts = async (context: Context<{ Bindings: Env }>, next: Next) => {
   const pathname = new URL(context.req.url).pathname;
 
-  if (context.req.method !== 'POST' || !isAuthPostPath(pathname)) {
+  if (context.req.method !== "POST" || !isAuthPostPath(pathname)) {
     await next();
 
     return;
@@ -32,12 +29,12 @@ const limitAuthPosts = async (
     key: `${pathname}:${connectingIp(context)}`,
   });
 
-  if (!success) return context.json({ message: 'Too many requests' }, 429);
+  if (!success) return context.json({ message: "Too many requests" }, 429);
 
   await next();
 };
 
-const api = new Hono<{ Bindings: Env }>().get('/health', async (context) => {
+const api = new Hono<{ Bindings: Env }>().get("/health", async (context) => {
   const database = createDatabase(context.env.DB);
 
   await database.run(sql`SELECT 1`);
@@ -47,10 +44,10 @@ const api = new Hono<{ Bindings: Env }>().get('/health', async (context) => {
 
 const app = new Hono<{ Bindings: Env }>()
   .use(
-    '/api/*',
+    "/api/*",
     secureHeaders({
-      xFrameOptions: 'DENY',
-      referrerPolicy: 'strict-origin-when-cross-origin',
+      xFrameOptions: "DENY",
+      referrerPolicy: "strict-origin-when-cross-origin",
       contentSecurityPolicy: {
         defaultSrc: ["'none'"],
         frameAncestors: ["'none'"],
@@ -58,27 +55,22 @@ const app = new Hono<{ Bindings: Env }>()
     }),
   )
   .use(
-    '/api/*',
+    "/api/*",
     bodyLimit({
       maxSize: JSON_BODY_LIMIT_BYTES,
-      onError: (context) =>
-        context.json({ message: 'Request body is too large' }, 413),
+      onError: (context) => context.json({ message: "Request body is too large" }, 413),
     }),
   )
   .use(limitAuthPosts)
-  .route('/api/auth', auth)
-  .route('/api/user', user)
-  .route('/api/questions', questions)
-  .route('/api', api);
+  .route("/api/auth", auth)
+  .route("/api/user", user)
+  .route("/api/questions", questions)
+  .route("/api", api);
 
 export type AppType = typeof app;
 
 export default {
-  async fetch(
-    request: Request,
-    env: Env,
-    ctx: ExecutionContext,
-  ): Promise<Response> {
+  async fetch(request: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     return app.fetch(request, env, ctx);
   },
 };

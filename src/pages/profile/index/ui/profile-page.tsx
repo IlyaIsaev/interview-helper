@@ -1,13 +1,13 @@
-import { reatomComponent } from '@reatom/react';
-import type { DeepReadonly } from 'es-toolkit/types';
-import { House } from 'lucide-react';
+import { reatomComponent } from "@reatom/react";
+import type { DeepReadonly } from "es-toolkit/types";
+import { House } from "lucide-react";
 
-import { ThemeSwitcher } from '@/features/theme-switcher';
-import { ChangePasswordForm } from '@/features/user/change-password';
-import { DeleteUser, DeleteUserButton } from '@/features/user/delete-user';
-import { UserMenu } from '@/features/user/user-menu';
-import { HOME_PATH } from '@/shared/config';
-import { Button } from '@/shared/ui';
+import { ThemeSwitcher } from "@/features/theme-switcher";
+import { ChangePasswordForm } from "@/features/user/change-password";
+import { DeleteUser, DeleteUserButton } from "@/features/user/delete-user";
+import { UserMenu } from "@/features/user/user-menu";
+import { HOME_PATH } from "@/shared/config";
+import { Button } from "@/shared/ui";
 
 type ProfilePageProps = {
   user: DeepReadonly<{
@@ -25,10 +25,7 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
             <House />
           </a>
         </Button>
-        <a
-          className="text-sm uppercase tracking-[2px] text-muted-foreground"
-          href={HOME_PATH}
-        >
+        <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
           Interview helper
         </a>
         <div className="ml-auto flex items-center gap-3">
@@ -37,9 +34,7 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
         </div>
       </header>
       <section className="mx-auto flex w-full max-w-md flex-col gap-4 px-4 py-16">
-        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">
-          profile
-        </p>
+        <p className="text-xs uppercase tracking-[2px] text-muted-foreground">profile</p>
         <h1 className="text-heading font-medium tracking-tight">{user.name}</h1>
         <p className="text-ui text-muted-foreground">{user.email}</p>
         <ChangePasswordForm deleteUser={<DeleteUserButton />} />
@@ -47,6 +42,6 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
       <DeleteUser />
     </>
   );
-}, 'ProfilePage');
+}, "ProfilePage");
 
 export default ProfilePage;

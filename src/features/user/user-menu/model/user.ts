@@ -1,8 +1,8 @@
-import { computed } from '@reatom/core';
-import { compact, join, map, pipe, take } from 'es-toolkit/fp';
-import type { DeepReadonly } from 'es-toolkit/types';
+import { computed } from "@reatom/core";
+import { compact, join, map, pipe, take } from "es-toolkit/fp";
+import type { DeepReadonly } from "es-toolkit/types";
 
-import { session } from '@/shared/auth';
+import { session } from "@/shared/auth";
 
 export type User = DeepReadonly<{
   name: string;
@@ -19,11 +19,11 @@ const buildUserInitials = (name: string): string => {
     compact(),
     map(firstLetter),
     take(2),
-    join(''),
+    join(""),
     toUpperCase,
   );
 
-  if (!initials) return '?';
+  if (!initials) return "?";
 
   return initials;
 };
@@ -31,10 +31,10 @@ const buildUserInitials = (name: string): string => {
 export const user = computed((): User | null => {
   const name = session.data()?.user?.name;
 
-  if (typeof name !== 'string') return null;
+  if (typeof name !== "string") return null;
 
   return {
     name,
     initials: buildUserInitials(name),
   };
-}, 'user');
+}, "user");

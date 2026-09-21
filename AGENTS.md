@@ -13,4 +13,4 @@ Write arrays as `Array<T>` / `ReadonlyArray<T>`, not `T[]`. Prefer `ReadonlyArra
 - Frontend (FSD, React, Reatom, SMUI, Vitest): `src/AGENTS.md`
 - Backend (Hono, wrangler, D1): `worker/AGENTS.md`
 - End-to-end tests: `e2e/AGENTS.md`
-- Agent in-session browsing: Playwright MCP or Chrome DevTools MCP (Chromium stays for `pnpm test` / `pnpm test:e2e`)
+- Check UI and user-flow work with the Playwright-cli skill (`.agents/skills/playwright-cli/SKILL.md`) before treating the task as done. Chromium stays for `pnpm test` / `pnpm test:e2e`.

@@ -1,15 +1,15 @@
-import { abortVar, wrap } from '@reatom/core';
-import { toMerged } from 'es-toolkit';
-import { hc } from 'hono/client';
-import type { InferRequestType, InferResponseType } from 'hono/client';
+import { abortVar, wrap } from "@reatom/core";
+import { toMerged } from "es-toolkit";
+import { hc } from "hono/client";
+import type { InferRequestType, InferResponseType } from "hono/client";
 
-import { session } from '@/shared/auth';
+import { session } from "@/shared/auth";
 
-import type { AppType } from '../../../worker';
+import type { AppType } from "../../../worker";
 
-const api = hc<AppType>('/', {
+const api = hc<AppType>("/", {
   init: {
-    credentials: 'include',
+    credentials: "include",
   },
   fetch: (input: RequestInfo | URL, init?: RequestInit) => {
     const { controller, unsubscribe } = abortVar.subscribe();
@@ -34,15 +34,12 @@ const retrySessionIfUnauthorized = async (response: Response): Promise<void> => 
 };
 
 const isErrorMessageBody = (body: unknown): body is { message: string } =>
-  typeof body === 'object' &&
+  typeof body === "object" &&
   body !== null &&
-  'message' in body &&
-  typeof body.message === 'string';
+  "message" in body &&
+  typeof body.message === "string";
 
-const failedRequestMessage = async (
-  response: Response,
-  failedMessage: string,
-): Promise<string> => {
+const failedRequestMessage = async (response: Response, failedMessage: string): Promise<string> => {
   try {
     const body: unknown = await wrap(response.json());
 
@@ -54,10 +51,7 @@ const failedRequestMessage = async (
   return `${failedMessage}: ${response.status}`;
 };
 
-const readJson = async <TBody>(
-  response: Response,
-  failedMessage: string,
-): Promise<TBody> => {
+const readJson = async <TBody>(response: Response, failedMessage: string): Promise<TBody> => {
   await retrySessionIfUnauthorized(response);
 
   if (!response.ok) throw new Error(`${failedMessage}: ${response.status}`);
@@ -70,45 +64,35 @@ const readJson = async <TBody>(
 
 type QuestionsResponse = InferResponseType<typeof api.api.questions.$get, 200>;
 
-type QuestionResponse = InferResponseType<(typeof api.api.questions)[':id']['$get'], 200>;
+type QuestionResponse = InferResponseType<(typeof api.api.questions)[":id"]["$get"], 200>;
 
-type CreateQuestionBody = InferRequestType<typeof api.api.questions.$post>['json'];
+type CreateQuestionBody = InferRequestType<typeof api.api.questions.$post>["json"];
 
 type CreatedQuestion = InferResponseType<typeof api.api.questions.$post, 201>;
 
-type UpdateQuestionBody = InferRequestType<
-  (typeof api.api.questions)[':id']['$put']
->['json'];
+type UpdateQuestionBody = InferRequestType<(typeof api.api.questions)[":id"]["$put"]>["json"];
 
-type UpdatedQuestion = InferResponseType<
-  (typeof api.api.questions)[':id']['$put'],
-  200
->;
+type UpdatedQuestion = InferResponseType<(typeof api.api.questions)[":id"]["$put"], 200>;
 
-type ChangePasswordBody = InferRequestType<typeof api.api.user.password.$post>['json'];
+type ChangePasswordBody = InferRequestType<typeof api.api.user.password.$post>["json"];
 
 export const clientApi = {
-  async loadQuestions(query = ''): Promise<QuestionsResponse> {
+  async loadQuestions(query = ""): Promise<QuestionsResponse> {
     const response = await wrap(
       api.api.questions.$get({
         query: query.length === 0 ? {} : { q: query },
       }),
     );
 
-    return await readJson<QuestionsResponse>(response, 'GET /api/questions failed');
+    return await readJson<QuestionsResponse>(response, "GET /api/questions failed");
   },
 
   async loadQuestion(id: string): Promise<QuestionResponse | null> {
-    const response = await wrap(
-      api.api.questions[':id'].$get({ param: { id } }),
-    );
+    const response = await wrap(api.api.questions[":id"].$get({ param: { id } }));
 
     if (response.status === 404) return null;
 
-    return await readJson<QuestionResponse>(
-      response,
-      'GET /api/questions/:id failed',
-    );
+    return await readJson<QuestionResponse>(response, "GET /api/questions/:id failed");
   },
 
   async createQuestion(questionFields: CreateQuestionBody): Promise<CreatedQuestion> {
@@ -121,7 +105,7 @@ export const clientApi = {
     await retrySessionIfUnauthorized(response);
 
     if (!response.ok)
-      throw new Error(await failedRequestMessage(response, 'POST /api/questions failed'));
+      throw new Error(await failedRequestMessage(response, "POST /api/questions failed"));
 
     const createdQuestion: unknown = await wrap(response.json());
 
@@ -129,26 +113,20 @@ export const clientApi = {
     return createdQuestion as CreatedQuestion;
   },
 
-  async updateQuestion(
-    id: string,
-    questionFields: UpdateQuestionBody,
-  ): Promise<UpdatedQuestion> {
+  async updateQuestion(id: string, questionFields: UpdateQuestionBody): Promise<UpdatedQuestion> {
     const response = await wrap(
-      api.api.questions[':id'].$put({
+      api.api.questions[":id"].$put({
         param: { id },
         json: questionFields,
       }),
     );
 
-    return await readJson<UpdatedQuestion>(
-      response,
-      'PUT /api/questions/:id failed',
-    );
+    return await readJson<UpdatedQuestion>(response, "PUT /api/questions/:id failed");
   },
 
   async deleteQuestion(id: string): Promise<void> {
     const response = await wrap(
-      api.api.questions[':id'].$delete({
+      api.api.questions[":id"].$delete({
         param: { id },
       }),
     );
@@ -173,7 +151,6 @@ export const clientApi = {
 
     await retrySessionIfUnauthorized(response);
 
-    if (!response.ok)
-      throw new Error(`POST /api/user/password failed: ${response.status}`);
+    if (!response.ok) throw new Error(`POST /api/user/password failed: ${response.status}`);
   },
 };

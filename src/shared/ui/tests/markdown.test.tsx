@@ -1,81 +1,81 @@
-import { expect, test } from 'vitest'
-import { render } from 'vitest-browser-react'
+import { expect, test } from "vitest";
+import { render } from "vitest-browser-react";
 
-import { Markdown, markdownPlainText } from '../markdown'
+import { Markdown, markdownPlainText } from "../markdown";
 
-test('should omit text-ui on paragraphs when rich markdown is rendered', async () => {
-  const screen = await render(<Markdown>{'Hello paragraph'}</Markdown>)
-  const paragraph = screen.getByText('Hello paragraph')
+test("should omit text-ui on paragraphs when rich markdown is rendered", async () => {
+  const screen = await render(<Markdown>{"Hello paragraph"}</Markdown>);
+  const paragraph = screen.getByText("Hello paragraph");
 
-  await expect.element(paragraph).toBeVisible()
-  await expect.element(paragraph).not.toHaveClass('text-ui')
-})
+  await expect.element(paragraph).toBeVisible();
+  await expect.element(paragraph).not.toHaveClass("text-ui");
+});
 
-test('should render markdown elements when the source contains syntax', async () => {
-  const screen = await render(<Markdown>{'# Hello\n\n**bold**'}</Markdown>)
+test("should render markdown elements when the source contains syntax", async () => {
+  const screen = await render(<Markdown>{"# Hello\n\n**bold**"}</Markdown>);
 
-  await expect.element(screen.getByRole('heading', { name: 'Hello' })).toBeVisible()
-  await expect.element(screen.getByText('bold')).toBeVisible()
-  await expect.element(screen.getByText('# Hello')).not.toBeInTheDocument()
-  await expect.element(screen.getByText('**bold**')).not.toBeInTheDocument()
-})
+  await expect.element(screen.getByRole("heading", { name: "Hello" })).toBeVisible();
+  await expect.element(screen.getByText("bold")).toBeVisible();
+  await expect.element(screen.getByText("# Hello")).not.toBeInTheDocument();
+  await expect.element(screen.getByText("**bold**")).not.toBeInTheDocument();
+});
 
-test('should render plain text without elements when plain is set', async () => {
-  const screen = await render(<Markdown plain>{'# Hello\n\n**bold**'}</Markdown>)
+test("should render plain text without elements when plain is set", async () => {
+  const screen = await render(<Markdown plain>{"# Hello\n\n**bold**"}</Markdown>);
 
-  await expect.element(screen.getByText(/Hello\s+bold/)).toBeVisible()
-  await expect.element(screen.getByRole('heading')).not.toBeInTheDocument()
-  await expect.element(screen.getByText('# Hello')).not.toBeInTheDocument()
-  await expect.element(screen.getByText('**bold**')).not.toBeInTheDocument()
-})
+  await expect.element(screen.getByText(/Hello\s+bold/)).toBeVisible();
+  await expect.element(screen.getByRole("heading")).not.toBeInTheDocument();
+  await expect.element(screen.getByText("# Hello")).not.toBeInTheDocument();
+  await expect.element(screen.getByText("**bold**")).not.toBeInTheDocument();
+});
 
-test('should keep the parent href when plain markdown contains a link', async () => {
+test("should keep the parent href when plain markdown contains a link", async () => {
   const screen = await render(
     <a href="/questions/1">
-      <Markdown plain>{'[Hello](https://example.com)'}</Markdown>
+      <Markdown plain>{"[Hello](https://example.com)"}</Markdown>
     </a>,
-  )
+  );
 
-  await expect.element(screen.getByRole('link', { name: 'Hello' })).toBeVisible()
+  await expect.element(screen.getByRole("link", { name: "Hello" })).toBeVisible();
   await expect
-    .element(screen.getByRole('link', { name: 'Hello' }))
-    .toHaveAttribute('href', '/questions/1')
-})
+    .element(screen.getByRole("link", { name: "Hello" }))
+    .toHaveAttribute("href", "/questions/1");
+});
 
-test('should strip markup to visible text when markdownPlainText runs', () => {
-  expect(markdownPlainText('# Hello')).toBe('Hello')
-  expect(markdownPlainText('**bold**')).toBe('bold')
-  expect(markdownPlainText('[Hello](https://example.com)')).toBe('Hello')
-  expect(markdownPlainText('# Hello field\n\n**bold**')).toBe('Hello field bold')
-  expect(markdownPlainText('# DDD\n## dddddd\n```tsx\nconst x = 1\n```')).toBe(
-    'DDD dddddd const x = 1',
-  )
-})
+test("should strip markup to visible text when markdownPlainText runs", () => {
+  expect(markdownPlainText("# Hello")).toBe("Hello");
+  expect(markdownPlainText("**bold**")).toBe("bold");
+  expect(markdownPlainText("[Hello](https://example.com)")).toBe("Hello");
+  expect(markdownPlainText("# Hello field\n\n**bold**")).toBe("Hello field bold");
+  expect(markdownPlainText("# DDD\n## dddddd\n```tsx\nconst x = 1\n```")).toBe(
+    "DDD dddddd const x = 1",
+  );
+});
 
-test('should keep https hrefs with rel and referrer policy when a link is rendered', async () => {
-  const screen = await render(<Markdown>{'[Hello](https://example.com)'}</Markdown>)
-  const link = screen.getByRole('link', { name: 'Hello' })
+test("should keep https hrefs with rel and referrer policy when a link is rendered", async () => {
+  const screen = await render(<Markdown>{"[Hello](https://example.com)"}</Markdown>);
+  const link = screen.getByRole("link", { name: "Hello" });
 
-  await expect.element(link).toBeVisible()
-  await expect.element(link).toHaveAttribute('href', 'https://example.com')
-  await expect.element(link).toHaveAttribute('rel', 'noopener noreferrer nofollow')
-  await expect.element(link).toHaveAttribute('referrerpolicy', 'no-referrer')
-})
+  await expect.element(link).toBeVisible();
+  await expect.element(link).toHaveAttribute("href", "https://example.com");
+  await expect.element(link).toHaveAttribute("rel", "noopener noreferrer nofollow");
+  await expect.element(link).toHaveAttribute("referrerpolicy", "no-referrer");
+});
 
-test('should drop javascript urls and images when markdown contains them', async () => {
+test("should drop javascript urls and images when markdown contains them", async () => {
   const screen = await render(
-    <Markdown>{'[bad](javascript:alert(1))\n\n![](https://example.com/pixel.png)'}</Markdown>,
-  )
+    <Markdown>{"[bad](javascript:alert(1))\n\n![](https://example.com/pixel.png)"}</Markdown>,
+  );
 
-  await expect.element(screen.getByRole('link', { name: 'bad' })).not.toBeInTheDocument()
-  await expect.element(screen.getByRole('img')).not.toBeInTheDocument()
-})
+  await expect.element(screen.getByRole("link", { name: "bad" })).not.toBeInTheDocument();
+  await expect.element(screen.getByRole("img")).not.toBeInTheDocument();
+});
 
-test('should highlight typescript when a fenced ts block is rendered', async () => {
-  const screen = await render(<Markdown>{'```ts\nconst x = 1\n```'}</Markdown>)
-  const keyword = screen.getByText('const')
+test("should highlight typescript when a fenced ts block is rendered", async () => {
+  const screen = await render(<Markdown>{"```ts\nconst x = 1\n```"}</Markdown>);
+  const keyword = screen.getByText("const");
 
-  await expect.element(keyword).toBeVisible()
-  await expect.element(keyword).toHaveClass('hljs-keyword')
-  await expect.element(screen.getByText('```ts')).not.toBeInTheDocument()
-})
+  await expect.element(keyword).toBeVisible();
+  await expect.element(keyword).toHaveClass("hljs-keyword");
+  await expect.element(screen.getByText("```ts")).not.toBeInTheDocument();
+});

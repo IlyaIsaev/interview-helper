@@ -1,6 +1,6 @@
-import { useVirtualizer, type VirtualItem } from '@tanstack/react-virtual';
-import { map, pipe } from 'es-toolkit/fp';
-import { useRef, type ReactNode } from 'react';
+import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
+import { map, pipe } from "es-toolkit/fp";
+import { useRef, type ReactNode } from "react";
 
 import {
   Markdown,
@@ -8,16 +8,16 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-} from '@/shared/ui';
+} from "@/shared/ui";
 
-import type { Question } from '../model/questions';
+import type { Question } from "../model/questions";
 
 const QUESTION_HEIGHT = 36;
 
 type QuestionListProps = {
   questions: ReadonlyArray<Question>;
   activeQuestionId: string | null;
-  activeAriaCurrent: true | 'page';
+  activeAriaCurrent: true | "page";
   onQuestionClick: (questionId: string) => void;
   updateQuestion: (question: Question) => ReactNode;
   deleteQuestion: (question: Question) => ReactNode;

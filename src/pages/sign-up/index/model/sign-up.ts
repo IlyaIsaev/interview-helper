@@ -1,31 +1,27 @@
-import { computed, reatomForm, wrap } from '@reatom/core';
-import * as v from 'valibot';
+import { computed, reatomForm, wrap } from "@reatom/core";
+import * as v from "valibot";
 
-import { authClient, session } from '@/shared/auth';
-import { registerFormSchemaValidation, toast } from '@/shared/ui';
+import { authClient, session } from "@/shared/auth";
+import { registerFormSchemaValidation, toast } from "@/shared/ui";
 
 const signUpSchema = v.object({
-  name: v.pipe(v.string(), v.nonEmpty('Enter a name')),
-  email: v.pipe(
-    v.string(),
-    v.nonEmpty('Enter an email'),
-    v.email('Enter a valid email'),
-  ),
+  name: v.pipe(v.string(), v.nonEmpty("Enter a name")),
+  email: v.pipe(v.string(), v.nonEmpty("Enter an email"), v.email("Enter a valid email")),
   password: v.pipe(
     v.string(),
-    v.nonEmpty('Enter a password'),
-    v.minLength(8, 'Use at least 8 characters'),
+    v.nonEmpty("Enter a password"),
+    v.minLength(8, "Use at least 8 characters"),
   ),
 });
 
 export const signUpForm = reatomForm(
   {
-    name: '',
-    email: '',
-    password: '',
+    name: "",
+    email: "",
+    password: "",
   },
   {
-    name: 'signUpForm',
+    name: "signUpForm",
     validateOnBlur: false,
     validateOnChange: false,
     schema: signUpSchema,
@@ -39,7 +35,7 @@ export const signUpForm = reatomForm(
       );
 
       if (error) {
-        toast.error(error.message ?? 'Could not create the account.');
+        toast.error(error.message ?? "Could not create the account.");
 
         return;
       }
@@ -63,4 +59,4 @@ export const isSignUpValid = computed(() => {
   });
 
   return parsedSignUp.success;
-}, 'isSignUpValid');
+}, "isSignUpValid");

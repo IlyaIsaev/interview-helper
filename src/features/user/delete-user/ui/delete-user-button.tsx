@@ -1,9 +1,9 @@
-import { wrap } from '@reatom/core';
-import { reatomComponent } from '@reatom/react';
+import { wrap } from "@reatom/core";
+import { reatomComponent } from "@reatom/react";
 
-import { Button } from '@/shared/ui';
+import { Button } from "@/shared/ui";
 
-import { openDeleteUser } from '../model/delete-user';
+import { openDeleteUser } from "../model/delete-user";
 
 export const DeleteUserButton = reatomComponent(() => {
   const handleOpenDeleteUser = wrap(openDeleteUser);
@@ -13,4 +13,4 @@ export const DeleteUserButton = reatomComponent(() => {
       Delete account
     </Button>
   );
-}, 'DeleteUserButton');
+}, "DeleteUserButton");

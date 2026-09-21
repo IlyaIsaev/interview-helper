@@ -1,7 +1,7 @@
-import { action, withAbort, withAsync, wrap } from '@reatom/core';
+import { action, withAbort, withAsync, wrap } from "@reatom/core";
 
-import { initQuestion, openedQuestionId } from '@/entities/questions/question';
-import { clientApi } from '@/shared/api';
+import { initQuestion, openedQuestionId } from "@/entities/questions/question";
+import { clientApi } from "@/shared/api";
 
 export const loadOpenedQuestion = action(async (questionId: string) => {
   if (questionId.length === 0) {
@@ -21,4 +21,4 @@ export const loadOpenedQuestion = action(async (questionId: string) => {
   }
 
   initQuestion(nextQuestion);
-}, 'loadOpenedQuestion').extend(withAsync(), withAbort());
+}, "loadOpenedQuestion").extend(withAsync(), withAbort());

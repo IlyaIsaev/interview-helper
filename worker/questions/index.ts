@@ -1,13 +1,13 @@
-import { vValidator } from '@hono/valibot-validator';
-import { and, count, eq } from 'drizzle-orm';
-import { Hono, type Context, type Next } from 'hono';
-import { csrf } from 'hono/csrf';
-import * as v from 'valibot';
+import { vValidator } from "@hono/valibot-validator";
+import { and, count, eq } from "drizzle-orm";
+import { Hono, type Context, type Next } from "hono";
+import { csrf } from "hono/csrf";
+import * as v from "valibot";
 
-import { createAuth, isTrustedAuthOrigin } from '../auth';
-import { createDatabase } from '../db/client';
-import { question } from '../db/schema';
-import { questionsMatchingSearch } from './utils/question-search';
+import { createAuth, isTrustedAuthOrigin } from "../auth";
+import { createDatabase } from "../db/client";
+import { question } from "../db/schema";
+import { questionsMatchingSearch } from "./utils/question-search";
 
 const QUESTION_FIELD_MAX_LENGTH = 20_000;
 
@@ -26,20 +26,20 @@ const questionRow = {
   answer: question.answer,
 };
 
-type Question = Omit<typeof question.$inferSelect, 'userId'>;
+type Question = Omit<typeof question.$inferSelect, "userId">;
 
 const questionFieldsSchema = v.object({
   question: v.pipe(
-    v.string('Question must be a string'),
+    v.string("Question must be a string"),
     v.trim(),
-    v.minLength(1, 'Question is required'),
-    v.maxLength(QUESTION_FIELD_MAX_LENGTH, 'Question is too long'),
+    v.minLength(1, "Question is required"),
+    v.maxLength(QUESTION_FIELD_MAX_LENGTH, "Question is too long"),
   ),
   answer: v.pipe(
-    v.string('Answer must be a string'),
+    v.string("Answer must be a string"),
     v.trim(),
-    v.minLength(1, 'Answer is required'),
-    v.maxLength(QUESTION_FIELD_MAX_LENGTH, 'Answer is too long'),
+    v.minLength(1, "Answer is required"),
+    v.maxLength(QUESTION_FIELD_MAX_LENGTH, "Answer is too long"),
   ),
 });
 
@@ -59,9 +59,9 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
     headers: context.req.raw.headers,
   });
 
-  if (!currentSession) return context.json({ message: 'Unauthorized' }, 401);
+  if (!currentSession) return context.json({ message: "Unauthorized" }, 401);
 
-  context.set('userId', currentSession.user.id);
+  context.set("userId", currentSession.user.id);
 
   await next();
 };
@@ -83,13 +83,12 @@ const loadQuestion = async (
 export const questions = new Hono<QuestionsContext>()
   .use(
     csrf({
-      origin: (origin, context) =>
-        isTrustedAuthOrigin(origin, context.env.BETTER_AUTH_URL),
+      origin: (origin, context) => isTrustedAuthOrigin(origin, context.env.BETTER_AUTH_URL),
     }),
   )
   .use(requireSession)
-  .get('/', vValidator('query', questionSearchQuerySchema), async (context) => {
-    const { q = '' } = context.req.valid('query');
+  .get("/", vValidator("query", questionSearchQuerySchema), async (context) => {
+    const { q = "" } = context.req.valid("query");
     const database = createDatabase(context.env.DB);
 
     const loadedQuestions = await database
@@ -98,28 +97,24 @@ export const questions = new Hono<QuestionsContext>()
         question: question.question,
       })
       .from(question)
-      .where(eq(question.userId, context.get('userId')));
+      .where(eq(question.userId, context.get("userId")));
 
     return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200);
   })
-  .get('/:id', vValidator('param', questionIdSchema), async (context) => {
-    const { id: questionId } = context.req.valid('param');
+  .get("/:id", vValidator("param", questionIdSchema), async (context) => {
+    const { id: questionId } = context.req.valid("param");
     const database = createDatabase(context.env.DB);
 
-    const foundQuestion = await loadQuestion(
-      database,
-      questionId,
-      context.get('userId'),
-    );
+    const foundQuestion = await loadQuestion(database, questionId, context.get("userId"));
 
-    if (!foundQuestion) return context.json({ message: 'Question not found' }, 404);
+    if (!foundQuestion) return context.json({ message: "Question not found" }, 404);
 
     return context.json(foundQuestion, 200);
   })
-  .post('/', vValidator('json', questionFieldsSchema), async (context) => {
-    const questionFields = context.req.valid('json');
+  .post("/", vValidator("json", questionFieldsSchema), async (context) => {
+    const questionFields = context.req.valid("json");
     const database = createDatabase(context.env.DB);
-    const userId = context.get('userId');
+    const userId = context.get("userId");
 
     const [questionTotal] = await database
       .select({ questionCount: count() })
@@ -127,7 +122,7 @@ export const questions = new Hono<QuestionsContext>()
       .where(eq(question.userId, userId));
 
     if ((questionTotal?.questionCount ?? 0) >= MAX_QUESTIONS_PER_USER)
-      return context.json({ message: 'Question limit reached' }, 400);
+      return context.json({ message: "Question limit reached" }, 400);
 
     const [createdQuestion] = await database
       .insert(question)
@@ -142,12 +137,12 @@ export const questions = new Hono<QuestionsContext>()
     return context.json(createdQuestion, 201);
   })
   .put(
-    '/:id',
-    vValidator('param', questionIdSchema),
-    vValidator('json', questionFieldsSchema),
+    "/:id",
+    vValidator("param", questionIdSchema),
+    vValidator("json", questionFieldsSchema),
     async (context) => {
-      const { id: questionId } = context.req.valid('param');
-      const questionFields = context.req.valid('json');
+      const { id: questionId } = context.req.valid("param");
+      const questionFields = context.req.valid("json");
       const database = createDatabase(context.env.DB);
 
       const [updatedQuestion] = await database
@@ -156,24 +151,24 @@ export const questions = new Hono<QuestionsContext>()
           question: questionFields.question,
           answer: questionFields.answer,
         })
-        .where(ownedQuestion(questionId, context.get('userId')))
+        .where(ownedQuestion(questionId, context.get("userId")))
         .returning(questionRow);
 
-      if (!updatedQuestion) return context.json({ message: 'Question not found' }, 404);
+      if (!updatedQuestion) return context.json({ message: "Question not found" }, 404);
 
       return context.json(updatedQuestion, 200);
     },
   )
-  .delete('/:id', vValidator('param', questionIdSchema), async (context) => {
-    const { id: questionId } = context.req.valid('param');
+  .delete("/:id", vValidator("param", questionIdSchema), async (context) => {
+    const { id: questionId } = context.req.valid("param");
     const database = createDatabase(context.env.DB);
 
     const [deletedQuestion] = await database
       .delete(question)
-      .where(ownedQuestion(questionId, context.get('userId')))
+      .where(ownedQuestion(questionId, context.get("userId")))
       .returning(questionRow);
 
-    if (!deletedQuestion) return context.json({ message: 'Question not found' }, 404);
+    if (!deletedQuestion) return context.json({ message: "Question not found" }, 404);
 
     return context.body(null, 204);
   });

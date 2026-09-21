@@ -1,4 +1,4 @@
-import type { FieldAtom } from '@reatom/core';
+import type { FieldAtom } from "@reatom/core";
 
 type SchemaValidationTrigger = () => void;
 
