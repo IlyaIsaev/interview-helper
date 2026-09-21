@@ -50,12 +50,13 @@ pages/sign-up/
 features/questions/create-question/ ← dialog form to create a question + answer
 features/questions/delete-question/ ← confirm dialog to delete a question
 features/questions/publish-questions/ ← header button to snapshot questions for guests
+features/questions/search-questions/ ← search field in the questions dialog
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
 features/user/change-password/ ← profile form: new password + confirmation (deleteUser slot)
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (dialog + list; updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
+entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (dialog + list; search / updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives

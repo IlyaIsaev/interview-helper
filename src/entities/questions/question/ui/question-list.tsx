@@ -1,6 +1,6 @@
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import { map, pipe } from "es-toolkit/fp";
-import { useState, type ChangeEvent, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
 import { cn } from "@/shared/lib";
 import {
@@ -10,8 +10,6 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-  Input,
-  Label,
   Markdown,
   markdownPlainText,
   Spinner,
@@ -25,8 +23,8 @@ type QuestionListProps = {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   questions: ReadonlyArray<Question> | null;
-  search: string;
-  onSearchChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  search: ReactNode;
+  hasSearchQuery: boolean;
   createQuestion: ReactNode;
   activeQuestionId: string | null;
   activeAriaCurrent: true | "page";
@@ -40,7 +38,7 @@ export function QuestionList({
   onOpenChange,
   questions,
   search,
-  onSearchChange,
+  hasSearchQuery,
   createQuestion,
   activeQuestionId,
   activeAriaCurrent,
@@ -107,7 +105,7 @@ export function QuestionList({
       );
     }
 
-    if (questions.length === 0 && search.trim().length === 0) {
+    if (questions.length === 0 && !hasSearchQuery) {
       return (
         <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
           no questions
@@ -150,10 +148,7 @@ export function QuestionList({
         </DialogHeader>
         <DialogDescription className="sr-only">Browse and open questions.</DialogDescription>
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
-          <div className="shrink-0 pb-2">
-            <Label htmlFor="question-search">search</Label>
-            <Input id="question-search" type="search" value={search} onChange={onSearchChange} />
-          </div>
+          <div className="shrink-0 pb-2">{search}</div>
           {questionsBody()}
         </div>
       </DialogContent>

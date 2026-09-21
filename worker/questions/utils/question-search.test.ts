@@ -25,3 +25,17 @@ test("should match visible question text when the query ignores markdown syntax"
 
   expect(questionsMatchingSearch(questions, "#")).toEqual([]);
 });
+
+test("should sort questions alphabetically by visible text", () => {
+  const questions = [
+    { id: "2", question: "Zebra" },
+    { id: "1", question: "Apple" },
+    { id: "3", question: "# Banana" },
+  ];
+
+  expect(questionsMatchingSearch(questions, "")).toEqual([
+    { id: "1", question: "Apple" },
+    { id: "3", question: "# Banana" },
+    { id: "2", question: "Zebra" },
+  ]);
+});

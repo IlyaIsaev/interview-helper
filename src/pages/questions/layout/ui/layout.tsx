@@ -1,25 +1,23 @@
 import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { find, pipe } from "es-toolkit/fp";
-import type { ChangeEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 
 import {
   openListedQuestion,
   QuestionList,
   questions,
-  questionsQuery,
   type Question,
 } from "@/entities/questions/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
 import { PublishQuestionsButton } from "@/features/questions/publish-questions";
+import { questionSearch, SearchQuestions } from "@/features/questions/search-questions";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
 import { HOME_PATH, questionPath } from "@/shared/config";
 import { Button } from "@/shared/ui";
-
-import { questionSearch, searchQuestions } from "../model/question-search";
 
 const isQuestionsDialogOpen = reatomBoolean(false, "isQuestionsDialogOpen");
 
@@ -57,16 +55,6 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
 
   const handleQuestionFormOpen = wrap(closeQuestionsDialog);
 
-  const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
-    const nextSearch = event.currentTarget.value;
-
-    questionSearch.set(nextSearch);
-
-    questionsQuery.set(nextSearch.trim());
-
-    searchQuestions();
-  });
-
   function renderCreateQuestion() {
     return (
       <div className="contents" onClick={handleCreateQuestionOpen}>
@@ -97,8 +85,8 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         open={isQuestionsDialogOpen()}
         onOpenChange={changeQuestionsDialogOpen}
         questions={listedQuestions}
-        search={search}
-        onSearchChange={changeQuestionSearch}
+        search={<SearchQuestions />}
+        hasSearchQuery={search.trim().length > 0}
         createQuestion={renderCreateQuestion()}
         activeQuestionId={openedQuestionId}
         activeAriaCurrent="page"

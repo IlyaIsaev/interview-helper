@@ -44,8 +44,8 @@ async function renderQuestionList({
       open
       onOpenChange={() => {}}
       questions={questions}
-      search=""
-      onSearchChange={() => {}}
+      search={<input />}
+      hasSearchQuery={false}
       createQuestion={null}
       activeQuestionId={questions[0]?.id ?? null}
       activeAriaCurrent="page"

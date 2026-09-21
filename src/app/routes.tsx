@@ -10,7 +10,7 @@ import {
   questionsQuery,
   resetQuestions,
 } from "@/entities/questions/question";
-import { questionSearch } from "@/pages/questions/layout/model/question-search";
+import { questionSearch } from "@/features/questions/search-questions";
 import { loadOpenedQuestion } from "@/pages/theory/index/model/load-opened-question";
 import { theoryQuestionSearch } from "@/pages/theory/index/model/question-search";
 import { clientApi } from "@/shared/api";
