@@ -35,7 +35,7 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 app/                 ← entrypoint, Reatom logger, routes, composition
                          protectedRoute: app shell (guests + signed-in; no page folder)
 pages/questions/     ← questions route group (under protectedRoute)
-  layout/            ← questionsRoute chrome + list loader (sidebar + toggle + header)
+  layout/            ← questionsRoute chrome + list loader (header + questions dialog)
   index/             ← questions list / empty state (/questions)
   question/
     index/           ← question detail; composes RandomQuestion (/questions/:id)
@@ -54,7 +54,7 @@ features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
 features/user/change-password/ ← profile form: new password + confirmation (deleteUser slot)
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
+entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (dialog + list; updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives

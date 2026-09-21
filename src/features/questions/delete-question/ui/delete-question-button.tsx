@@ -2,7 +2,7 @@ import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { Trash2 } from "lucide-react";
 
-import { SidebarMenuAction } from "@/shared/ui";
+import { Button } from "@/shared/ui";
 
 import { openDeleteQuestion } from "../model/delete-question";
 
@@ -14,13 +14,15 @@ export const DeleteQuestionButton = reatomComponent(({ questionId }: DeleteQuest
   const handleOpenDeleteQuestion = wrap(() => openDeleteQuestion(questionId));
 
   return (
-    <SidebarMenuAction
+    <Button
       type="button"
-      showOnHover
+      variant="ghost"
+      size="icon"
+      className="size-7"
       aria-label="Delete question"
       onClick={handleOpenDeleteQuestion}
     >
       <Trash2 />
-    </SidebarMenuAction>
+    </Button>
   );
 }, "DeleteQuestionButton");

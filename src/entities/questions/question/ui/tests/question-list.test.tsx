@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
-import { markdownPlainText, SidebarProvider } from "@/shared/ui";
+import { markdownPlainText } from "@/shared/ui";
 
 import type { Question } from "../../model/questions";
 import { QuestionList } from "../question-list";
@@ -40,22 +40,26 @@ async function renderQuestionList({
   }
 
   return render(
-    <SidebarProvider className="h-[400px]">
-      <QuestionList
-        questions={questions}
-        activeQuestionId={questions[0]?.id ?? null}
-        activeAriaCurrent="page"
-        onQuestionClick={onQuestionClick}
-        updateQuestion={renderUpdateQuestion}
-        deleteQuestion={renderDeleteQuestion}
-      />
-    </SidebarProvider>,
+    <QuestionList
+      open
+      onOpenChange={() => {}}
+      questions={questions}
+      search=""
+      onSearchChange={() => {}}
+      createQuestion={null}
+      activeQuestionId={questions[0]?.id ?? null}
+      activeAriaCurrent="page"
+      onQuestionClick={onQuestionClick}
+      updateQuestion={renderUpdateQuestion}
+      deleteQuestion={renderDeleteQuestion}
+    />,
   );
 }
 
 test("should show update and delete slots when the questions list renders", async () => {
   const screen = await renderQuestionList();
 
+  await expect.element(screen.getByRole("dialog", { name: "Questions" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "First question" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "Second question" })).toBeVisible();
   await expect.element(screen.getByText(`update ${firstQuestion.id}`)).toBeVisible();

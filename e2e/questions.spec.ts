@@ -28,7 +28,7 @@ const sidebarQuestion = (page: Page, questionText: string) =>
   page.getByRole("button", { name: questionText });
 
 const sidebarQuestionItem = (page: Page, questionText: string) =>
-  page.locator('[data-slot="sidebar-menu-item"]').filter({
+  page.locator("li").filter({
     has: page.getByRole("button", { name: questionText }),
   });
 

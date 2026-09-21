@@ -1,13 +1,20 @@
 import { useVirtualizer, type VirtualItem } from "@tanstack/react-virtual";
 import { map, pipe } from "es-toolkit/fp";
-import { useRef, type ReactNode } from "react";
+import { useState, type ChangeEvent, type ReactNode } from "react";
 
+import { cn } from "@/shared/lib";
 import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  Input,
+  Label,
   Markdown,
   markdownPlainText,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
+  Spinner,
 } from "@/shared/ui";
 
 import type { Question } from "../model/questions";
@@ -15,7 +22,12 @@ import type { Question } from "../model/questions";
 const QUESTION_HEIGHT = 36;
 
 type QuestionListProps = {
-  questions: ReadonlyArray<Question>;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  questions: ReadonlyArray<Question> | null;
+  search: string;
+  onSearchChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  createQuestion: ReactNode;
   activeQuestionId: string | null;
   activeAriaCurrent: true | "page";
   onQuestionClick: (questionId: string) => void;
@@ -24,24 +36,30 @@ type QuestionListProps = {
 };
 
 export function QuestionList({
+  open,
+  onOpenChange,
   questions,
+  search,
+  onSearchChange,
+  createQuestion,
   activeQuestionId,
   activeAriaCurrent,
   onQuestionClick,
   updateQuestion,
   deleteQuestion,
 }: QuestionListProps) {
-  const questionsScroller = useRef<HTMLDivElement>(null);
+  const [questionsScroller, setQuestionsScroller] = useState<HTMLDivElement | null>(null);
+  const listedQuestions = questions ?? [];
   const questionsVirtualizer = useVirtualizer({
-    count: questions.length,
+    count: listedQuestions.length,
     estimateSize: () => QUESTION_HEIGHT,
-    getItemKey: (index) => questions[index]?.id ?? index,
-    getScrollElement: () => questionsScroller.current,
+    getItemKey: (index) => listedQuestions[index]?.id ?? index,
+    getScrollElement: () => questionsScroller,
     overscan: 8,
   });
 
-  function questionMenu(virtualQuestion: VirtualItem) {
-    const question = questions[virtualQuestion.index];
+  function questionRow(virtualQuestion: VirtualItem) {
+    const question = listedQuestions[virtualQuestion.index];
 
     if (!question) return null;
 
@@ -53,35 +71,92 @@ export function QuestionList({
     };
 
     return (
-      <SidebarMenuItem
+      <li
         key={question.id}
-        className="absolute top-0 left-0 w-full"
-        style={{ transform: `translateY(${virtualQuestion.start}px)` }}
+        role="listitem"
+        className="absolute top-0 left-0 flex w-full items-center"
+        style={{ height: QUESTION_HEIGHT, transform: `translateY(${virtualQuestion.start}px)` }}
       >
-        <SidebarMenuButton
+        <Button
           type="button"
-          isActive={isQuestionActive}
+          variant="ghost"
           aria-current={questionAriaCurrent}
-          className="group-has-data-[sidebar=menu-action]/menu-item:pr-14"
+          className={cn(
+            "h-9 min-w-0 flex-1 justify-start overflow-hidden font-normal normal-case tracking-normal",
+            isQuestionActive && "bg-accent text-accent-foreground",
+          )}
           title={markdownPlainText(question.question)}
           onClick={handleQuestionClick}
         >
           <Markdown plain>{question.question}</Markdown>
-        </SidebarMenuButton>
-        {updateQuestion(question)}
-        {deleteQuestion(question)}
-      </SidebarMenuItem>
+        </Button>
+        <div className="flex shrink-0 items-center">
+          {updateQuestion(question)}
+          {deleteQuestion(question)}
+        </div>
+      </li>
+    );
+  }
+
+  function questionsBody() {
+    if (questions === null) {
+      return (
+        <div className="flex min-h-0 flex-1 items-center justify-center">
+          <Spinner />
+        </div>
+      );
+    }
+
+    if (questions.length === 0 && search.trim().length === 0) {
+      return (
+        <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
+          no questions
+        </p>
+      );
+    }
+
+    if (questions.length === 0) {
+      return (
+        <p className="px-2 py-1 text-xs uppercase tracking-[1.5px] text-muted-foreground">
+          no matches
+        </p>
+      );
+    }
+
+    return (
+      <div ref={setQuestionsScroller} className="min-h-64 flex-1 overflow-y-auto">
+        <ul
+          className="relative m-0 list-none p-0"
+          role="list"
+          style={{ height: questionsVirtualizer.getTotalSize() }}
+        >
+          {pipe(questionsVirtualizer.getVirtualItems(), map(questionRow))}
+        </ul>
+      </div>
     );
   }
 
   return (
-    <div ref={questionsScroller} className="min-h-0 flex-1 overflow-y-auto">
-      <SidebarMenu
-        className="relative gap-0"
-        style={{ height: questionsVirtualizer.getTotalSize() }}
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent
+        showCloseButton={false}
+        className="flex! max-h-[85vh] min-h-0 flex-col gap-0 overflow-hidden p-0"
       >
-        {pipe(questionsVirtualizer.getVirtualItems(), map(questionMenu))}
-      </SidebarMenu>
-    </div>
+        <DialogHeader className="h-12 flex-row items-center gap-3 border-b border-border px-3 py-0">
+          <DialogTitle className="text-xs font-normal uppercase tracking-[2px] text-muted-foreground">
+            Questions
+          </DialogTitle>
+          {createQuestion}
+        </DialogHeader>
+        <DialogDescription className="sr-only">Browse and open questions.</DialogDescription>
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
+          <div className="shrink-0 pb-2">
+            <Label htmlFor="question-search">search</Label>
+            <Input id="question-search" type="search" value={search} onChange={onSearchChange} />
+          </div>
+          {questionsBody()}
+        </div>
+      </DialogContent>
+    </Dialog>
   );
 }
