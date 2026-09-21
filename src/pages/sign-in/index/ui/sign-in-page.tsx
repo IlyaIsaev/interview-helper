@@ -13,13 +13,12 @@ import {
   Input,
 } from '@/shared/ui';
 
-import { signInForm } from '../model/sign-in';
+import { isSignInValid, signInForm } from '../model/sign-in';
 import { CookieConsent } from './cookie-consent';
 
 const SignInPage = reatomComponent(() => {
-  const { fields, submit, validation } = signInForm;
+  const { fields, submit } = signInForm;
   const isSubmitReady = submit.ready();
-  const hasValidationErrors = validation().errors.length > 0;
   const submitError = submit.error();
   const emailField = bindFormControl(fields.email);
   const passwordField = bindFormControl(fields.password);
@@ -57,7 +56,7 @@ const SignInPage = reatomComponent(() => {
             </FormItem>
           </FormField>
           <FormMessage>{submitError?.message}</FormMessage>
-          <Button type="submit" disabled={!isSubmitReady || hasValidationErrors}>
+          <Button type="submit" disabled={!isSubmitReady || !isSignInValid()}>
             Sign in
           </Button>
         </Form>

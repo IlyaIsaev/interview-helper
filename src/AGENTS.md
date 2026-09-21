@@ -44,7 +44,7 @@ pages/theory/
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
-  index/             ← login (GET /api/demo-user prefill) + cookie consent
+  index/             ← login + cookie consent
 pages/sign-up/
   index/             ← empty custom sign-up form
 features/questions/create-question/ ← dialog form to create a question + answer
@@ -317,19 +317,19 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 - Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
 - Sign-in forms use `reatomForm`. After success, `session.retry()`.
-- On `/sign-in`, `GET /api/demo-user` reuses the HttpOnly `createdDemoUser` cookie or generates credentials and sets that cookie; the form is prefilled from the JSON body and the session stays empty. The client keeps credentials only in memory (`createdDemoUser` atom), not in `document.cookie`. Demo Sign in creates the user (`POST /api/demo-user`, or signs in if that email exists). After demo Sign in, toast that demo accounts are deleted after 24 hours. Custom emails use `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is a link to `/sign-up`.
-- On `/sign-up`, the form is empty. Do not call `GET`/`POST /api/demo-user` there. Create account toasts that sign-up is temporarily unavailable and does not call `authClient.signUp.email`.
+- On `/sign-in`, the form is empty. Sign in uses `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is a link to `/sign-up`.
+- On `/sign-up`, the form is empty. Create account calls `authClient.signUp.email`, then `session.retry()`. Toast Better Auth errors (duplicate email, rate limit). After success, `protectedRoute` sends the signed-in user to questions.
 - Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
   - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
   - Guests on `/sign-in` or `/sign-up` stay.
   - Signed-in users on `/` or auth URLs go to `questionsRoute`. Questions load in that route's `loader`; empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
   - `/theory` is behind `protectedRoute` for auth; it loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
   - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
-- Sign-out returns to `/sign-in` with the same demo credentials (Worker HttpOnly cookie, then `GET /api/demo-user`).
-- Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`. For a demo user, the Worker refreshes the HttpOnly `createdDemoUser` cookie so sign-out still prefills the **new** password.
-- Delete account on `/profile` removes the signed-in user and their questions, expires the HttpOnly `createdDemoUser` cookie, then `/sign-in` with a **new** generated demo pair from `GET /api/demo-user`. Demo Sign in recreates the account.
+- Sign-out returns to `/sign-in` with an empty form.
+- Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.
+- Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with an empty form.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
-- Server auth, demo-user creation, and cookie names are in `worker/AGENTS.md`.
+- Server auth and account APIs are in `worker/AGENTS.md`.
 
 ## Unit tests
 

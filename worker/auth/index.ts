@@ -1,6 +1,6 @@
 import { betterAuth } from 'better-auth';
 import { drizzleAdapter } from 'better-auth/adapters/drizzle';
-import { Hono, type Context, type Next } from 'hono';
+import { Hono } from 'hono';
 
 import { createDatabase } from '../db/client';
 import * as schema from '../db/schema';
@@ -36,6 +36,12 @@ const authForEnv = (env: Env) =>
     trustedOrigins: trustedOriginsFor(env.BETTER_AUTH_URL),
     rateLimit: {
       enabled: true,
+      customRules: {
+        '/sign-up/email': false,
+        '/sign-in/email': false,
+        '/api/auth/sign-up/email': false,
+        '/api/auth/sign-in/email': false,
+      },
     },
     advanced: {
       ipAddress: {
@@ -47,24 +53,8 @@ const authForEnv = (env: Env) =>
 export const createAuth = (env: Env): ReturnType<typeof authForEnv> =>
   authForEnv(env);
 
-const isPublicEmailSignUp = (method: string, pathname: string): boolean =>
-  method === 'POST' && pathname.endsWith('/sign-up/email');
-
-const rejectPublicEmailSignUp = async (
-  context: Context<{ Bindings: Env }>,
-  next: Next,
-) => {
-  if (!isPublicEmailSignUp(context.req.method, new URL(context.req.url).pathname)) {
-    await next();
-
-    return;
-  }
-
-  return context.json({ message: 'Sign-up temporarily unavailable' }, 403);
-};
-
-export const auth = new Hono<{ Bindings: Env }>()
-  .use(rejectPublicEmailSignUp)
-  .on(['GET', 'POST'], '/*', (context) =>
-    createAuth(context.env).handler(context.req.raw),
-  );
+export const auth = new Hono<{ Bindings: Env }>().on(
+  ['GET', 'POST'],
+  '/*',
+  (context) => createAuth(context.env).handler(context.req.raw),
+);

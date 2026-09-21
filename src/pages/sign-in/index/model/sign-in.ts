@@ -1,18 +1,8 @@
-import { action, reatomForm, wrap } from '@reatom/core';
+import { computed, reatomForm, wrap } from '@reatom/core';
 import * as v from 'valibot';
 
-import { clientApi } from '@/shared/api';
-import {
-  authClient,
-  createdDemoUser,
-  session,
-  type DemoCredentials,
-} from '@/shared/auth';
+import { authClient, session } from '@/shared/auth';
 import { registerFormSchemaValidation, toast } from '@/shared/ui';
-
-const DEMO_USER_EMAIL_PATTERN = /^demo-user-[a-f0-9]{8}@demo\.com$/;
-
-const isDemoEmail = (email: string): boolean => DEMO_USER_EMAIL_PATTERN.test(email);
 
 const signInSchema = v.object({
   email: v.pipe(
@@ -38,16 +28,6 @@ export const signInForm = reatomForm(
     validateOnChange: false,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
-      if (isDemoEmail(email)) {
-        await wrap(clientApi.createDemoUser({ email, password }));
-
-        await wrap(session.retry());
-
-        toast.info('Demo accounts are deleted after 24 hours.');
-
-        return;
-      }
-
       const { error } = await wrap(
         authClient.signIn.email({
           email,
@@ -71,10 +51,11 @@ registerFormSchemaValidation(signInForm, [
   signInForm.fields.password,
 ]);
 
-export const initSignIn = action((credentials: DemoCredentials) => {
-  createdDemoUser.set(credentials);
+export const isSignInValid = computed(() => {
+  const parsedSignIn = v.safeParse(signInSchema, {
+    email: signInForm.fields.email(),
+    password: signInForm.fields.password(),
+  });
 
-  signInForm.fields.email.change(credentials.email);
-
-  signInForm.fields.password.change(credentials.password);
-}, 'initSignIn');
+  return parsedSignIn.success;
+}, 'isSignInValid');

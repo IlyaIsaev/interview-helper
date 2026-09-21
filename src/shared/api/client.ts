@@ -85,15 +85,7 @@ type UpdatedQuestion = InferResponseType<
   200
 >;
 
-export type DemoUserCredentials = InferResponseType<
-  (typeof api.api)['demo-user']['$get']
->;
-
-type CreateDemoUserBody = InferRequestType<(typeof api.api)['demo-user']['$post']>['json'];
-
-type ChangePasswordBody = InferRequestType<
-  (typeof api.api)['demo-user']['password']['$post']
->['json'];
+type ChangePasswordBody = InferRequestType<typeof api.api.user.password.$post>['json'];
 
 export const clientApi = {
   async loadQuestions(query = ''): Promise<QuestionsResponse> {
@@ -166,34 +158,15 @@ export const clientApi = {
     if (!response.ok) throw new Error(`DELETE /api/questions/:id failed: ${response.status}`);
   },
 
-  async loadDemoUser(): Promise<DemoUserCredentials> {
-    const response = await wrap(api.api['demo-user'].$get());
-
-    return await readJson<DemoUserCredentials>(
-      response,
-      'GET /api/demo-user failed',
-    );
-  },
-
-  async createDemoUser(demoSignIn: CreateDemoUserBody): Promise<void> {
-    const response = await wrap(
-      api.api['demo-user'].$post({
-        json: demoSignIn,
-      }),
-    );
-
-    if (!response.ok) throw new Error(`POST /api/demo-user failed: ${response.status}`);
-  },
-
   async deleteUser(): Promise<void> {
-    const response = await wrap(api.api['demo-user'].$delete());
+    const response = await wrap(api.api.user.$delete());
 
-    if (!response.ok) throw new Error(`DELETE /api/demo-user failed: ${response.status}`);
+    if (!response.ok) throw new Error(`DELETE /api/user failed: ${response.status}`);
   },
 
   async changePassword(passwordChange: ChangePasswordBody): Promise<void> {
     const response = await wrap(
-      api.api['demo-user'].password.$post({
+      api.api.user.password.$post({
         json: passwordChange,
       }),
     );
@@ -201,6 +174,6 @@ export const clientApi = {
     await retrySessionIfUnauthorized(response);
 
     if (!response.ok)
-      throw new Error(`POST /api/demo-user/password failed: ${response.status}`);
+      throw new Error(`POST /api/user/password failed: ${response.status}`);
   },
 };

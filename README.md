@@ -1,6 +1,6 @@
 # Interview helper
 
-A signed-in app for storing interview questions and answers as Markdown, searching the list, and practicing from a question page. Guests land on demo sign-in. Public email sign-up is currently closed. Demo accounts expire after 24 hours.
+A signed-in app for storing interview questions and answers as Markdown, searching the list, and practicing from a question page. Guests land on sign-in. Public email sign-up is open.
 
 ## Technologies
 
@@ -16,8 +16,8 @@ A signed-in app for storing interview questions and answers as Markdown, searchi
 ## Architecture
 
 - SPA in `src/` (Feature-Sliced Design: `app` → `pages` → `features` → `entities` → `shared`). No widgets layer.
-- Worker in `worker/` (`/api/auth`, `/api/demo-user`, `/api/questions`). Vite Cloudflare plugin; only `/api/*` hits the Worker.
-- Persistence: D1 via Drizzle. Hourly cron deletes expired demo users.
+- Worker in `worker/` (`/api/auth`, `/api/user`, `/api/questions`). Vite Cloudflare plugin; only `/api/*` hits the Worker.
+- Persistence: D1 via Drizzle.
 
 ```text
 src/       SPA (FSD)

@@ -31,7 +31,7 @@ test('declining cookies leaves for Google without deleting a user', async ({
   const deleteRequests: Array<string> = []
 
   page.on('request', (request) => {
-    if (request.url().includes('/api/demo-user') && request.method() === 'DELETE') {
+    if (request.url().includes('/api/user') && request.method() === 'DELETE') {
       deleteRequests.push(request.url())
     }
   })

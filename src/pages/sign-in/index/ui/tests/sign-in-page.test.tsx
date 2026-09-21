@@ -5,14 +5,11 @@ import { render } from 'vitest-browser-react'
 import { signInForm } from '../../model/sign-in'
 import SignInPage from '../sign-in-page'
 
-test('should link to sign-up and omit demo expiry copy when the sign-in page renders', async () => {
+test('should link to sign-up when the sign-in page renders', async () => {
   const screen = await render(<SignInPage />)
 
   await expect.element(screen.getByRole('heading', { name: 'Sign in' })).toBeVisible()
   await expect.element(screen.getByRole('link', { name: 'Sign up' })).toBeVisible()
-  await expect
-    .element(screen.getByText('demo accounts are deleted after 24 hours'))
-    .not.toBeInTheDocument()
 })
 
 test('should not show email validation when the field is blurred without changes', async () => {

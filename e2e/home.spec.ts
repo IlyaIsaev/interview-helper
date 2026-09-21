@@ -1,8 +1,13 @@
 import { expect, test, type Page } from '@playwright/test'
 
-const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
-
-const demoEmail = /demo-user-[a-f0-9]{8}@demo\.com/
+import {
+  createAccount,
+  e2eUserName,
+  openUserMenu,
+  signedInPath,
+  signInWithCredentials,
+  submitSignUp,
+} from './auth'
 
 const isQuestionsPath = (url: string) =>
   new URL(url).pathname === '/questions'
@@ -10,46 +15,13 @@ const isQuestionsPath = (url: string) =>
 const notifications = (page: Page) =>
   page.getByRole('region', { name: /Notifications/i })
 
-const createDemoAccount = async (page: Page) => {
-  await page.goto('/sign-in')
-
-  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
-
-  const email = await page.getByLabel('email').inputValue()
-  const password = await page.getByLabel('password').inputValue()
-
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
-
-  return { email, password }
-}
-
-const openUserMenu = async (page: Page) => {
-  await expect(async () => {
-    await page.getByRole('button', { name: 'Demo user' }).click()
-    await expect(page.getByRole('menuitem', { name: 'Profile' })).toBeVisible({
-      timeout: 2_000,
-    })
-  }).toPass({ timeout: 15_000 })
-}
-
 test('opening the app redirects guests to sign-in', async ({ page }) => {
-  const demoUserGets: Array<string> = []
-  const demoUserPosts: Array<string> = []
+  const demoUserRequests: Array<string> = []
   const signUpRequests: Array<string> = []
 
-  page.on('requestfinished', (request) => {
-    if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
-      demoUserGets.push(request.url())
-    }
-  })
-
   page.on('request', (request) => {
-    if (request.url().includes('/api/demo-user') && request.method() === 'POST') {
-      demoUserPosts.push(request.url())
+    if (request.url().includes('/api/demo-user')) {
+      demoUserRequests.push(request.url())
     }
 
     if (request.url().includes('/api/auth/sign-up/email')) {
@@ -61,27 +33,18 @@ test('opening the app redirects guests to sign-in', async ({ page }) => {
 
   await expect(page).toHaveURL(/\/sign-in$/)
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
-  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
-  await expect(page.getByLabel('password')).not.toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
   await expect(page.getByRole('heading', { name: 'We use cookies' })).toBeVisible()
-  await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
   await expect(page.getByRole('link', { name: 'Sign up' })).toBeVisible()
-  await expect(page.evaluate(() => document.cookie)).resolves.not.toContain(
-    'createdDemoUser',
-  )
-  expect(demoUserGets).toHaveLength(1)
-  expect(demoUserPosts).toEqual([])
+  expect(demoUserRequests).toEqual([])
   expect(signUpRequests).toEqual([])
 })
 
-test('signing in creates the demo user and lands on questions', async ({
+test('signing up creates an account and lands on questions', async ({
   page,
 }) => {
-  await createDemoAccount(page)
-
-  await expect(
-    notifications(page).getByText('Demo accounts are deleted after 24 hours.'),
-  ).toBeVisible()
+  await createAccount(page)
 
   if (isQuestionsPath(page.url())) {
     await expect(page.getByRole('heading', { name: 'Questions' })).toBeVisible()
@@ -97,44 +60,39 @@ test('signing in creates the demo user and lands on questions', async ({
   await page.reload()
 
   await expect(page).toHaveURL(signedInPath)
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 })
 
-test('signing out returns to sign-in with the same demo user', async ({
+test('signing out returns to empty sign-in and can sign in again', async ({
   page,
 }) => {
-  const { email, password } = await createDemoAccount(page)
+  const account = await createAccount(page)
 
   await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Log Out' }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(page.getByLabel('email')).toHaveValue(email)
-  await expect(page.getByLabel('password')).toHaveValue(password)
-  await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
 
   await page.reload()
 
-  await expect(page.getByLabel('email')).toHaveValue(email)
-  await expect(page.getByLabel('password')).toHaveValue(password)
-  await expect(notifications(page).getByText('Demo user created.')).toHaveCount(0)
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
 
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await signInWithCredentials(page, account)
 })
 
 test('user menu name opens the profile page without a sidebar', async ({
   page,
 }) => {
-  const { email } = await createDemoAccount(page)
+  const { email } = await createAccount(page)
 
   await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
 
   await expect(page).toHaveURL(/\/profile$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: e2eUserName })).toBeVisible()
   await expect(page.getByRole('paragraph').filter({ hasText: email })).toBeVisible()
   await expect(page.getByRole('button', { name: 'Toggle Sidebar' })).toHaveCount(
     0,
@@ -143,7 +101,7 @@ test('user menu name opens the profile page without a sidebar', async ({
   await expect(
     page.getByRole('link', { name: 'Interview helper' }),
   ).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 
   const loadQuestionsRequests: Array<string> = []
 
@@ -160,13 +118,13 @@ test('user menu name opens the profile page without a sidebar', async ({
   await page.reload()
 
   await expect(page).toHaveURL(/\/profile$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: e2eUserName })).toBeVisible()
   expect(loadQuestionsRequests).toEqual([])
 
   await page.getByRole('link', { name: 'Interview helper' }).click()
 
   await expect(page).toHaveURL(signedInPath)
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 })
 
 test('guests opening profile are redirected to sign-in', async ({ page }) => {
@@ -179,7 +137,7 @@ test('guests opening profile are redirected to sign-in', async ({ page }) => {
 test('signed-in users opening sign-in are sent to questions', async ({
   page,
 }) => {
-  await createDemoAccount(page)
+  await createAccount(page)
 
   await page.goto('/sign-in')
 
@@ -190,7 +148,7 @@ test('signed-in users opening sign-in are sent to questions', async ({
 test('changing the password on profile signs in with the new password after log out', async ({
   page,
 }) => {
-  await createDemoAccount(page)
+  const account = await createAccount(page)
 
   await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -223,16 +181,17 @@ test('changing the password on profile signs in with the new password after log 
   await page.getByRole('menuitem', { name: 'Log Out' }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/)
-  await expect(page.getByLabel('password')).toHaveValue('newpass1!')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
 
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await signInWithCredentials(page, {
+    ...account,
+    password: 'newpass1!',
+  })
 })
 
 test('cancelling account deletion stays on profile', async ({ page }) => {
-  await createDemoAccount(page)
+  await createAccount(page)
 
   await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -250,12 +209,12 @@ test('cancelling account deletion stays on profile', async ({ page }) => {
 
   await expect(page.getByRole('dialog')).toHaveCount(0)
   await expect(page).toHaveURL(/\/profile$/)
-  await expect(page.getByRole('heading', { name: 'Demo user' })).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: e2eUserName })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 })
 
-test('deleting the account prefills a new demo user', async ({ page }) => {
-  const { email: deletedEmail } = await createDemoAccount(page)
+test('deleting the account returns to empty sign-in', async ({ page }) => {
+  const account = await createAccount(page)
 
   await openUserMenu(page)
   await page.getByRole('menuitem', { name: 'Profile' }).click()
@@ -266,38 +225,26 @@ test('deleting the account prefills a new demo user', async ({ page }) => {
   await page.getByRole('button', { name: 'Delete', exact: true }).click()
 
   await expect(page).toHaveURL(/\/sign-in$/, { timeout: 15_000 })
-  await expect(page.getByLabel('email')).toHaveValue(demoEmail)
-  await expect(page.getByLabel('email')).not.toHaveValue(deletedEmail)
-  await expect(page.getByLabel('password')).not.toHaveValue('')
+  await expect(page.getByLabel('email')).toHaveValue('')
+  await expect(page.getByLabel('password')).toHaveValue('')
   await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible()
 
-  const demoUserPosts: Array<string> = []
-
-  page.on('request', (request) => {
-    if (request.url().includes('/api/demo-user') && request.method() === 'POST') {
-      demoUserPosts.push(request.url())
-    }
-  })
-
+  await page.getByLabel('email').fill(account.email)
+  await page.getByLabel('password').fill(account.password)
+  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
   await page.getByRole('button', { name: 'Sign in' }).click()
 
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
-  expect(demoUserPosts.length).toBeGreaterThan(0)
+  await expect(page).toHaveURL(/\/sign-in$/)
+  await expect(
+    notifications(page).getByText("This user doesn't exist anymore."),
+  ).toBeVisible()
 })
 
-test('sign-up stays empty, toasts that it is unavailable, and does not register', async ({
-  page,
-  request,
-}) => {
-  const demoUserGets: Array<string> = []
+test('sign-up registers a new account', async ({ page }) => {
+  const email = `e2e-${crypto.randomUUID()}@example.com`
   const signUpRequests: Array<string> = []
 
   page.on('request', (request) => {
-    if (request.url().includes('/api/demo-user') && request.method() === 'GET') {
-      demoUserGets.push(request.url())
-    }
-
     if (request.url().includes('/api/auth/sign-up/email')) {
       signUpRequests.push(request.url())
     }
@@ -309,31 +256,18 @@ test('sign-up stays empty, toasts that it is unavailable, and does not register'
   await expect(page.getByLabel('name')).toHaveValue('')
   await expect(page.getByLabel('email')).toHaveValue('')
   await expect(page.getByLabel('password')).toHaveValue('')
-  expect(demoUserGets).toEqual([])
 
   await expect(page.getByRole('button', { name: 'Create account' })).toBeDisabled()
 
-  await page.getByLabel('name').fill('Ada')
-  await page.getByLabel('email').fill('ada@example.com')
+  await page.getByLabel('name').fill(e2eUserName)
+  await page.getByLabel('email').fill(email)
   await page.getByLabel('password').fill('password1')
-  await page.getByRole('button', { name: 'Create account' }).click()
-
-  await expect(page).toHaveURL(/\/sign-up$/)
-  await expect(
-    notifications(page).getByText('Sign-up temporarily unavailable.'),
-  ).toBeVisible()
-  expect(signUpRequests).toEqual([])
-
-  const signUpResponse = await request.post('/api/auth/sign-up/email', {
-    data: {
-      name: 'Ada',
-      email: 'ada@example.com',
-      password: 'password1',
-    },
+  await submitSignUp(page, {
+    name: e2eUserName,
+    email,
+    password: 'password1',
   })
 
-  expect(signUpResponse.status()).toBe(403)
-  await expect(signUpResponse.json()).resolves.toEqual({
-    message: 'Sign-up temporarily unavailable',
-  })
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
+  expect(signUpRequests.length).toBeGreaterThan(0)
 })

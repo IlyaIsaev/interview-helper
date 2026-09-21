@@ -1,7 +1,7 @@
 import { action, reatomBoolean, urlAtom, withAsync, wrap } from '@reatom/core';
 
 import { clientApi } from '@/shared/api';
-import { createdDemoUser, session } from '@/shared/auth';
+import { session } from '@/shared/auth';
 import { SIGN_IN_PATH } from '@/shared/config';
 import { toast } from '@/shared/ui';
 
@@ -24,8 +24,6 @@ export const deleteUser = action(async () => {
   }
 
   closeDeleteUserDialog();
-
-  createdDemoUser.set(null);
 
   await wrap(session.retry());
 

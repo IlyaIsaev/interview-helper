@@ -1,5 +1,7 @@
 import { expect, test, type Page, type Request } from '@playwright/test'
 
+import { createAccount, e2eUserName } from './auth'
+
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
 const openedQuestionUrl = /\/theory\?id=[0-9a-f-]+$/
@@ -30,27 +32,10 @@ const emptyCreateQuestion = (page: Page) =>
 const notifications = (page: Page) =>
   page.getByRole('region', { name: /Notifications/i })
 
-const signIn = async (page: Page) => {
-  await page.goto('/sign-in')
-
-  await expect(page.getByLabel('email')).toHaveValue(
-    /demo-user-[a-f0-9]{8}@demo\.com/,
-  )
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
-
-  await expect(async () => {
-    if (!signedInPath.test(page.url())) {
-      await page.getByRole('button', { name: 'Sign in' }).click()
-    }
-
-    await expect(page).toHaveURL(signedInPath)
-  }).toPass({ timeout: 30_000 })
-
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
-}
+const signIn = createAccount
 
 const openTheory = async (page: Page) => {
-  await page.getByRole('button', { name: 'Demo user' }).click()
+  await page.getByRole('button', { name: e2eUserName }).click()
   await page.getByRole('menuitem', { name: 'Theory' }).click()
   await expect(page).toHaveURL(/\/theory(?:\?id=.+)?$/)
   await expect(page.getByRole('heading', { name: 'Theory' })).toBeVisible()
@@ -140,7 +125,7 @@ test('signed-in users can open a missing theory question', async ({ page }) => {
   await expect(page).toHaveURL(/\/theory\?id=abc$/)
   await expect(page.getByRole('heading', { name: 'Theory' })).toBeVisible()
   await expect(page.getByText('question not found')).toBeVisible()
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 })
 
 test('creating a question from the theory header stays on theory', async ({

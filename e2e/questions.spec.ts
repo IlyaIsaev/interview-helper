@@ -1,5 +1,7 @@
 import { expect, test, type Page, type Request } from '@playwright/test'
 
+import { createAccount, e2eUserName } from './auth'
+
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/
 
 const isQuestionsPath = (url: string) =>
@@ -36,18 +38,7 @@ const emptyCreateQuestion = (page: Page) =>
     .getByRole('button', { name: 'Create question' })
     .filter({ hasText: 'Create question' })
 
-const signIn = async (page: Page) => {
-  await page.goto('/sign-in')
-
-  await expect(page.getByLabel('email')).toHaveValue(
-    /demo-user-[a-f0-9]{8}@demo\.com/,
-  )
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeEnabled()
-  await page.getByRole('button', { name: 'Sign in' }).click()
-
-  await expect(page).toHaveURL(signedInPath, { timeout: 15_000 })
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
-}
+const signIn = createAccount
 
 const failQuestionMutation = async (page: Page, method: 'PUT' | 'DELETE') => {
   await page.route('**/api/questions/*', async (route) => {
@@ -230,12 +221,12 @@ test('signed-in users land on questions and can open a missing question', async 
   await expect(page).toHaveURL(/\/questions\/abc$/)
   await expect(page.getByText('question not found')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Questions' })).toHaveCount(0)
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 
   await page.goto('/')
 
   await expect(page).toHaveURL(signedInPath)
-  await expect(page.getByRole('button', { name: 'Demo user' })).toBeVisible()
+  await expect(page.getByRole('button', { name: e2eUserName })).toBeVisible()
 })
 
 test('sidebar plus and empty-state button open the create question form', async ({

@@ -5,9 +5,8 @@ import { secureHeaders } from 'hono/secure-headers';
 
 import { auth } from './auth';
 import { createDatabase } from './db/client';
-import { demoUser } from './demo-user';
-import { deleteExpiredDemoUsers } from './demo-user/demo-users';
 import { questions } from './questions';
+import { user } from './user';
 
 const JSON_BODY_LIMIT_BYTES = 128 * 1024;
 
@@ -15,7 +14,7 @@ const connectingIp = (context: Context<{ Bindings: Env }>): string =>
   context.req.header('CF-Connecting-IP') ?? 'unknown';
 
 const isAuthPostPath = (pathname: string): boolean =>
-  pathname.startsWith('/api/demo-user') || pathname.startsWith('/api/auth/');
+  pathname.startsWith('/api/user') || pathname.startsWith('/api/auth/');
 
 const limitAuthPosts = async (
   context: Context<{ Bindings: Env }>,
@@ -68,14 +67,11 @@ const app = new Hono<{ Bindings: Env }>()
   )
   .use(limitAuthPosts)
   .route('/api/auth', auth)
-  .route('/api/demo-user', demoUser)
+  .route('/api/user', user)
   .route('/api/questions', questions)
   .route('/api', api);
 
 export type AppType = typeof app;
-
-const isLocalHost = (hostname: string): boolean =>
-  hostname === '127.0.0.1' || hostname === 'localhost';
 
 export default {
   async fetch(
@@ -83,14 +79,6 @@ export default {
     env: Env,
     ctx: ExecutionContext,
   ): Promise<Response> {
-    const { hostname, pathname } = new URL(request.url);
-
-    if (pathname === '/__scheduled' && !isLocalHost(hostname))
-      return new Response(null, { status: 404 });
-
     return app.fetch(request, env, ctx);
-  },
-  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
-    await deleteExpiredDemoUsers(createDatabase(env.DB));
   },
 };

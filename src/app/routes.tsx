@@ -11,7 +11,6 @@ import {
   resetQuestions,
 } from "@/entities/questions/question";
 import { questionSearch } from "@/pages/questions/layout/model/question-search";
-import { initSignIn } from "@/pages/sign-in/index/model/sign-in";
 import { loadOpenedQuestion } from "@/pages/theory/index/model/load-opened-question";
 import { theoryQuestionSearch } from "@/pages/theory/index/model/question-search";
 import { clientApi } from "@/shared/api";
@@ -248,16 +247,7 @@ export const signInRoute = rootRoute.reatomRoute(
 
       return {};
     },
-    async loader() {
-      if (session.data()?.user) return;
-
-      const credentials = await wrap(clientApi.loadDemoUser());
-
-      initSignIn(credentials);
-    },
-    render(self) {
-      if (!self.loader.ready()) return <PageFallback />;
-
+    render() {
       return <SignInPage />;
     },
   },
