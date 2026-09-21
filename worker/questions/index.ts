@@ -5,8 +5,9 @@ import { csrf } from "hono/csrf";
 import * as v from "valibot";
 
 import { createAuth, isTrustedAuthOrigin } from "../auth";
+import { CATALOG_OWNER_EMAIL } from "../auth/allowed-sign-up-emails";
 import { createDatabase } from "../db/client";
-import { question } from "../db/schema";
+import { question, user } from "../db/schema";
 import { questionsMatchingSearch } from "./utils/question-search";
 
 const QUESTION_FIELD_MAX_LENGTH = 20_000;
@@ -66,6 +67,28 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
   await next();
 };
 
+const catalogOwnerUserId = async (
+  database: ReturnType<typeof createDatabase>,
+): Promise<string | null> => {
+  const [catalogOwner] = await database
+    .select({ id: user.id })
+    .from(user)
+    .where(eq(user.email, CATALOG_OWNER_EMAIL))
+    .limit(1);
+
+  return catalogOwner?.id ?? null;
+};
+
+const questionsOwnerUserId = async (context: Context<QuestionsContext>): Promise<string | null> => {
+  const currentSession = await createAuth(context.env).api.getSession({
+    headers: context.req.raw.headers,
+  });
+
+  if (currentSession) return currentSession.user.id;
+
+  return catalogOwnerUserId(createDatabase(context.env.DB));
+};
+
 const loadQuestion = async (
   database: ReturnType<typeof createDatabase>,
   questionId: string,
@@ -86,9 +109,12 @@ export const questions = new Hono<QuestionsContext>()
       origin: (origin, context) => isTrustedAuthOrigin(origin, context.env.BETTER_AUTH_URL),
     }),
   )
-  .use(requireSession)
   .get("/", vValidator("query", questionSearchQuerySchema), async (context) => {
     const { q = "" } = context.req.valid("query");
+    const userId = await questionsOwnerUserId(context);
+
+    if (!userId) return context.json({ questions: [] }, 200);
+
     const database = createDatabase(context.env.DB);
 
     const loadedQuestions = await database
@@ -97,21 +123,23 @@ export const questions = new Hono<QuestionsContext>()
         question: question.question,
       })
       .from(question)
-      .where(eq(question.userId, context.get("userId")));
+      .where(eq(question.userId, userId));
 
     return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200);
   })
   .get("/:id", vValidator("param", questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid("param");
-    const database = createDatabase(context.env.DB);
+    const userId = await questionsOwnerUserId(context);
 
-    const foundQuestion = await loadQuestion(database, questionId, context.get("userId"));
+    if (!userId) return context.json({ message: "Question not found" }, 404);
+
+    const foundQuestion = await loadQuestion(createDatabase(context.env.DB), questionId, userId);
 
     if (!foundQuestion) return context.json({ message: "Question not found" }, 404);
 
     return context.json(foundQuestion, 200);
   })
-  .post("/", vValidator("json", questionFieldsSchema), async (context) => {
+  .post("/", requireSession, vValidator("json", questionFieldsSchema), async (context) => {
     const questionFields = context.req.valid("json");
     const database = createDatabase(context.env.DB);
     const userId = context.get("userId");
@@ -138,6 +166,7 @@ export const questions = new Hono<QuestionsContext>()
   })
   .put(
     "/:id",
+    requireSession,
     vValidator("param", questionIdSchema),
     vValidator("json", questionFieldsSchema),
     async (context) => {
@@ -159,7 +188,7 @@ export const questions = new Hono<QuestionsContext>()
       return context.json(updatedQuestion, 200);
     },
   )
-  .delete("/:id", vValidator("param", questionIdSchema), async (context) => {
+  .delete("/:id", requireSession, vValidator("param", questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid("param");
     const database = createDatabase(context.env.DB);
 

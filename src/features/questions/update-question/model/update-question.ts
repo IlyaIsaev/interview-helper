@@ -26,6 +26,7 @@ import {
   type Question,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
+import { isSignedIn } from "@/shared/auth";
 import { questionPath } from "@/shared/config";
 import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
 
@@ -59,6 +60,8 @@ export const updateQuestionForm = reatomForm(
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {
+      if (!isSignedIn()) return;
+
       const questionId = updatedQuestionId();
 
       if (!questionId) return;

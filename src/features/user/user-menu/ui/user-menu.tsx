@@ -2,10 +2,11 @@ import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 
 import { signOut } from "@/shared/auth";
-import { PROFILE_PATH, QUESTIONS_PATH, THEORY_PATH } from "@/shared/config";
+import { PROFILE_PATH, QUESTIONS_PATH, SIGN_IN_PATH, THEORY_PATH } from "@/shared/config";
 import {
   Avatar,
   AvatarFallback,
+  Button,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
@@ -17,7 +18,13 @@ import { user } from "../model/user";
 export const UserMenu = reatomComponent(() => {
   const { name, initials } = user() ?? { name: "", initials: "" };
 
-  if (!name) return null;
+  if (!name) {
+    return (
+      <Button asChild variant="ghost">
+        <a href={SIGN_IN_PATH}>Sign in</a>
+      </Button>
+    );
+  }
 
   const handleLogOut = wrap(signOut);
 

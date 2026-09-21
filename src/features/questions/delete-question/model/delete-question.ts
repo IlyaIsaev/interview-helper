@@ -12,6 +12,7 @@ import {
   type Question,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
+import { isSignedIn } from "@/shared/auth";
 import { QUESTIONS_PATH, questionPath, THEORY_PATH } from "@/shared/config";
 import { markdownPlainText, toast } from "@/shared/ui";
 
@@ -37,6 +38,8 @@ export const openDeleteQuestion = action((questionId: string) => {
 }, "openDeleteQuestion");
 
 export const deleteQuestion = action(async () => {
+  if (!isSignedIn()) return;
+
   const questionId = deletedQuestionId();
 
   if (!questionId) return;

@@ -84,11 +84,12 @@ const failQuestionMutation = async (page: Page, method: "PUT" | "DELETE") => {
   });
 };
 
-test("guests opening theory are redirected to sign-in", async ({ page }) => {
+test("guests can open theory", async ({ page }) => {
   await page.goto("/theory");
 
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page).toHaveURL(/\/theory$/);
+  await expect(page.getByRole("heading", { name: "Theory" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
 test("user menu opens theory without leaving the theory path", async ({ page }) => {

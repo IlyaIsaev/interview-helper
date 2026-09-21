@@ -13,15 +13,10 @@ const isQuestionsPath = (url: string) => new URL(url).pathname === "/questions";
 
 const notifications = (page: Page) => page.getByRole("region", { name: /Notifications/i });
 
-test("opening the app redirects guests to sign-in", async ({ page }) => {
-  const demoUserRequests: Array<string> = [];
+test("opening the app lands guests on questions", async ({ page }) => {
   const signUpRequests: Array<string> = [];
 
   page.on("request", (request) => {
-    if (request.url().includes("/api/demo-user")) {
-      demoUserRequests.push(request.url());
-    }
-
     if (request.url().includes("/api/auth/sign-up/email")) {
       signUpRequests.push(request.url());
     }
@@ -29,14 +24,34 @@ test("opening the app redirects guests to sign-in", async ({ page }) => {
 
   await page.goto("/");
 
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByLabel("email")).toHaveValue("");
-  await expect(page.getByLabel("password")).toHaveValue("");
-  await expect(page.getByRole("heading", { name: "We use cookies" })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Sign up" })).toBeVisible();
-  expect(demoUserRequests).toEqual([]);
+  await expect(page).toHaveURL(signedInPath);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: e2eUserName })).toHaveCount(0);
+  await expect(page.getByRole("heading", { name: "We use cookies" })).toHaveCount(0);
   expect(signUpRequests).toEqual([]);
+});
+
+test("guests cannot create a question", async ({ page }) => {
+  await page.goto("/");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+
+  await page.getByRole("button", { name: "Questions" }).click();
+  await page
+    .getByRole("button", { name: "Create question" })
+    .filter({ has: page.locator("svg") })
+    .click();
+
+  await expect(page.getByRole("heading", { name: "Create question" })).toBeVisible();
+
+  const createSubmit = page
+    .getByRole("dialog")
+    .getByRole("button", { name: "Create", exact: true });
+
+  await expect(createSubmit).toBeDisabled();
+  await createSubmit.locator("xpath=..").hover();
+  await expect(page.getByRole("tooltip", { name: "Sign in to create a question" })).toBeVisible();
 });
 
 test("signing up creates an account and lands on questions", async ({ page }) => {
@@ -252,4 +267,32 @@ test("sign-up registers a new account", async ({ page }) => {
 
   await expect(page.getByRole("button", { name: e2eUserName })).toBeVisible();
   expect(signUpRequests.length).toBeGreaterThan(0);
+});
+
+test("sign-up rejects an email that is not allowed", async ({ page }) => {
+  await page.goto("/sign-up");
+
+  await expect(page.getByRole("heading", { name: "Sign up" })).toBeVisible();
+
+  await page.getByLabel("name").fill(e2eUserName);
+  await page.getByLabel("email").fill("not-allowed@gmail.com");
+  await page.getByLabel("password").fill("password1");
+
+  const responsePromise = page.waitForResponse((response) => {
+    if (response.request().method() !== "POST") return false;
+
+    return new URL(response.url()).pathname === "/api/auth/sign-up/email";
+  });
+
+  await page.getByRole("button", { name: "Create account" }).click();
+
+  const response = await responsePromise;
+
+  expect(response.status()).toBe(403);
+  await expect(
+    notifications(page).getByText("This email is not allowed to register."),
+  ).toBeVisible();
+  await expect(page).toHaveURL(/\/sign-up$/);
+  await expect(page.getByRole("heading", { name: "Sign up" })).toBeVisible();
+  await expect(page.getByRole("button", { name: e2eUserName })).toHaveCount(0);
 });

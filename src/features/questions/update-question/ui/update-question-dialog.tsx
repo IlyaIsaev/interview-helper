@@ -4,6 +4,7 @@ import { FileUp } from "lucide-react";
 import { useRef, type ChangeEvent } from "react";
 
 import { QuestionFields } from "@/entities/questions/question";
+import { isSignedIn } from "@/shared/auth";
 import {
   Button,
   Dialog,
@@ -12,6 +13,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DisabledButtonTooltip,
   Form,
   Spinner,
 } from "@/shared/ui";
@@ -86,9 +88,17 @@ export const UpdateQuestion = reatomComponent(() => {
                 <Button type="button" variant="outline" onClick={wrap(closeUpdateQuestionDialog)}>
                   Cancel
                 </Button>
-                <Button type="submit" disabled={!isSubmitReady || hasValidationErrors || !dirty}>
-                  Update
-                </Button>
+                {isSignedIn() ? (
+                  <Button type="submit" disabled={!isSubmitReady || hasValidationErrors || !dirty}>
+                    Update
+                  </Button>
+                ) : (
+                  <DisabledButtonTooltip tooltip="Sign in to update a question">
+                    <Button type="submit" disabled>
+                      Update
+                    </Button>
+                  </DisabledButtonTooltip>
+                )}
               </div>
             </DialogFooter>
           </Form>

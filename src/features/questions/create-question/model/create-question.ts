@@ -9,6 +9,7 @@ import {
   refetchQuestions,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
+import { isSignedIn } from "@/shared/auth";
 import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
 
 export const isCreateQuestionDialogOpen = reatomBoolean(false, "isCreateQuestionDialogOpen");
@@ -55,6 +56,8 @@ export const createQuestionForm = reatomForm(
     validateOnChange: true,
     schema: questionFieldsSchema,
     onSubmit: async ({ question, answer }) => {
+      if (!isSignedIn()) return;
+
       try {
         return await wrap(clientApi.createQuestion({ question, answer }));
       } catch {

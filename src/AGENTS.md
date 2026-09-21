@@ -33,12 +33,12 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 
 ```text
 app/                 ← entrypoint, Reatom logger, routes, composition
-                         protectedRoute: signed-in gate (no page folder)
+                         protectedRoute: app shell (guests + signed-in; no page folder)
 pages/questions/     ← questions route group (under protectedRoute)
   layout/            ← questionsRoute chrome + list loader (sidebar + toggle + header)
   index/             ← questions list / empty state (/questions)
   question/
-    index/           ← signed-in question detail; composes RandomQuestion (/questions/:id)
+    index/           ← question detail; composes RandomQuestion (/questions/:id)
 pages/theory/
   index/             ← accordion list / empty state (/theory, open item is ?id=)
 pages/profile/
@@ -96,7 +96,7 @@ export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => 
 }, 'initQuestions');
 
 async loader() {
-  if (!session.data()?.user) return;
+  if (!session.ready()) return;
 
   const { questions: nextQuestions } = await wrap(
     clientApi.loadQuestions(questionsQuery()),
@@ -109,7 +109,7 @@ async loader() {
 
 // theoryRoute loader
 async loader() {
-  if (!session.data()?.user) return;
+  if (!session.ready()) return;
 
   const { questions: nextQuestions } = await wrap(
     clientApi.loadQuestions(questionsQuery()),
@@ -161,31 +161,30 @@ const protectedRoute = layoutRoute.reatomRoute(
 
       if (!session.ready() && onAuthPage) return null;
 
-      if (!session.ready() && !onAuthPage) return {};
+      if (!session.ready()) return {};
 
       const user = session.data()?.user;
+      const userId = user?.id ?? null;
 
-      if (!user && questions() !== null) {
-        resetQuestions();
+      if (lastQuestionsUserId() !== userId) {
+        lastQuestionsUserId.set(userId);
 
-        questionSearch.reset();
-      }
+        if (questions() !== null) {
+          resetQuestions();
 
-      if (!user && !onAuthPage) {
-        signInRoute.go(undefined, true);
-
-        return null;
+          questionSearch.reset();
+        }
       }
 
       if (!user && onAuthPage) return null;
 
-      if (pathname === HOME_PATH || onAuthPage) {
+      if (pathname === HOME_PATH || (user && onAuthPage)) {
         questionsRoute.go(undefined, true);
 
         return null;
       }
 
-      return {};
+      return { userId };
     },
     render(self) {
       if (!session.ready()) return <PageFallback />;
@@ -315,17 +314,20 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 
 ## Auth
 
-- Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. Do not use `useSession`.
+- Client: `authClient` in `@/shared/auth`. Session is a Reatom `computed` + `withAsyncData`. `isSignedIn` is `Boolean(session.data()?.user)`. Do not use `useSession`.
 - Sign-in forms use `reatomForm`. After success, `session.retry()`.
 - On `/sign-in`, the form is empty. Sign in uses `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is a link to `/sign-up`.
 - On `/sign-up`, the form is empty. Create account calls `authClient.signUp.email`, then `session.retry()`. Toast Better Auth errors (duplicate email, rate limit). After success, `protectedRoute` sends the signed-in user to questions.
 - Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
-  - Guests opening protected URLs go to `/sign-in`. Guests never auto-navigate to `/sign-up`.
-  - Guests on `/sign-in` or `/sign-up` stay.
-  - Signed-in users on `/` or auth URLs go to `questionsRoute`. Questions load in that route's `loader`; empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page.
-  - `/theory` is behind `protectedRoute` for auth; it loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
-  - `/profile` is behind `protectedRoute` for auth only; it does not load questions or follow question landing.
-- Sign-out returns to `/sign-in` with an empty form.
+  - Guests can open `/`, `/questions`, `/questions/:id`, and `/theory`. `/` replaces to questions. Loaders wait for `session.ready()` then fetch; with no session the worker returns the catalog owner's questions.
+  - Guests on `/sign-in` or `/sign-up` stay. Guests never auto-navigate to `/sign-up`.
+  - Guests on `/profile` go to `/sign-in` (`profileRoute.params()`).
+  - Signed-in users on `/` or auth URLs go to `questionsRoute`. Empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page. Guests with a non-empty catalog follow the same landing.
+  - `/theory` loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
+  - `/profile` is signed-in only; it does not load questions or follow question landing.
+- Header `UserMenu` is the avatar menu when signed in. Guests see a Sign in link in that slot (no Theory header item).
+- Create, update, and delete question submits are disabled for guests, with a hover tooltip. The worker still requires a session for POST/PUT/DELETE.
+- Sign-out returns to `/sign-in` with an empty form (`urlAtom.go(SIGN_IN_PATH)` after `session.retry()`).
 - Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.
 - Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with an empty form.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.

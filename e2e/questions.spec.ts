@@ -214,16 +214,16 @@ const createSubmit = (page: Page) =>
 
 const notifications = (page: Page) => page.getByRole("region", { name: /Notifications/i });
 
-test("guests opening questions routes are redirected to sign-in", async ({ page }) => {
+test("guests can open questions routes", async ({ page }) => {
   await page.goto("/questions");
 
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page).toHaveURL(signedInPath);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 
   await page.goto("/questions/abc");
 
-  await expect(page).toHaveURL(/\/sign-in$/);
-  await expect(page.getByRole("button", { name: "Sign in" })).toBeVisible();
+  await expect(page).toHaveURL(/\/questions\/abc$/);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
 });
 
 test("signed-in users land on questions and can open a missing question", async ({ page }) => {

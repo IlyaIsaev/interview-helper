@@ -1,22 +1,29 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { Hono } from "hono";
 
 import { createDatabase } from "../db/client";
 import * as schema from "../db/schema";
 
-const LOCAL_DEV_ORIGINS = ["http://127.0.0.1:5173", "http://localhost:5173"] as const;
+import {
+  isAllowedSignUpEmail,
+  isLocalAuthUrl,
+  LOCAL_DEV_ORIGINS,
+  SIGN_UP_EMAIL_NOT_ALLOWED_MESSAGE,
+} from "./allowed-sign-up-emails";
 
 export const trustedOriginsFor = (betterAuthUrl: string): Array<string> => {
   const origin = new URL(betterAuthUrl).origin;
 
-  return origin === LOCAL_DEV_ORIGINS[0] || origin === LOCAL_DEV_ORIGINS[1]
-    ? [...LOCAL_DEV_ORIGINS]
-    : [origin];
+  return isLocalAuthUrl(betterAuthUrl) ? [...LOCAL_DEV_ORIGINS] : [origin];
 };
 
 export const isTrustedAuthOrigin = (origin: string, betterAuthUrl: string): boolean =>
   trustedOriginsFor(betterAuthUrl).includes(origin);
+
+const isSignUpEmailPath = (path: string): boolean =>
+  path === "/sign-up/email" || path === "/api/auth/sign-up/email";
 
 const authForEnv = (env: Env) =>
   betterAuth({
@@ -31,6 +38,19 @@ const authForEnv = (env: Env) =>
       enabled: true,
     },
     trustedOrigins: trustedOriginsFor(env.BETTER_AUTH_URL),
+    hooks: {
+      before: createAuthMiddleware(async (context) => {
+        if (!isSignUpEmailPath(context.path)) return;
+
+        const email = context.body?.email;
+
+        if (typeof email !== "string") return;
+
+        if (isAllowedSignUpEmail(email, env.BETTER_AUTH_URL)) return;
+
+        throw new APIError("FORBIDDEN", { message: SIGN_UP_EMAIL_NOT_ALLOWED_MESSAGE });
+      }),
+    },
     rateLimit: {
       enabled: true,
       customRules: {

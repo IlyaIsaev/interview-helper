@@ -81,6 +81,8 @@ export {
   useSidebar,
 } from "./sidebar";
 
+export { DisabledButtonTooltip } from "./disabled-button-tooltip";
+
 export { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "./tooltip";
 
 export {
@@ -109,6 +111,8 @@ export type {
 } from "./accordion";
 
 export type { ButtonProps } from "./button";
+
+export type { DisabledButtonTooltipProps } from "./disabled-button-tooltip";
 
 export type {
   CardActionProps,

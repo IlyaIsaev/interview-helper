@@ -1,6 +1,7 @@
 import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 
+import { isSignedIn } from "@/shared/auth";
 import {
   Button,
   Dialog,
@@ -9,6 +10,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
+  DisabledButtonTooltip,
 } from "@/shared/ui";
 
 import {
@@ -40,14 +42,22 @@ export const DeleteQuestion = reatomComponent(() => {
           <Button type="button" variant="outline" onClick={wrap(closeDeleteQuestionDialog)}>
             Cancel
           </Button>
-          <Button
-            type="button"
-            variant="destructive"
-            disabled={!isDeleteReady}
-            onClick={handleDeleteQuestion}
-          >
-            Delete
-          </Button>
+          {isSignedIn() ? (
+            <Button
+              type="button"
+              variant="destructive"
+              disabled={!isDeleteReady}
+              onClick={handleDeleteQuestion}
+            >
+              Delete
+            </Button>
+          ) : (
+            <DisabledButtonTooltip tooltip="Sign in to delete a question">
+              <Button type="button" variant="destructive" disabled>
+                Delete
+              </Button>
+            </DisabledButtonTooltip>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

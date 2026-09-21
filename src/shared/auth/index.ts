@@ -1,3 +1,3 @@
 export { authClient } from "./auth-client";
 
-export { session, signOut } from "./session";
+export { isSignedIn, session, signOut } from "./session";

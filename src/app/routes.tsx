@@ -1,4 +1,4 @@
-import { action, effect, reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { action, atom, effect, reatomRoute, urlAtom, wrap } from "@reatom/core";
 import { pipe, sample } from "es-toolkit/fp";
 import { lazy, Suspense } from "react";
 
@@ -41,6 +41,8 @@ const TheoryPage = lazy(() => import("@/pages/theory/index/ui/theory-page"));
 
 const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
 
+const lastQuestionsUserId = atom<string | null | undefined>(undefined, "lastQuestionsUserId");
+
 const openSignedInDestination = action(() => {
   if (questions() === null) return;
 
@@ -76,33 +78,32 @@ export const protectedRoute = rootRoute.reatomRoute(
 
       if (!session.ready() && onAuthPage) return null;
 
-      if (!session.ready() && !onAuthPage) return {};
+      if (!session.ready()) return {};
 
       const user = session.data()?.user;
+      const userId = user?.id ?? null;
 
-      if (!user && questions() !== null) {
-        resetQuestions();
+      if (lastQuestionsUserId() !== userId) {
+        lastQuestionsUserId.set(userId);
 
-        questionSearch.reset();
+        if (questions() !== null) {
+          resetQuestions();
 
-        theoryQuestionSearch.reset();
-      }
+          questionSearch.reset();
 
-      if (!user && !onAuthPage) {
-        signInRoute.go(undefined, true);
-
-        return null;
+          theoryQuestionSearch.reset();
+        }
       }
 
       if (!user && onAuthPage) return null;
 
-      if (pathname === HOME_PATH || onAuthPage) {
+      if (pathname === HOME_PATH || (user && onAuthPage)) {
         questionsRoute.go(undefined, true);
 
         return null;
       }
 
-      return {};
+      return { userId };
     },
     render(self) {
       if (!session.ready()) return <PageFallback />;
@@ -123,7 +124,7 @@ export const questionsRoute = protectedRoute.reatomRoute(
       return {};
     },
     async loader() {
-      if (!session.data()?.user) return;
+      if (!session.ready()) return;
 
       questionsQuery.set(questionSearch().trim());
 
@@ -156,7 +157,7 @@ export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ":id",
     params({ id }) {
-      if (!session.ready() || !session.data()?.user) return null;
+      if (!session.ready()) return null;
 
       return { id };
     },
@@ -178,7 +179,7 @@ export const theoryRoute = protectedRoute.reatomRoute(
   {
     path: THEORY_PATH.slice(1),
     async loader() {
-      if (!session.data()?.user) return;
+      if (!session.ready()) return;
 
       const idFromUrl = urlAtom().searchParams.get("id") ?? "";
 
@@ -210,6 +211,17 @@ export const theoryRoute = protectedRoute.reatomRoute(
 export const profileRoute = protectedRoute.reatomRoute(
   {
     path: PROFILE_PATH.slice(1),
+    params() {
+      if (!session.ready()) return {};
+
+      if (!session.data()?.user) {
+        signInRoute.go(undefined, true);
+
+        return null;
+      }
+
+      return {};
+    },
     async loader() {
       const user = session.data()?.user;
 

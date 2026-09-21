@@ -31,7 +31,7 @@ db/                  ← Drizzle schema + D1 client
 Authentication is [Better Auth](https://better-auth.com) with email and password.
 
 - Server: `createAuth(env)` in `auth/` — create per request, never as a Worker singleton.
-- Handler: dedicated Hono `auth` app in `auth/`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`. Public email sign-up is open (`POST /api/auth/sign-up/email`). Do not set Better Auth `emailAndPassword.disableSignUp`. Better Auth's default 3/10s cap on sign-up and sign-in is turned off (`rateLimit.customRules` `false` for both `/sign-up/email` and `/api/auth/sign-up/email`, same for sign-in); those POSTs are limited by `AUTH_RATE_LIMITER` instead.
+- Handler: dedicated Hono `auth` app in `auth/`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`. Email sign-up (`POST /api/auth/sign-up/email`) is limited to `ALLOWED_SIGN_UP_EMAILS` in `auth/allowed-sign-up-emails.ts` (currently `CATALOG_OWNER_EMAIL` / `iaisaev@pm.me`). A local `BETTER_AUTH_URL` also allows `*@example.com` for e2e. Other addresses get 403 `{ message: 'This email is not allowed to register.' }`. Do not set Better Auth `emailAndPassword.disableSignUp`. Better Auth's default 3/10s cap on sign-up and sign-in is turned off (`rateLimit.customRules` `false` for both `/sign-up/email` and `/api/auth/sign-up/email`, same for sign-in); those POSTs are limited by `AUTH_RATE_LIMITER` instead.
 - `POST /api/user/password` changes the signed-in user's password (session required; 8–128 characters). `DELETE /api/user` deletes the signed-in user (any email). Questions cascade. It expires Better Auth session cookies. POST `/api/user` (including `/password`) and POST `/api/auth/*` are rate-limited with a Workers rate-limit binding keyed by path and `CF-Connecting-IP`.
 - Cookie consent is only on `/sign-in`: Accept sets the `cookieConsent=true` cookie; Decline redirects to `https://www.google.com` (do not delete the user).
 - Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.
@@ -43,7 +43,7 @@ Client session, forms, and redirects are in `src/AGENTS.md`.
 Persistence is [Drizzle](https://orm.drizzle.team) on Cloudflare D1.
 
 - Schema: `db/schema.ts`. Client: `createDatabase(env.DB)` from `db/client.ts`.
-- `question` has a unique `id`, `question`, `answer`, and `userId` (FK to `user.id`, cascade on delete). List and mutate only that user's rows. `question` and `answer` are capped at 20_000 characters. A user may have at most 200 questions.
+- `question` has a unique `id`, `question`, `answer`, and `userId` (FK to `user.id`, cascade on delete). With a session, list and mutate only that user's rows. Unauthenticated `GET /api/questions` and `GET /api/questions/:id` return the catalog owner's rows (`CATALOG_OWNER_EMAIL` in `auth/allowed-sign-up-emails.ts`). Missing owner yields `{ questions: [] }` / 404, not 401. POST, PUT, and DELETE still require a session. `question` and `answer` are capped at 20_000 characters. A user may have at most 200 questions.
 - Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`.
 - Browse the local D1 file with `pnpm db:studio` (Drizzle Studio at `127.0.0.1:4983` / [local.drizzle.studio](https://local.drizzle.studio)).
 - Local `database_id` is a placeholder. Create a real D1 database before remote deploy (`wrangler d1 create interview-helper`).
