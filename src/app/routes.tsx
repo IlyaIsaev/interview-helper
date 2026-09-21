@@ -1,4 +1,4 @@
-import { action, atom, effect, reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { action, atom, effect, peek, reatomRoute, urlAtom, wrap } from "@reatom/core";
 import { pipe, sample } from "es-toolkit/fp";
 import { lazy, Suspense } from "react";
 
@@ -126,9 +126,11 @@ export const questionsRoute = protectedRoute.reatomRoute(
     async loader() {
       if (!session.ready()) return;
 
-      questionsQuery.set(questionSearch().trim());
+      const query = peek(questionSearch).trim();
 
-      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(questionsQuery()));
+      questionsQuery.set(query);
+
+      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
 
       initQuestions(nextQuestions);
 
@@ -181,15 +183,17 @@ export const theoryRoute = protectedRoute.reatomRoute(
     async loader() {
       if (!session.ready()) return;
 
-      const idFromUrl = urlAtom().searchParams.get("id") ?? "";
+      const idFromUrl = peek(urlAtom).searchParams.get("id") ?? "";
 
-      if (openedQuestionId() !== idFromUrl) {
+      if (peek(openedQuestionId) !== idFromUrl) {
         openedQuestionId.set(idFromUrl);
       }
 
-      questionsQuery.set(theoryQuestionSearch().trim());
+      const query = peek(theoryQuestionSearch).trim();
 
-      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(questionsQuery()));
+      questionsQuery.set(query);
+
+      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
 
       initQuestions(nextQuestions);
 

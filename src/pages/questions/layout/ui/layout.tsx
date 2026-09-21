@@ -98,7 +98,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
       <UpdateQuestion />
       <DeleteQuestion />
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
-        <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+        <a className="text-lg uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
           Interview helper
         </a>
         <Button type="button" variant="ghost" onClick={openQuestionsDialog}>

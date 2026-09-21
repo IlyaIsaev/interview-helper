@@ -80,8 +80,9 @@ export function QuestionList({
           variant="ghost"
           aria-current={questionAriaCurrent}
           className={cn(
-            "h-9 min-w-0 flex-1 justify-start overflow-hidden font-normal normal-case tracking-normal",
-            isQuestionActive && "bg-accent text-accent-foreground",
+            "h-9 min-w-0 flex-1 justify-start overflow-hidden text-left font-normal normal-case tracking-normal hover:bg-transparent hover:text-inherit",
+            isQuestionActive &&
+              "bg-accent text-accent-foreground hover:bg-accent hover:text-accent-foreground",
           )}
           title={markdownPlainText(question.question)}
           onClick={handleQuestionClick}
@@ -140,7 +141,7 @@ export function QuestionList({
         showCloseButton={false}
         className="flex! max-h-[85vh] min-h-0 flex-col gap-0 overflow-hidden p-0"
       >
-        <DialogHeader className="h-12 flex-row items-center gap-3 border-b border-border px-3 py-0">
+        <DialogHeader className="h-12 flex-row items-center gap-3 border-b border-border px-3 py-0 text-left">
           <DialogTitle className="text-xs font-normal uppercase tracking-[2px] text-muted-foreground">
             Questions
           </DialogTitle>

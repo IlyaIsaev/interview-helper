@@ -88,3 +88,19 @@ test("should expose a markdown-free title when a question contains markup", asyn
     .element(screen.getByRole("button", { name: /Hello\s+bold/ }))
     .toHaveAttribute("title", markdownPlainText(markedUpQuestion.question));
 });
+
+test("should left-align rows without hover fill when the questions list renders", async () => {
+  const screen = await renderQuestionList();
+  const activeQuestion = screen.getByRole("button", { name: "First question" });
+  const inactiveQuestion = screen.getByRole("button", { name: "Second question" });
+
+  await expect.element(activeQuestion).toBeVisible();
+  await expect.element(inactiveQuestion).toBeVisible();
+
+  expect(activeQuestion.element().className).toContain("text-left");
+  expect(activeQuestion.element().className).toContain("bg-accent");
+  expect(activeQuestion.element().className).toContain("hover:bg-accent");
+  expect(inactiveQuestion.element().className).toContain("text-left");
+  expect(inactiveQuestion.element().className).toContain("hover:bg-transparent");
+  expect(inactiveQuestion.element().className).not.toContain("bg-accent");
+});

@@ -26,7 +26,7 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
             <House />
           </a>
         </Button>
-        <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+        <a className="text-lg uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
           Interview helper
         </a>
         <div className="ml-auto flex items-center gap-3">
