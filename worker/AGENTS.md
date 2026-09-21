@@ -44,6 +44,6 @@ Persistence is [Drizzle](https://orm.drizzle.team) on Cloudflare D1.
 
 - Schema: `db/schema.ts`. Client: `createDatabase(env.DB)` from `db/client.ts`.
 - `question` has a unique `id`, `question`, `answer`, and `userId` (FK to `user.id`, cascade on delete). With a session, list and mutate only that user's rows. Unauthenticated `GET /api/questions` and `GET /api/questions/:id` return the published snapshot (`published_question`: `id`, `question`, `answer`; no `userId`). An empty snapshot yields `{ questions: [] }` / 404, not 401. `POST /api/questions/publish` (session required) deletes every `published_question` row and inserts the signed-in user's current questions (same ids). An empty list clears the catalog. Last publisher wins. POST, PUT, and DELETE on `/api/questions` still require a session. `question` and `answer` are capped at 20_000 characters. A user may have at most 200 questions.
-- Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`.
+- Generate SQL with `pnpm db:generate`. Apply locally with `pnpm db:migrate`. Apply on production with `pnpm db:migrate:remote` (also run by `pnpm deploy`).
 - Browse the local D1 file with `pnpm db:studio` (Drizzle Studio at `127.0.0.1:4983` / [local.drizzle.studio](https://local.drizzle.studio)).
 - Local `database_id` is a placeholder. Create a real D1 database before remote deploy (`wrangler d1 create interview-helper`).

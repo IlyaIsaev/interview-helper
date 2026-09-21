@@ -12,9 +12,10 @@
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "wrangler d1 migrations apply interview-helper --local",
+    "db:migrate:remote": "wrangler d1 migrations apply interview-helper --remote",
     "db:studio": "drizzle-kit studio",
     "types": "wrangler types",
-    "deploy": "vite build && wrangler deploy"
+    "deploy": "vite build && wrangler d1 migrations apply interview-helper --remote && wrangler deploy"
   },
   "dependencies": {
     "@fontsource/jetbrains-mono": "^5.3.0",
