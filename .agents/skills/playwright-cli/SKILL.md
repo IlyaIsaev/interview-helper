@@ -1,12 +1,12 @@
 ---
 name: playwright-cli
-description: Debug a paused Chromium Playwright e2e run with playwright-cli attach tw-*. Do not use this skill to browse the app, open Chrome, or attach over CDP. Agent browsing uses the lightpanda skill.
+description: Debug a paused Chromium Playwright e2e run with playwright-cli attach tw-*. Do not use this skill to browse the app, open Chrome, or attach over CDP.
 allowed-tools: Bash(playwright-cli:*) Bash(npx:*) Bash(pnpm:*)
 ---
 
 # Debug Chromium e2e with playwright-cli
 
-Use this skill only when a Playwright **test** is already running with `--debug=cli`. Agent verification of the live app uses Lightpanda MCP (`.agents/skills/lightpanda/SKILL.md`).
+Use this skill only when a Playwright **test** is already running with `--debug=cli`. Agent verification of the live app uses Playwright MCP or Chrome DevTools MCP.
 
 Do not:
 
