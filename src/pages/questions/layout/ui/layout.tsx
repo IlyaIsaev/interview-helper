@@ -17,22 +17,25 @@ import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
 import { HOME_PATH, questionPath } from "@/shared/config";
 import {
+  Button,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
   Input,
   Label,
-  Sidebar,
-  SidebarContent,
-  SidebarGroup,
-  SidebarHeader,
-  SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
   Spinner,
-  useSidebar,
 } from "@/shared/ui";
 
 import { questionSearch, searchQuestions } from "../model/question-search";
 
-const isSidebarOpen = reatomBoolean(true, "isSidebarOpen");
+const isQuestionsDialogOpen = reatomBoolean(false, "isQuestionsDialogOpen");
+
+const closeQuestionsDialog = () => {
+  isQuestionsDialogOpen.setFalse();
+};
 
 type LayoutProps = {
   children?: ReactNode;
@@ -44,8 +47,6 @@ type QuestionSidebarProps = {
 };
 
 const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarProps) => {
-  const { isMobile, setOpenMobile } = useSidebar();
-
   if (questions === null) {
     return (
       <div className="flex min-h-0 flex-1 items-center justify-center">
@@ -77,15 +78,25 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
   const handleQuestionClick = wrap((questionId: string) => {
     openListedQuestion(questionId);
 
-    if (isMobile) setOpenMobile(false);
+    closeQuestionsDialog();
   });
 
+  const handleQuestionFormOpen = wrap(closeQuestionsDialog);
+
   function renderUpdateQuestion(question: Question) {
-    return <UpdateQuestionButton className="right-7" questionId={question.id} />;
+    return (
+      <div className="contents" onClick={handleQuestionFormOpen}>
+        <UpdateQuestionButton className="right-7" questionId={question.id} />
+      </div>
+    );
   }
 
   function renderDeleteQuestion(question: Question) {
-    return <DeleteQuestionButton questionId={question.id} />;
+    return (
+      <div className="contents" onClick={handleQuestionFormOpen}>
+        <DeleteQuestionButton questionId={question.id} />
+      </div>
+    );
   }
 
   return (
@@ -103,9 +114,15 @@ const QuestionSidebar = reatomComponent(({ questions, search }: QuestionSidebarP
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();
 
-  const changeSidebarOpen = wrap((isNextOpen: boolean) => {
-    isSidebarOpen.set(isNextOpen);
+  const changeQuestionsDialogOpen = wrap((isNextOpen: boolean) => {
+    isQuestionsDialogOpen.set(isNextOpen);
   });
+
+  const openQuestionsDialog = wrap(() => {
+    isQuestionsDialogOpen.setTrue();
+  });
+
+  const handleCreateQuestionOpen = wrap(closeQuestionsDialog);
 
   const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
     const nextSearch = event.currentTarget.value;
@@ -118,48 +135,54 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
   });
 
   return (
-    <SidebarProvider
-      className="h-svh overflow-hidden"
-      open={isSidebarOpen()}
-      onOpenChange={changeSidebarOpen}
-    >
-      <Sidebar collapsible="offcanvas">
-        <SidebarHeader className="h-12 flex-row items-center gap-3 border-b border-sidebar-border px-3 py-0">
-          <p className="text-xs uppercase tracking-[2px] text-muted-foreground">Questions</p>
-          <CreateQuestionButton />
-        </SidebarHeader>
-        <SidebarContent className="overflow-hidden">
-          <SidebarGroup className="flex min-h-0 flex-1 flex-col overflow-hidden">
-            <div className="shrink-0 pb-2">
-              <Label htmlFor="question-search">search</Label>
-              <Input
-                id="question-search"
-                type="search"
-                value={search}
-                onChange={changeQuestionSearch}
-              />
+    <div className="flex h-svh flex-col overflow-hidden">
+      <Dialog open={isQuestionsDialogOpen()} onOpenChange={changeQuestionsDialogOpen}>
+        <DialogContent
+          showCloseButton={false}
+          className="flex max-h-[85vh] min-h-0 flex-col gap-0 overflow-hidden p-0"
+        >
+          <SidebarProvider className="h-full min-h-0 w-full min-w-0 flex-col">
+            <DialogHeader className="h-12 flex-row items-center gap-3 border-b border-sidebar-border px-3 py-0">
+              <DialogTitle className="text-xs font-normal uppercase tracking-[2px] text-muted-foreground">
+                Questions
+              </DialogTitle>
+              <div className="contents" onClick={handleCreateQuestionOpen}>
+                <CreateQuestionButton />
+              </div>
+            </DialogHeader>
+            <DialogDescription className="sr-only">Browse and open questions.</DialogDescription>
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden p-2">
+              <div className="shrink-0 pb-2">
+                <Label htmlFor="question-search">search</Label>
+                <Input
+                  id="question-search"
+                  type="search"
+                  value={search}
+                  onChange={changeQuestionSearch}
+                />
+              </div>
+              <QuestionSidebar questions={questions()} search={search} />
             </div>
-            <QuestionSidebar questions={questions()} search={search} />
-          </SidebarGroup>
-        </SidebarContent>
-      </Sidebar>
+          </SidebarProvider>
+        </DialogContent>
+      </Dialog>
       <CreateQuestion />
       <UpdateQuestion />
       <DeleteQuestion />
-      <SidebarInset className="min-h-0 overflow-hidden">
-        <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
-          <SidebarTrigger />
-          <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
-            Interview helper
-          </a>
-          <div className="ml-auto flex items-center gap-3">
-            <UserMenu />
-            <ThemeSwitcher />
-          </div>
-        </header>
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</div>
-      </SidebarInset>
-    </SidebarProvider>
+      <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
+        <a className="text-sm uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+          Interview helper
+        </a>
+        <Button type="button" variant="ghost" onClick={openQuestionsDialog}>
+          Questions
+        </Button>
+        <div className="ml-auto flex items-center gap-3">
+          <UserMenu />
+          <ThemeSwitcher />
+        </div>
+      </header>
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
+    </div>
   );
 }, "Layout");
 

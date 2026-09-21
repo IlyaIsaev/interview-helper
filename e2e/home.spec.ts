@@ -86,7 +86,7 @@ test("user menu name opens the profile page without a sidebar", async ({ page })
   await expect(page).toHaveURL(/\/profile$/);
   await expect(page.getByRole("heading", { name: e2eUserName })).toBeVisible();
   await expect(page.getByRole("paragraph").filter({ hasText: email })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Toggle Sidebar" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Questions" })).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Home" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
   await expect(page.getByRole("button", { name: e2eUserName })).toBeVisible();

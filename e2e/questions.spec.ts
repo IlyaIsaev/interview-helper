@@ -19,6 +19,8 @@ const revealAnswer = async (page: Page, answer: string) => {
 const openedQuestion = (page: Page, questionText: string) =>
   page.getByRole("main").getByText(questionText, { exact: true });
 
+const questionsDialog = (page: Page) => page.getByRole("dialog", { name: "Questions" });
+
 const sidebarCreateQuestion = (page: Page) =>
   page.getByRole("button", { name: "Create question" }).filter({ has: page.locator("svg") });
 
@@ -29,6 +31,38 @@ const sidebarQuestionItem = (page: Page, questionText: string) =>
   page.locator('[data-slot="sidebar-menu-item"]').filter({
     has: page.getByRole("button", { name: questionText }),
   });
+
+const openQuestionsDialog = async (page: Page) => {
+  if (await questionsDialog(page).isVisible()) {
+    return;
+  }
+
+  await page.getByRole("button", { name: "Questions" }).click();
+  await expect(questionsDialog(page)).toBeVisible();
+};
+
+const createQuestionFromDialog = async (page: Page) => {
+  await openQuestionsDialog(page);
+  await sidebarCreateQuestion(page).click();
+  await expect(page.getByRole("heading", { name: "Create question" })).toBeVisible();
+};
+
+const expectQuestionInDialog = async (page: Page, questionText: string) => {
+  await openQuestionsDialog(page);
+  await expect(sidebarQuestion(page, questionText)).toBeVisible();
+};
+
+const expectQuestionAbsentFromDialog = async (page: Page, questionText: string) => {
+  await openQuestionsDialog(page);
+  await expect(sidebarQuestion(page, questionText)).toHaveCount(0);
+};
+
+const openDialogQuestionItem = async (page: Page, questionText: string) => {
+  await openQuestionsDialog(page);
+  await expect(sidebarQuestion(page, questionText)).toBeVisible();
+
+  return sidebarQuestionItem(page, questionText);
+};
 
 const emptyCreateQuestion = (page: Page) =>
   page.getByRole("button", { name: "Create question" }).filter({ hasText: "Create question" });
@@ -216,10 +250,10 @@ test("signed-in users land on questions and can open a missing question", async 
 test("sidebar plus and empty-state button open the create question form", async ({ page }) => {
   await signIn(page);
 
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
+  await openQuestionsDialog(page);
   await expect(sidebarCreateQuestion(page)).toBeVisible();
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Create question" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Create" })).toBeDisabled();
@@ -239,7 +273,7 @@ test("creating a question from the sidebar goes to the new question page", async
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("button", { name: "Create" })).toBeDisabled();
 
@@ -252,9 +286,9 @@ test("creating a question from the sidebar goes to the new question page", async
   await expect(openedQuestion(page, questionText)).toBeVisible();
   await revealAnswer(page, "Feature-Sliced Design");
   await expect(page.getByRole("button", { name: "Next question" })).toHaveCount(0);
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
-  await expect(page.getByRole("button", { name: questionText, current: "page" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
+  await expect(page.getByRole("button", { name: questionText, current: "page" })).toBeVisible();
   await expect(notifications(page).getByText("Question created.")).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
 });
@@ -264,7 +298,7 @@ test("create does not show empty-field errors when fields are focused without ty
 }) => {
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
 
   const dialog = page.getByRole("dialog");
   const questionField = dialog.getByRole("textbox", { name: "question" });
@@ -282,7 +316,7 @@ test("create does not show empty-field errors when fields are focused without ty
 test("create stays disabled until both fields have non-empty text", async ({ page }) => {
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
 
   const dialog = page.getByRole("dialog");
   const questionField = dialog.getByRole("textbox", { name: "question" });
@@ -311,7 +345,7 @@ test("importing markdown prefills the create question form", async ({ page }) =>
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
 
   const dialog = page.getByRole("dialog");
 
@@ -333,7 +367,7 @@ test("importing markdown prefills the create question form", async ({ page }) =>
 test("importing invalid markdown shows an error and leaves the form empty", async ({ page }) => {
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
 
   const dialog = page.getByRole("dialog");
 
@@ -354,14 +388,14 @@ test("importing invalid markdown shows an error and leaves the form empty", asyn
 test("cancelling create resets the form", async ({ page }) => {
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, "Draft question", "Draft answer");
   await expect(createSubmit(page)).toBeEnabled();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await expect(page.getByRole("textbox", { name: "question" })).toHaveValue("");
   await expect(page.getByRole("textbox", { name: "answer" })).toHaveValue("");
@@ -375,7 +409,7 @@ test("creating a markdown question previews it and renders it after save", async
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
 
   const dialog = page.getByRole("dialog");
 
@@ -387,13 +421,13 @@ test("creating a markdown question previews it and renders it after save", async
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(page.getByRole("heading", { name: headingText })).toBeVisible();
-  await expect(sidebarQuestion(page, headingText)).toBeVisible();
-  await expect(page.getByRole("button", { name: headingText, current: "page" })).toBeVisible();
   await revealAnswer(page, answerText);
   await expect(
     page.getByRole("main").locator("strong").filter({ hasText: answerText }),
   ).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, headingText);
+  await expect(page.getByRole("button", { name: headingText, current: "page" })).toBeVisible();
 });
 
 test("a failed create keeps the dialog and shows an error", async ({ page }) => {
@@ -404,7 +438,7 @@ test("a failed create keeps the dialog and shows an error", async ({ page }) => 
   const listUrl = page.url();
 
   await failCreateQuestion(page);
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, questionText, "Should not save");
   await createSubmit(page).click();
@@ -415,7 +449,7 @@ test("a failed create keeps the dialog and shows an error", async ({ page }) => 
   ).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
   await expect(page).toHaveURL(listUrl);
-  await expect(sidebarQuestion(page, questionText)).toHaveCount(0);
+  await expect(openedQuestion(page, questionText)).toHaveCount(0);
 });
 
 test("create is disabled while the question is saving", async ({ page }) => {
@@ -425,7 +459,7 @@ test("create is disabled while the question is saving", async ({ page }) => {
 
   const releaseCreate = await holdCreateQuestion(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, questionText, "Pending answer");
   await expect(createSubmit(page)).toBeEnabled();
@@ -461,8 +495,8 @@ test("creating a question from the empty state goes to the new question page", a
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
   await expect(page.getByText("the questions list is empty")).toHaveCount(0);
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
 });
 
 test("creating a second question keeps the first in the sidebar", async ({ page }) => {
@@ -471,7 +505,7 @@ test("creating a second question keeps the first in the sidebar", async ({ page 
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, firstQuestion, "First answer");
   await createSubmit(page).click();
@@ -482,7 +516,7 @@ test("creating a second question keeps the first in the sidebar", async ({ page 
 
   const firstUrl = page.url();
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, secondQuestion, "Second answer");
   await createSubmit(page).click();
@@ -491,10 +525,10 @@ test("creating a second question keeps the first in the sidebar", async ({ page 
     timeout: 15_000,
   });
   await expect(page).not.toHaveURL(firstUrl);
-  await expect(sidebarQuestion(page, firstQuestion)).toBeVisible();
-  await expect(sidebarQuestion(page, secondQuestion)).toBeVisible();
-  await expect(page.getByRole("button", { name: secondQuestion, current: "page" })).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, firstQuestion);
+  await expectQuestionInDialog(page, secondQuestion);
+  await expect(page.getByRole("button", { name: secondQuestion, current: "page" })).toBeVisible();
 });
 
 test("creating a question trims leading and trailing whitespace", async ({ page }) => {
@@ -504,7 +538,7 @@ test("creating a question trims leading and trailing whitespace", async ({ page 
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, `  ${questionText}  `, `  ${answerText}  `);
   await createSubmit(page).click();
@@ -512,9 +546,9 @@ test("creating a question trims leading and trailing whitespace", async ({ page 
   await expect(openedQuestion(page, questionText)).toBeVisible({
     timeout: 15_000,
   });
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await revealAnswer(page, answerText);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
 });
 
 test("a failed list refetch after create keeps the new question", async ({ page }) => {
@@ -523,15 +557,15 @@ test("a failed list refetch after create keeps the new question", async ({ page 
   await signIn(page);
   await failLoadQuestions(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, questionText, "Kept after refetch fail");
   await createSubmit(page).click();
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
 });
 
 test("creating while search is active waits for the filtered list refetch", async ({ page }) => {
@@ -542,13 +576,15 @@ test("creating while search is active waits for the filtered list refetch", asyn
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, otherQuestion, "Other answer");
   await createSubmit(page).click();
   await expect(openedQuestion(page, otherQuestion)).toBeVisible({
     timeout: 15_000,
   });
+
+  await openQuestionsDialog(page);
 
   const questionSearch = page.getByRole("searchbox", { name: "search" });
 
@@ -558,7 +594,7 @@ test("creating while search is active waits for the filtered list refetch", asyn
 
   const releaseMatchingLoadQuestions = await holdLoadQuestions(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, matchingQuestion, "Match answer");
   await createSubmit(page).click();
@@ -566,6 +602,8 @@ test("creating while search is active waits for the filtered list refetch", asyn
   await expect(openedQuestion(page, matchingQuestion)).toBeVisible({
     timeout: 15_000,
   });
+
+  await openQuestionsDialog(page);
   await expect(sidebarQuestion(page, matchingQuestion)).toHaveCount(0);
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible();
 
@@ -574,7 +612,7 @@ test("creating while search is active waits for the filtered list refetch", asyn
   await expect(sidebarQuestion(page, matchingQuestion)).toBeVisible();
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible();
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, nonMatchingQuestion, "Nomatch answer");
   await createSubmit(page).click();
@@ -582,6 +620,8 @@ test("creating while search is active waits for the filtered list refetch", asyn
   await expect(openedQuestion(page, nonMatchingQuestion)).toBeVisible({
     timeout: 15_000,
   });
+
+  await openQuestionsDialog(page);
   await expect(sidebarQuestion(page, nonMatchingQuestion)).toHaveCount(0);
   await expect(sidebarQuestion(page, matchingQuestion)).toBeVisible();
   await expect(sidebarQuestion(page, otherQuestion)).toBeVisible();
@@ -598,7 +638,7 @@ test("questions belong only to the user who created them", async ({ browser }) =
 
     await signIn(ownerPage);
 
-    await sidebarCreateQuestion(ownerPage).click();
+    await createQuestionFromDialog(ownerPage);
     await expect(ownerPage.getByRole("dialog")).toBeVisible();
     await ownerPage.getByRole("textbox", { name: "question" }).fill(questionText);
     await ownerPage.getByRole("textbox", { name: "answer" }).fill("Private answer");
@@ -616,9 +656,10 @@ test("questions belong only to the user who created them", async ({ browser }) =
 
     await expect(otherPage).toHaveURL(/\/questions$/);
     await expect(otherPage.getByText("the questions list is empty")).toBeVisible();
+    await openQuestionsDialog(otherPage);
     await expect(sidebarQuestion(otherPage, questionText)).toHaveCount(0);
 
-    await sidebarCreateQuestion(otherPage).click();
+    await createQuestionFromDialog(otherPage);
     await expect(otherPage.getByRole("dialog")).toBeVisible();
     await otherPage.getByRole("textbox", { name: "question" }).fill(otherQuestionText);
     await otherPage.getByRole("textbox", { name: "answer" }).fill("Other answer");
@@ -628,7 +669,7 @@ test("questions belong only to the user who created them", async ({ browser }) =
       timeout: 15_000,
     });
     await expect(openedQuestion(otherPage, otherQuestionText)).toBeVisible();
-    await expect(sidebarQuestion(otherPage, questionText)).toHaveCount(0);
+    await expectQuestionAbsentFromDialog(otherPage, questionText);
 
     await otherPage.goto(`/questions/${questionId}`);
 
@@ -647,7 +688,7 @@ test("updating a question from the sidebar goes to the question page", async ({ 
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
@@ -656,10 +697,9 @@ test("updating a question from the sidebar goes to the question page", async ({ 
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
 
   await question.hover();
   await question.getByRole("button", { name: "Update question" }).click();
@@ -677,9 +717,9 @@ test("updating a question from the sidebar goes to the question page", async ({ 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, updatedQuestionText)).toBeVisible();
   await revealAnswer(page, "Updated answer");
-  await expect(sidebarQuestion(page, updatedQuestionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionInDialog(page, updatedQuestionText);
+  await expectQuestionAbsentFromDialog(page, questionText);
   await expect(notifications(page).getByText("Question updated.")).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
 });
@@ -689,7 +729,7 @@ test("updating a question shows a spinner while the question loads", async ({ pa
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
@@ -701,7 +741,7 @@ test("updating a question shows a spinner while the question loads", async ({ pa
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
   const releaseQuestionGet = await holdQuestionGet(page);
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
   const updateDialog = page.getByRole("dialog");
 
   await question.hover();
@@ -728,7 +768,7 @@ test("importing markdown prefills the update question form", async ({ page }) =>
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(originalQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Original answer");
@@ -738,7 +778,7 @@ test("importing markdown prefills the update question form", async ({ page }) =>
   await expect(openedQuestion(page, originalQuestion)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  const question = sidebarQuestionItem(page, originalQuestion);
+  const question = await openDialogQuestionItem(page, originalQuestion);
 
   await question.hover();
   await question.getByRole("button", { name: "Update question" }).click();
@@ -769,7 +809,7 @@ test("importing invalid markdown shows an error and leaves the update form uncha
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
   await page.getByRole("textbox", { name: "answer" }).fill("Original answer");
@@ -779,7 +819,7 @@ test("importing invalid markdown shows an error and leaves the update form uncha
   await expect(openedQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
 
   await question.hover();
   await question.getByRole("button", { name: "Update question" }).click();
@@ -806,7 +846,7 @@ test("deleting a question from the sidebar removes it", async ({ page }) => {
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
@@ -815,10 +855,9 @@ test("deleting a question from the sidebar removes it", async ({ page }) => {
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
 
   await question.hover();
   await question.getByRole("button", { name: "Delete question" }).click();
@@ -826,16 +865,18 @@ test("deleting a question from the sidebar removes it", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Delete question" })).toBeVisible();
   await page.getByRole("button", { name: "Cancel" }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(openedQuestion(page, questionText)).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
 
-  await question.hover();
-  await question.getByRole("button", { name: "Delete question" }).click();
+  const questionAgain = await openDialogQuestionItem(page, questionText);
+
+  await questionAgain.hover();
+  await questionAgain.getByRole("button", { name: "Delete question" }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
 
-  await expect(sidebarQuestion(page, questionText)).toHaveCount(0);
   await expect(openedQuestion(page, questionText)).toHaveCount(0);
   await expect(page.getByRole("dialog")).toHaveCount(0);
+  await expectQuestionAbsentFromDialog(page, questionText);
   await expect(page).toHaveURL(signedInPath);
   await expect(notifications(page).getByText("Question deleted.")).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
@@ -846,7 +887,7 @@ test("a failed delete restores the question and shows a toast", async ({ page })
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
@@ -855,11 +896,10 @@ test("a failed delete restores the question and shows a toast", async ({ page })
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
 
   await failQuestionMutation(page, "DELETE");
 
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
 
   await question.hover();
   await question.getByRole("button", { name: "Delete question" }).click();
@@ -870,8 +910,8 @@ test("a failed delete restores the question and shows a toast", async ({ page })
     notifications(page).getByText("Could not delete the question. Try again later."),
   ).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(openedQuestion(page, questionText)).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
 });
 
 test("a failed update restores the question and shows a toast", async ({ page }) => {
@@ -880,7 +920,7 @@ test("a failed update restores the question and shows a toast", async ({ page })
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
 
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
@@ -889,11 +929,10 @@ test("a failed update restores the question and shows a toast", async ({ page })
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
 
   await failQuestionMutation(page, "PUT");
 
-  const question = sidebarQuestionItem(page, questionText);
+  const question = await openDialogQuestionItem(page, questionText);
 
   await question.hover();
   await question.getByRole("button", { name: "Update question" }).click();
@@ -908,22 +947,22 @@ test("a failed update restores the question and shows a toast", async ({ page })
     notifications(page).getByText("Could not update the question. Try again later."),
   ).toBeVisible();
   await expect(notifications(page).getByText(questionText).first()).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
   await expect(openedQuestion(page, questionText)).toBeVisible();
-  await expect(sidebarQuestion(page, updatedQuestionText)).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
+  await expectQuestionAbsentFromDialog(page, updatedQuestionText);
 });
 
 test("mobile sidebar sheet shows Questions and opens create form", async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
   await signIn(page);
 
-  await page.getByRole("button", { name: "Toggle Sidebar" }).click();
-  const sidebarSheet = page.getByRole("dialog").filter({ hasText: "Questions" });
+  await openQuestionsDialog(page);
+  const picker = questionsDialog(page);
 
-  await expect(sidebarSheet.getByText("Questions", { exact: true })).toBeVisible();
-  await expect(sidebarSheet.getByRole("button", { name: "Create question" })).toBeVisible();
+  await expect(picker.getByText("Questions", { exact: true })).toBeVisible();
+  await expect(picker.getByRole("button", { name: "Create question" })).toBeVisible();
 
-  await sidebarSheet.getByRole("button", { name: "Create question" }).click();
+  await picker.getByRole("button", { name: "Create question" }).click();
   await expect(page.getByRole("heading", { name: "Create question" })).toBeVisible();
 });
 
@@ -935,10 +974,8 @@ test("app title keeps the sidebar and sidebar questions open in the main pane", 
 
   await signIn(page);
 
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
-  await expect(sidebarCreateQuestion(page)).toBeVisible();
-
-  await sidebarCreateQuestion(page).click();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
   await page.getByRole("textbox", { name: "answer" }).fill(answerText);
@@ -954,14 +991,18 @@ test("app title keeps the sidebar and sidebar questions open in the main pane", 
     timeout: 15_000,
   });
   await expect(page.getByRole("button", { name: "Show answer" })).toBeVisible();
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
   await expect(sidebarCreateQuestion(page)).toBeVisible();
+
+  await page.keyboard.press("Escape");
+  await expect(questionsDialog(page)).toHaveCount(0);
 
   await page.getByRole("link", { name: "Interview helper" }).click();
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/);
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
   await expect(sidebarCreateQuestion(page)).toBeVisible();
 
   const questionUrl = page.url();
@@ -973,10 +1014,11 @@ test("app title keeps the sidebar and sidebar questions open in the main pane", 
   await expect(page.getByRole("main").getByText(answerText)).toBeVisible();
   await expect(page.getByRole("button", { name: "Show answer" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Next question" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: questionText, current: "page" })).toBeVisible();
   await expect(page).toHaveURL(questionUrl);
   await expect(page.getByRole("heading", { name: "Home" })).toHaveCount(0);
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
+  await expect(page.getByRole("button", { name: questionText, current: "page" })).toBeVisible();
   await expect(sidebarCreateQuestion(page)).toBeVisible();
 });
 
@@ -986,7 +1028,7 @@ test("sidebar question opens that question in the main pane", async ({ page }) =
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(firstQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("First answer");
@@ -996,7 +1038,7 @@ test("sidebar question opens that question in the main pane", async ({ page }) =
     timeout: 15_000,
   });
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(secondQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Second answer");
@@ -1008,6 +1050,7 @@ test("sidebar question opens that question in the main pane", async ({ page }) =
 
   const secondQuestionUrl = page.url();
 
+  await openQuestionsDialog(page);
   await sidebarQuestion(page, firstQuestion).click();
 
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -1015,9 +1058,10 @@ test("sidebar question opens that question in the main pane", async ({ page }) =
   await expect(page.getByRole("main").getByText("First answer")).toBeVisible();
   await expect(page.getByRole("button", { name: "Show answer" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
-  await expect(page.getByRole("button", { name: firstQuestion, current: "page" })).toBeVisible();
   await expect(page).not.toHaveURL(secondQuestionUrl);
 
+  await openQuestionsDialog(page);
+  await expect(page.getByRole("button", { name: firstQuestion, current: "page" })).toBeVisible();
   await sidebarQuestion(page, secondQuestion).click();
 
   await expect(page.getByRole("dialog")).toHaveCount(0);
@@ -1026,7 +1070,11 @@ test("sidebar question opens that question in the main pane", async ({ page }) =
   await expect(page.getByRole("main").getByText(firstQuestion)).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Show answer" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Next question" })).toBeVisible();
+
+  await openQuestionsDialog(page);
   await expect(page.getByRole("button", { name: secondQuestion, current: "page" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(questionsDialog(page)).toHaveCount(0);
 
   await page.getByRole("button", { name: "Next question" }).click();
 
@@ -1040,7 +1088,7 @@ test("reloading a question page fetches that question once", async ({ page }) =>
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
   await page.getByRole("textbox", { name: "answer" }).fill("Once on reload");
@@ -1067,8 +1115,8 @@ test("reloading a question page fetches that question once", async ({ page }) =>
   await expect(openedQuestion(page, questionText)).toBeVisible({
     timeout: 15_000,
   });
-  await expect(sidebarQuestion(page, questionText)).toBeVisible();
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expectQuestionInDialog(page, questionText);
   await expect(sidebarCreateQuestion(page)).toBeVisible();
   expect(questionRequests).toHaveLength(1);
 });
@@ -1080,7 +1128,7 @@ test("list and auth routes send signed-in users with questions to a question pag
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(questionText);
   await page.getByRole("textbox", { name: "answer" }).fill("Landing answer");
@@ -1109,7 +1157,7 @@ test("sidebar stays visible while a child page chunk is loading", async ({ page 
     await route.continue();
   });
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill("Suspense nav");
   await page.getByRole("textbox", { name: "answer" }).fill("Keep the sidebar");
@@ -1118,16 +1166,16 @@ test("sidebar stays visible while a child page chunk is loading", async ({ page 
   await expect(openedQuestion(page, "Suspense nav")).toHaveCount(0, {
     timeout: 500,
   });
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
-  await expect(sidebarCreateQuestion(page)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
 
   await expect(openedQuestion(page, "Suspense nav")).toBeVisible({
     timeout: 15_000,
   });
   await revealAnswer(page, "Keep the sidebar");
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/);
-  await expect(page.getByText("Questions", { exact: true }).first()).toBeVisible();
-  await expect(sidebarCreateQuestion(page)).toBeVisible();
+  await expect(page.getByRole("button", { name: "Questions" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
 });
 
 test("next question opens another loaded question", async ({ page }) => {
@@ -1136,7 +1184,7 @@ test("next question opens another loaded question", async ({ page }) => {
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(firstQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("First answer");
@@ -1146,7 +1194,7 @@ test("next question opens another loaded question", async ({ page }) => {
     timeout: 15_000,
   });
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(secondQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Second answer");
@@ -1182,7 +1230,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
 
   await signIn(page);
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(firstQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Alpha answer");
@@ -1192,7 +1240,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
     timeout: 15_000,
   });
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(secondQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Beta answer");
@@ -1201,6 +1249,8 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
   await expect(openedQuestion(page, secondQuestion)).toBeVisible({
     timeout: 15_000,
   });
+
+  await openQuestionsDialog(page);
 
   const questionSearch = page.getByRole("searchbox", { name: "search" });
 
@@ -1219,7 +1269,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
   const gammaQuestion = `# Search gamma ${gammaStamp}`;
   const gammaVisible = `Search gamma ${gammaStamp}`;
 
-  await sidebarCreateQuestion(page).click();
+  await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(gammaQuestion);
   await page.getByRole("textbox", { name: "answer" }).fill("Gamma answer");
@@ -1229,6 +1279,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
     timeout: 15_000,
   });
 
+  await openQuestionsDialog(page);
   await questionSearch.fill("gamma");
   await expect(sidebarQuestion(page, gammaVisible)).toBeVisible();
   await expect(sidebarQuestion(page, firstQuestion)).toHaveCount(0);
