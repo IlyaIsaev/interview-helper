@@ -49,6 +49,7 @@ pages/sign-up/
   index/             ← empty custom sign-up form
 features/questions/create-question/ ← dialog form to create a question + answer
 features/questions/delete-question/ ← confirm dialog to delete a question
+features/questions/publish-questions/ ← header button to snapshot questions for guests
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
@@ -319,13 +320,14 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - On `/sign-in`, the form is empty. Sign in uses `authClient.signIn.email`; if that account is gone, stay on `/sign-in` and toast that the user doesn't exist anymore. There is a link to `/sign-up`.
 - On `/sign-up`, the form is empty. Create account calls `authClient.signUp.email`, then `session.retry()`. Toast Better Auth errors (duplicate email, rate limit). After success, `protectedRoute` sends the signed-in user to questions.
 - Auth gates live in `protectedRoute` `params()` (see **Side effects and redirects on `reatomRoute`**):
-  - Guests can open `/`, `/questions`, `/questions/:id`, and `/theory`. `/` replaces to questions. Loaders wait for `session.ready()` then fetch; with no session the worker returns the catalog owner's questions.
+  - Guests can open `/`, `/questions`, `/questions/:id`, and `/theory`. `/` replaces to questions. Loaders wait for `session.ready()` then fetch; with no session the worker returns the published snapshot.
   - Guests on `/sign-in` or `/sign-up` stay. Guests never auto-navigate to `/sign-up`.
   - Guests on `/profile` go to `/sign-in` (`profileRoute.params()`).
   - Signed-in users on `/` or auth URLs go to `questionsRoute`. Empty stays on `/questions`, otherwise a random `/questions/:id` unless already on a question page. Guests with a non-empty catalog follow the same landing.
   - `/theory` loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
   - `/profile` is signed-in only; it does not load questions or follow question landing.
 - Header `UserMenu` is the avatar menu when signed in. Guests see a Sign in link in that slot (no Theory header item).
+- Header `Publish` is signed-in only. It opens a confirmation dialog, then while the snapshot is saving it shows a spinner and `Publishing...`. `POST /api/questions/publish` deletes every `published_question` row and inserts the signed-in user's current questions (an empty list clears the catalog). Last publisher wins. Later edits stay private until Publish is confirmed again.
 - Create, update, and delete question submits are disabled for guests, with a hover tooltip. The worker still requires a session for POST/PUT/DELETE.
 - Sign-out returns to `/sign-in` with an empty form (`urlAtom.go(SIGN_IN_PATH)` after `session.retry()`).
 - Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.

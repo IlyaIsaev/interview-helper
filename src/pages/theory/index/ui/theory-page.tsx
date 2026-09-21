@@ -17,6 +17,7 @@ import {
   CreateQuestionEmptyButton,
 } from "@/features/questions/create-question";
 import { DeleteQuestion, openDeleteQuestion } from "@/features/questions/delete-question";
+import { PublishQuestionsButton } from "@/features/questions/publish-questions";
 import { openUpdateQuestion, UpdateQuestion } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
@@ -253,6 +254,7 @@ const TheoryPage = reatomComponent(() => {
         </a>
         <CreateQuestionButton />
         <div className="flex items-center gap-3">
+          <PublishQuestionsButton />
           <UserMenu />
           <ThemeSwitcher />
         </div>

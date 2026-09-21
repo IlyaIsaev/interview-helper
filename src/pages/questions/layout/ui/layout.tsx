@@ -12,6 +12,7 @@ import {
 } from "@/entities/questions/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
+import { PublishQuestionsButton } from "@/features/questions/publish-questions";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
@@ -116,6 +117,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
           Questions
         </Button>
         <div className="ml-auto flex items-center gap-3">
+          <PublishQuestionsButton />
           <UserMenu />
           <ThemeSwitcher />
         </div>

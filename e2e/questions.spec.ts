@@ -1,6 +1,6 @@
 import { expect, test, type Page, type Request } from "@playwright/test";
 
-import { createAccount, e2eUserName } from "./auth";
+import { createAccount, e2eUserName, openUserMenu, signInWithCredentials } from "./auth";
 
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/;
 
@@ -39,6 +39,13 @@ const openQuestionsDialog = async (page: Page) => {
 
   await page.getByRole("button", { name: "Questions" }).click();
   await expect(questionsDialog(page)).toBeVisible();
+};
+
+const closeQuestionsDialog = async (page: Page) => {
+  if (!(await questionsDialog(page).isVisible())) return;
+
+  await page.keyboard.press("Escape");
+  await expect(questionsDialog(page)).toHaveCount(0);
 };
 
 const createQuestionFromDialog = async (page: Page) => {
@@ -149,6 +156,43 @@ const holdCreateQuestion = async (page: Page) => {
   return () => {
     releaseCreate();
   };
+};
+
+const isPublishQuestionsPost = (request: Request) => {
+  if (request.method() !== "POST") return false;
+
+  return new URL(request.url()).pathname === "/api/questions/publish";
+};
+
+const holdPublishQuestions = async (page: Page) => {
+  let releasePublish = () => {};
+  const publishHeld = new Promise<void>((resolve) => {
+    releasePublish = resolve;
+  });
+
+  await page.route("**/api/questions/publish", async (route) => {
+    if (!isPublishQuestionsPost(route.request())) {
+      await route.continue();
+
+      return;
+    }
+
+    await publishHeld;
+    await route.continue();
+  });
+
+  return () => {
+    releasePublish();
+  };
+};
+
+const publishQuestionsDialog = (page: Page) =>
+  page.getByRole("dialog", { name: "Publish questions" });
+
+const confirmPublish = async (page: Page) => {
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(publishQuestionsDialog(page)).toBeVisible();
+  await publishQuestionsDialog(page).getByRole("button", { name: "Publish", exact: true }).click();
 };
 
 const isLoadQuestions = (request: Request) => {
@@ -1292,4 +1336,149 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
   await expect(sidebarQuestion(page, firstQuestion)).toBeVisible();
   await expect(sidebarQuestion(page, secondQuestion)).toBeVisible();
   await expect(sidebarQuestion(page, gammaVisible)).toBeVisible();
+});
+
+test("publishing snapshots questions for guests until the next publish", async ({ page }) => {
+  const questionText = `Publish ${Date.now()}`;
+  const updatedQuestionText = `Published update ${Date.now()}`;
+  const keptQuestionText = `Publish kept ${Date.now()}`;
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+
+  const account = await signIn(page);
+
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeVisible();
+
+  await createQuestionFromDialog(page);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await fillCreateQuestion(page, questionText, "Original published answer");
+  await createSubmit(page).click();
+
+  await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
+  await expect(openedQuestion(page, questionText)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(publishQuestionsDialog(page)).toBeVisible();
+  await publishQuestionsDialog(page).getByRole("button", { name: "Cancel" }).click();
+  await expect(publishQuestionsDialog(page)).toHaveCount(0);
+
+  const releasePublish = await holdPublishQuestions(page);
+
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect(publishQuestionsDialog(page)).toBeVisible();
+  await publishQuestionsDialog(page).getByRole("button", { name: "Publish", exact: true }).click();
+
+  const publishingButton = page.getByRole("button", { name: "Loading Publishing..." });
+
+  await expect(publishingButton).toBeVisible();
+  await expect(publishingButton).toBeDisabled();
+  await expect(publishingButton.getByRole("status", { name: "Loading" })).toBeVisible();
+  await expect(publishQuestionsDialog(page)).toHaveCount(0);
+
+  releasePublish();
+
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+  await expect(notifications(page).getByText("Published.")).toBeVisible();
+
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+  await expectQuestionInDialog(page, questionText);
+
+  await closeQuestionsDialog(page);
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await signInWithCredentials(page, account);
+
+  const question = await openDialogQuestionItem(page, questionText);
+
+  await question.hover();
+  await question.getByRole("button", { name: "Update question" }).click();
+
+  await expect(page.getByRole("heading", { name: "Update question" })).toBeVisible();
+  await page.getByRole("textbox", { name: "question" }).fill(updatedQuestionText);
+  await page.getByRole("textbox", { name: "answer" }).fill("Updated published answer");
+  await page.getByRole("button", { name: "Update" }).click();
+
+  await expect(openedQuestion(page, updatedQuestionText)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expectQuestionInDialog(page, questionText);
+  await expectQuestionAbsentFromDialog(page, updatedQuestionText);
+
+  await closeQuestionsDialog(page);
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await signInWithCredentials(page, account);
+
+  await confirmPublish(page);
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+  await expect(notifications(page).getByText("Published.")).toBeVisible();
+
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expectQuestionInDialog(page, updatedQuestionText);
+  await expectQuestionAbsentFromDialog(page, questionText);
+
+  await closeQuestionsDialog(page);
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await signInWithCredentials(page, account);
+
+  await createQuestionFromDialog(page);
+  await expect(page.getByRole("dialog")).toBeVisible();
+  await fillCreateQuestion(page, keptQuestionText, "Kept published answer");
+  await createSubmit(page).click();
+
+  await expect(openedQuestion(page, keptQuestionText)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await confirmPublish(page);
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+
+  const dropped = await openDialogQuestionItem(page, updatedQuestionText);
+
+  await dropped.hover();
+  await dropped.getByRole("button", { name: "Delete question" }).click();
+
+  await expect(page.getByRole("heading", { name: "Delete question" })).toBeVisible();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await confirmPublish(page);
+  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expectQuestionInDialog(page, keptQuestionText);
+  await expectQuestionAbsentFromDialog(page, updatedQuestionText);
 });

@@ -64,3 +64,9 @@ export const question = sqliteTable(
   },
   (table) => [index("question_userId_idx").on(table.userId)],
 );
+
+export const publishedQuestion = sqliteTable("published_question", {
+  id: text("id").primaryKey(),
+  question: text("question").notNull(),
+  answer: text("answer").notNull(),
+});

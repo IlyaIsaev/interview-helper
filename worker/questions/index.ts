@@ -5,9 +5,8 @@ import { csrf } from "hono/csrf";
 import * as v from "valibot";
 
 import { createAuth, isTrustedAuthOrigin } from "../auth";
-import { CATALOG_OWNER_EMAIL } from "../auth/allowed-sign-up-emails";
 import { createDatabase } from "../db/client";
-import { question, user } from "../db/schema";
+import { publishedQuestion, question } from "../db/schema";
 import { questionsMatchingSearch } from "./utils/question-search";
 
 const QUESTION_FIELD_MAX_LENGTH = 20_000;
@@ -67,26 +66,28 @@ const requireSession = async (context: Context<QuestionsContext>, next: Next) =>
   await next();
 };
 
-const catalogOwnerUserId = async (
-  database: ReturnType<typeof createDatabase>,
-): Promise<string | null> => {
-  const [catalogOwner] = await database
-    .select({ id: user.id })
-    .from(user)
-    .where(eq(user.email, CATALOG_OWNER_EMAIL))
-    .limit(1);
-
-  return catalogOwner?.id ?? null;
-};
-
-const questionsOwnerUserId = async (context: Context<QuestionsContext>): Promise<string | null> => {
+const sessionUserId = async (context: Context<QuestionsContext>): Promise<string | null> => {
   const currentSession = await createAuth(context.env).api.getSession({
     headers: context.req.raw.headers,
   });
 
-  if (currentSession) return currentSession.user.id;
+  return currentSession?.user.id ?? null;
+};
 
-  return catalogOwnerUserId(createDatabase(context.env.DB));
+const listedQuestionRow = {
+  id: question.id,
+  question: question.question,
+};
+
+const listedPublishedQuestionRow = {
+  id: publishedQuestion.id,
+  question: publishedQuestion.question,
+};
+
+const publishedQuestionRow = {
+  id: publishedQuestion.id,
+  question: publishedQuestion.question,
+  answer: publishedQuestion.answer,
 };
 
 const loadQuestion = async (
@@ -103,6 +104,37 @@ const loadQuestion = async (
   return foundQuestion ?? null;
 };
 
+const loadPublishedQuestion = async (
+  database: ReturnType<typeof createDatabase>,
+  questionId: string,
+): Promise<Question | null> => {
+  const [foundQuestion] = await database
+    .select(publishedQuestionRow)
+    .from(publishedQuestion)
+    .where(eq(publishedQuestion.id, questionId))
+    .limit(1);
+
+  return foundQuestion ?? null;
+};
+
+const replacePublishedQuestions = async (
+  database: ReturnType<typeof createDatabase>,
+  nextQuestions: ReadonlyArray<Question>,
+): Promise<void> => {
+  const [firstQuestion, ...otherQuestions] = nextQuestions;
+
+  if (!firstQuestion) {
+    await database.delete(publishedQuestion);
+
+    return;
+  }
+
+  await database.batch([
+    database.delete(publishedQuestion),
+    database.insert(publishedQuestion).values([firstQuestion, ...otherQuestions]),
+  ]);
+};
+
 export const questions = new Hono<QuestionsContext>()
   .use(
     csrf({
@@ -111,29 +143,45 @@ export const questions = new Hono<QuestionsContext>()
   )
   .get("/", vValidator("query", questionSearchQuerySchema), async (context) => {
     const { q = "" } = context.req.valid("query");
-    const userId = await questionsOwnerUserId(context);
-
-    if (!userId) return context.json({ questions: [] }, 200);
-
+    const userId = await sessionUserId(context);
     const database = createDatabase(context.env.DB);
 
+    if (userId) {
+      const loadedQuestions = await database
+        .select(listedQuestionRow)
+        .from(question)
+        .where(eq(question.userId, userId));
+
+      return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200);
+    }
+
     const loadedQuestions = await database
-      .select({
-        id: question.id,
-        question: question.question,
-      })
-      .from(question)
-      .where(eq(question.userId, userId));
+      .select(listedPublishedQuestionRow)
+      .from(publishedQuestion);
 
     return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200);
   })
+  .post("/publish", requireSession, async (context) => {
+    const database = createDatabase(context.env.DB);
+    const userId = context.get("userId");
+
+    const ownedQuestions = await database
+      .select(questionRow)
+      .from(question)
+      .where(eq(question.userId, userId));
+
+    await replacePublishedQuestions(database, ownedQuestions);
+
+    return context.body(null, 204);
+  })
   .get("/:id", vValidator("param", questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid("param");
-    const userId = await questionsOwnerUserId(context);
+    const userId = await sessionUserId(context);
+    const database = createDatabase(context.env.DB);
 
-    if (!userId) return context.json({ message: "Question not found" }, 404);
-
-    const foundQuestion = await loadQuestion(createDatabase(context.env.DB), questionId, userId);
+    const foundQuestion = userId
+      ? await loadQuestion(database, questionId, userId)
+      : await loadPublishedQuestion(database, questionId);
 
     if (!foundQuestion) return context.json({ message: "Question not found" }, 404);
 
