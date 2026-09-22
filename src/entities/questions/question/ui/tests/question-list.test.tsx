@@ -2,8 +2,6 @@ import { expect, test } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
-import { markdownPlainText } from "@/shared/ui";
-
 import type { Question } from "../../model/questions";
 import { QuestionList } from "../question-list";
 
@@ -15,11 +13,6 @@ const firstQuestion = {
 const secondQuestion = {
   id: "22222222-2222-2222-2222-222222222222",
   question: "Second question",
-};
-
-const markedUpQuestion = {
-  id: "33333333-3333-3333-3333-333333333333",
-  question: "# Hello\n\n**bold**",
 };
 
 type RenderQuestionListOptions = {
@@ -85,16 +78,6 @@ test("should call onQuestionClick when a question row is clicked", async () => {
   await userEvent.click(screen.getByRole("button", { name: "Second question" }));
 
   expect(clicks).toEqual([secondQuestion.id]);
-});
-
-test("should expose a markdown-free title when a question contains markup", async () => {
-  const screen = await renderQuestionList({
-    questions: [markedUpQuestion],
-  });
-
-  await expect
-    .element(screen.getByRole("button", { name: /Hello\s+bold/ }))
-    .toHaveAttribute("title", markdownPlainText(markedUpQuestion.question));
 });
 
 test("should left-align rows without hover fill when the questions list renders", async () => {

@@ -11,7 +11,6 @@ import {
   DialogHeader,
   DialogTitle,
   Markdown,
-  markdownPlainText,
   Spinner,
 } from "@/shared/ui";
 
@@ -83,7 +82,6 @@ export function QuestionList({
           variant="ghost"
           aria-current={questionAriaCurrent}
           className="h-9 min-w-0 flex-1 justify-start overflow-hidden text-left font-normal normal-case tracking-normal hover:bg-transparent hover:text-inherit"
-          title={markdownPlainText(question.question)}
           onClick={handleQuestionClick}
         >
           <Markdown plain>{question.question}</Markdown>

@@ -31,7 +31,6 @@ import {
   Input,
   Label,
   Markdown,
-  markdownPlainText,
   Spinner,
 } from "@/shared/ui";
 
@@ -86,7 +85,6 @@ const QuestionAccordionItem = reatomComponent(
       <AccordionItem className="group/accordion-item" value={listedQuestion.id}>
         <AccordionTrigger
           className="py-3 hover:no-underline"
-          title={markdownPlainText(listedQuestion.question)}
           trailing={
             <div className="flex shrink-0 items-center gap-1 py-2 pr-1 transition-opacity md:opacity-0 md:group-hover/accordion-item:opacity-100 md:group-focus-within/accordion-item:opacity-100">
               <Button
