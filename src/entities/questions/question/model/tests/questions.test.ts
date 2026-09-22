@@ -3,21 +3,27 @@ import { expect, test } from "vitest";
 
 import {
   addToQuestions,
-  initQuestions,
   questions,
   restoreToQuestions,
   updateInQuestions,
+  type Question,
 } from "../questions";
 
-test("should sort questions alphabetically by visible text", () => {
-  initQuestions([
+const seedQuestions = (nextQuestions: ReadonlyArray<Question>) => {
+  questions.data.set(nextQuestions);
+  notify();
+};
+
+test("should sort questions alphabetically by visible text when one is added", () => {
+  seedQuestions([
     { id: "2", question: "Zebra" },
     { id: "1", question: "Apple" },
-    { id: "3", question: "# Banana" },
   ]);
+
+  addToQuestions({ id: "3", question: "# Banana" });
   notify();
 
-  expect(questions()).toEqual([
+  expect(questions.data()).toEqual([
     { id: "1", question: "Apple" },
     { id: "3", question: "# Banana" },
     { id: "2", question: "Zebra" },
@@ -25,42 +31,39 @@ test("should sort questions alphabetically by visible text", () => {
 });
 
 test("should keep alphabetical order when a question is added", () => {
-  initQuestions([{ id: "2", question: "Zebra" }]);
-  notify();
+  seedQuestions([{ id: "2", question: "Zebra" }]);
 
   addToQuestions({ id: "1", question: "Apple" });
   notify();
 
-  expect(questions()).toEqual([
+  expect(questions.data()).toEqual([
     { id: "1", question: "Apple" },
     { id: "2", question: "Zebra" },
   ]);
 });
 
 test("should re-sort when a question title changes", () => {
-  initQuestions([
+  seedQuestions([
     { id: "1", question: "Zebra" },
     { id: "2", question: "Apple" },
   ]);
-  notify();
 
   updateInQuestions({ id: "1", question: "Aardvark" });
   notify();
 
-  expect(questions()).toEqual([
+  expect(questions.data()).toEqual([
     { id: "1", question: "Aardvark" },
     { id: "2", question: "Apple" },
   ]);
 });
 
 test("should re-sort when a deleted question is restored", () => {
-  initQuestions([{ id: "2", question: "Zebra" }]);
-  notify();
+  seedQuestions([{ id: "2", question: "Zebra" }]);
 
   restoreToQuestions({ id: "1", question: "Apple" }, 1);
   notify();
 
-  expect(questions()).toEqual([
+  expect(questions.data()).toEqual([
     { id: "1", question: "Apple" },
     { id: "2", question: "Zebra" },
   ]);

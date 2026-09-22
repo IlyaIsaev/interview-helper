@@ -1,14 +1,15 @@
-import { urlAtom, wrap } from "@reatom/core";
+import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { find, flatten, map, pipe } from "es-toolkit/fp";
 import { House, Pencil, Trash2 } from "lucide-react";
 import type { ChangeEvent } from "react";
 
+import { questionsRoute, theoryOpenedRoute } from "@/app/routes";
 import {
   openedQuestionId,
   question,
   questions,
-  questionsQuery,
+  theoryQuestionSearch,
   type Question,
 } from "@/entities/questions/question";
 import {
@@ -21,7 +22,6 @@ import { PublishQuestionsButton } from "@/features/questions/publish-questions";
 import { openUpdateQuestion, UpdateQuestion } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
-import { HOME_PATH, THEORY_PATH } from "@/shared/config";
 import {
   Accordion,
   AccordionContent,
@@ -34,19 +34,30 @@ import {
   Spinner,
 } from "@/shared/ui";
 
-import { loadOpenedQuestion } from "../model/load-opened-question";
-import { searchTheoryQuestions, theoryQuestionSearch } from "../model/question-search";
-
 type QuestionAnswerProps = {
   questionId: string;
 };
 
 const QuestionAnswer = reatomComponent(({ questionId }: QuestionAnswerProps) => {
   const openedQuestion = question();
-  const isOpenedQuestionReady = loadOpenedQuestion.ready();
+  const isOpenedQuestionReady = theoryOpenedRoute.loader.ready();
+  const openedQuestionError = theoryOpenedRoute.loader.error();
 
   if (openedQuestion?.id === questionId) {
     return <Markdown>{openedQuestion.answer}</Markdown>;
+  }
+
+  if (openedQuestionError && openedQuestionId() === questionId) {
+    return (
+      <div className="flex flex-col items-start gap-3 py-2">
+        <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
+          could not load this question
+        </p>
+        <Button type="button" onClick={wrap(() => theoryOpenedRoute.loader.retry())}>
+          Retry
+        </Button>
+      </div>
+    );
   }
 
   if (isOpenedQuestionReady && openedQuestionId() === questionId && openedQuestion === null) {
@@ -124,13 +135,12 @@ const QuestionAccordionItem = reatomComponent(
 );
 
 const TheoryQuestions = reatomComponent(() => {
-  const listedQuestions = questions();
+  const listedQuestions = questions.data();
   const search = theoryQuestionSearch();
-  const openedId =
-    openedQuestionId() ||
-    (urlAtom().pathname === THEORY_PATH ? (urlAtom().searchParams.get("id") ?? "") : "");
+  const openedId = openedQuestionId();
   const openedQuestion = question();
-  const isOpenedQuestionReady = loadOpenedQuestion.ready();
+  const isOpenedQuestionReady = theoryOpenedRoute.loader.ready();
+  const openedQuestionError = theoryOpenedRoute.loader.error();
   const isOpenedQuestionListed =
     listedQuestions !== null &&
     pipe(
@@ -153,17 +163,17 @@ const TheoryQuestions = reatomComponent(() => {
     openedId.length > 0 && !isOpenedQuestionListed && extraOpenedQuestion === null;
 
   const changeOpenedQuestion = wrap((nextQuestionId: string) => {
-    openedQuestionId.set(nextQuestionId);
+    if (nextQuestionId.length === 0) {
+      theoryOpenedRoute.go({});
+
+      return;
+    }
+
+    theoryOpenedRoute.go({ id: nextQuestionId });
   });
 
   const changeQuestionSearch = wrap((event: ChangeEvent<HTMLInputElement>) => {
-    const nextSearch = event.currentTarget.value;
-
-    theoryQuestionSearch.set(nextSearch);
-
-    questionsQuery.set(nextSearch.trim());
-
-    searchTheoryQuestions();
+    theoryQuestionSearch.set(event.currentTarget.value);
   });
 
   if (listedQuestions === null) {
@@ -221,7 +231,16 @@ const TheoryQuestions = reatomComponent(() => {
             </Accordion>
           ) : null}
           {isOpenedQuestionMissing ? (
-            isOpenedQuestionReady && openedQuestion === null ? (
+            openedQuestionError ? (
+              <div className="flex flex-col items-start gap-3 py-2">
+                <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
+                  could not load this question
+                </p>
+                <Button type="button" onClick={wrap(() => theoryOpenedRoute.loader.retry())}>
+                  Retry
+                </Button>
+              </div>
+            ) : isOpenedQuestionReady && openedQuestion === null ? (
               <p className="text-ui uppercase tracking-[2px] text-muted-foreground">
                 question not found
               </p>
@@ -243,11 +262,14 @@ const TheoryPage = reatomComponent(() => {
     <div className="flex h-svh flex-col overflow-hidden">
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
         <Button asChild className="size-7" size="icon" variant="ghost">
-          <a aria-label="Home" href={HOME_PATH}>
+          <a aria-label="Home" href={questionsRoute.path()}>
             <House />
           </a>
         </Button>
-        <a className="text-lg uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+        <a
+          className="text-lg uppercase tracking-[2px] text-muted-foreground"
+          href={questionsRoute.path()}
+        >
           Interview helper
         </a>
         <CreateQuestionButton />

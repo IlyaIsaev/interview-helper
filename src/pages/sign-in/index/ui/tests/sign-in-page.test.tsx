@@ -12,7 +12,7 @@ test("should link to sign-up when the sign-in page renders", async () => {
   await expect.element(screen.getByRole("link", { name: "Sign up" })).toBeVisible();
 });
 
-test("should not show email validation when the field is blurred without changes", async () => {
+test("should show email validation when the field is blurred without changes", async () => {
   signInForm.reset();
 
   const screen = await render(<SignInPage />);
@@ -21,8 +21,7 @@ test("should not show email validation when the field is blurred without changes
   await userEvent.click(email);
   await userEvent.keyboard("{Tab}");
 
-  await expect.element(screen.getByText("Enter an email")).not.toBeInTheDocument();
-  await expect.element(screen.getByText("Enter a valid email")).not.toBeInTheDocument();
+  await expect.element(screen.getByText("Enter a valid email")).toBeVisible();
 });
 
 test("should show email validation when the field is blurred with invalid input", async () => {

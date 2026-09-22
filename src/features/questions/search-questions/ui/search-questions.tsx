@@ -2,13 +2,12 @@ import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import type { ChangeEvent } from "react";
 
+import { questionSearch } from "@/entities/questions/question";
 import { Input, Label } from "@/shared/ui";
-
-import { changeQuestionSearch, questionSearch } from "../model/search-questions";
 
 export const SearchQuestions = reatomComponent(() => {
   const handleQuestionSearchChange = wrap((event: ChangeEvent<HTMLInputElement>) => {
-    changeQuestionSearch(event.currentTarget.value);
+    questionSearch.set(event.currentTarget.value);
   });
 
   return (

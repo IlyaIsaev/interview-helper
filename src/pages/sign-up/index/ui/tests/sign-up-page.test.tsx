@@ -5,7 +5,7 @@ import { render } from "vitest-browser-react";
 import { signUpForm } from "../../model/sign-up";
 import SignUpPage from "../sign-up-page";
 
-test("should not show name validation when the field is blurred without changes", async () => {
+test("should show name validation when the field is blurred without changes", async () => {
   signUpForm.reset();
 
   const screen = await render(<SignUpPage />);
@@ -14,7 +14,7 @@ test("should not show name validation when the field is blurred without changes"
   await userEvent.click(name);
   await userEvent.keyboard("{Tab}");
 
-  await expect.element(screen.getByText("Enter a name")).not.toBeInTheDocument();
+  await expect.element(screen.getByText("Enter a name")).toBeVisible();
 });
 
 test("should show name validation when the field is blurred empty", async () => {

@@ -1,6 +1,4 @@
-import { action, computed, urlAtom, withAsync, withAsyncData, wrap } from "@reatom/core";
-
-import { SIGN_IN_PATH } from "@/shared/config";
+import { action, computed, withAsync, withAsyncData, wrap } from "@reatom/core";
 
 import { authClient } from "./auth-client";
 
@@ -18,6 +16,4 @@ export const signOut = action(async () => {
   if (error) throw new Error(error.message);
 
   await wrap(session.retry());
-
-  urlAtom.go(SIGN_IN_PATH);
 }, "signOut").extend(withAsync());

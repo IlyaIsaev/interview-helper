@@ -56,7 +56,7 @@ features/theme-switcher/ ← icon toggle for light/dark theme
 features/user/user-menu/ ← header menu: Questions, Theory, profile, log out
 features/user/change-password/ ← profile form: new password + confirmation (deleteUser slot)
 features/user/delete-user/ ← confirm dialog to delete the signed-in account
-entities/questions/question/ ← current question + questions, openedQuestionId (?id= on /theory), questionFieldsSchema, QuestionFields, QuestionList (dialog + list; search / updateQuestion / deleteQuestion slots), RandomQuestion (show answer + next random)
+entities/questions/question/ ← questions list query, opened question computed, openedQuestionId, questionFieldsSchema, QuestionFields, QuestionList, RandomQuestion
 shared/auth/         ← Better Auth client + session
 shared/api/          ← clientApi facade over wrap-aware Hono RPC
 shared/ui/           ← SMUI / shadcn primitives
@@ -67,7 +67,7 @@ shared/theme/        ← light/dark theme atom + document class sync
 
 ## Pages and routes
 
-Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from `app/`. Path strings live in `@/shared/config`. Pages and features must not import route atoms from `app/`.
+Define routes in `src/app/routes.tsx`. Path strings for route `path` options live in `@/shared/config`. Pages, features, and entity UI link with `route.path()` and navigate with `route.go()`. Entity **model** modules do not import `@/app/routes`. `src/app/routes.tsx` imports entity model files directly, not the public barrel, so UI that imports routes does not cycle.
 
 ### Folder layout
 
@@ -78,66 +78,41 @@ Define routes in `src/app/routes.tsx`. Pages export UI; they do not import from 
 - Load pages with `React.lazy(() => import('@/pages/questions/index/ui/questions-page'))`. Do not statically import page screens in `app/`.
 - Route screens through `render` on `reatomRoute`, not `if (!route.match())` in components.
 
-### Loaders and `init*`
+### Loaders and queries
 
-If a resource is loaded for a route, fetch it in the `reatomRoute` `loader` in `src/app/routes.tsx`. Do not call `clientApi` for that resource from `entities/` or `features/`.
+Route reads are one async computed. Do not copy the same payload into a second atom with `init*`.
 
-The loader passes the API payload to an `init*` action (`init` + domain object: `initQuestions`, `initQuestion`) on the entity or feature. Do not set the atom from the loader.
+The questions list is `computed(async () => …).extend(withAsyncData())` in the question entity. It waits until `session.ready()`, debounces a non-empty search inside that computed, and sorts the payload. `questionsRoute` and `theoryRoute` loaders `await wrap(questions())`. They do not call `clientApi.loadQuestions`. UI reads `questions.data()`, `questions.ready()`, and `questions.error()`, and retries with `questions.retry()`. Optimistic edits write `questions.data`, then retry.
 
-The `init*` action performs **all** mapping and derivation that slice needs, then writes the atom. It does not fetch. Keep `.map`, field picking, and domain defaults out of the loader.
+`questionRoute` validates `:id` with Valibot and loads that question. `theoryOpenedRoute` is a search-only child of `theoryRoute` with optional `id`. Its loader loads the open theory item. Changing `?id=` does not refetch the list. `opened-question.ts` reads whichever of those loaders is active. Routes do not import that file.
 
-UI reads the atom, not `route.loader.data()` from inside entities or features. Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
+Detail fetches that are not the shared list stay on the route loader (`clientApi.loadQuestion`). Mutations may still call `clientApi` from features.
 
 ```ts
-import { map, pick, pipe } from 'es-toolkit/fp';
+export const questions = computed(async () => {
+  const signedInUserId = session.data()?.user?.id ?? null;
 
-export const questions = atom<ReadonlyArray<Question> | null>(null, 'questions');
+  if (!session.ready()) await wrap(new Promise<never>(() => {}));
 
-export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => {
-  questions.set(pipe(nextQuestions, map(pick(['id', 'question']))));
-}, 'initQuestions');
+  const query = activeQuestionsQuery();
+
+  if (query.length > 0) await wrap(sleep(300));
+
+  if ((session.data()?.user?.id ?? null) !== signedInUserId) return null;
+
+  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
+
+  return sortedQuestions(nextQuestions);
+}, 'questions').extend(withAsyncData({ initState: null }));
 
 async loader() {
   if (!session.ready()) return;
 
-  const { questions: nextQuestions } = await wrap(
-    clientApi.loadQuestions(questionsQuery()),
-  );
-
-  initQuestions(nextQuestions);
-
-  openSignedInDestination();
-}
-
-// theoryRoute loader
-async loader() {
-  if (!session.ready()) return;
-
-  const { questions: nextQuestions } = await wrap(
-    clientApi.loadQuestions(questionsQuery()),
-  );
-
-  initQuestions(nextQuestions);
-
-  effect(() => {
-    loadOpenedQuestion(openedQuestionId());
-  });
-}
-
-// Forbidden — entity/feature fetches a route-level resource
-export const loadQuestions = action(async () => {
-  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions());
-
-  questions.set(nextQuestions);
-}, 'loadQuestions');
-
-// Forbidden — loader maps into the entity/feature shape
-async loader() {
-  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions());
-
-  initQuestions(pipe(nextQuestions, map(pick(['id', 'question']))));
+  await wrap(questions());
 }
 ```
+
+Do not fetch the same list from a feature action, and do not map the payload in the loader.
 
 ### Side effects and redirects on `reatomRoute`
 
@@ -169,12 +144,14 @@ const protectedRoute = layoutRoute.reatomRoute(
       const userId = user?.id ?? null;
 
       if (lastQuestionsUserId() !== userId) {
+        const previousUserId = lastQuestionsUserId();
+
         lastQuestionsUserId.set(userId);
 
-        if (questions() !== null) {
+        if (previousUserId !== undefined && questions.data() !== null) {
           resetQuestions();
 
-          questionSearch.reset();
+          if (pathname === THEORY_PATH) theoryOpenedRoute.go({}, true);
         }
       }
 
@@ -298,7 +275,7 @@ Form schemas use Valibot via `reatomForm` `schema` (Standard Schema). Do not add
 ## API client
 
 - Frontend API calls go through `clientApi` from `@/shared/api` (`clientApi.loadQuestions()`, `clientApi.createQuestion()`, …), not raw RPC. Hono RPC (`hc<AppType>`) is an implementation detail of that slice.
-- Route-level resources: call `clientApi` in the route `loader`, then `init*` on the entity or feature. Do not call `clientApi` for that resource inside `entities/` or `features/`. See **Pages and routes**.
+- The questions list is the entity `questions` computed. Route loaders await that same computed. `questionRoute` and `theoryOpenedRoute` load one question with `clientApi.loadQuestion`. Mutations may still use `clientApi` in features or pages. See **Pages and routes**.
 - Mutations and data that is not route-loaded may still use `clientApi` in features or pages.
 - Keep the auth client (`authClient`) separate from that facade.
 - Do not import `worker/` at runtime. The only allowed `src/` → `worker/` import is `import type { AppType } from '../../../worker'` in `@/shared/api`.
@@ -330,7 +307,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - Header `UserMenu` is the avatar menu when signed in. Guests see a Sign in link in that slot (no Theory header item).
 - Header `Publish` is signed-in only. It opens a confirmation dialog, then while the snapshot is saving it shows a spinner and `Publishing...`. `POST /api/questions/publish` deletes every `published_question` row and inserts the signed-in user's current questions (an empty list clears the catalog). Last publisher wins. Later edits stay private until Publish is confirmed again.
 - Create, update, and delete question submits are disabled for guests, with a hover tooltip. The worker still requires a session for POST/PUT/DELETE.
-- Sign-out returns to `/sign-in` with an empty form (`urlAtom.go(SIGN_IN_PATH)` after `session.retry()`).
+- Sign-out returns to `/sign-in` with an empty form (`signInRoute.go()` after `session.retry()`).
 - Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.
 - Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with an empty form.
 - Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.

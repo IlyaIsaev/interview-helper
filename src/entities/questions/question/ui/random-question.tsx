@@ -1,11 +1,13 @@
 import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
+import { pipe, sample } from "es-toolkit/fp";
 
+import { questionRoute } from "@/app/routes";
 import { cn } from "@/shared/lib";
 import { Button, Markdown } from "@/shared/ui";
 
-import { openNextQuestion, otherQuestions } from "../model/next-question";
-import { question } from "../model/question";
+import { otherQuestions } from "../model/next-question";
+import { question } from "../model/opened-question";
 import { isAnswerVisible, showAnswer } from "../model/show-answer";
 
 const randomQuestionClassName = cn(
@@ -27,7 +29,13 @@ export const RandomQuestion = reatomComponent(() => {
 
   const handleShowAnswer = wrap(showAnswer);
 
-  const handleOpenNextQuestion = wrap(openNextQuestion);
+  const handleOpenNextQuestion = wrap(() => {
+    const nextQuestion = pipe(otherQuestions(), sample());
+
+    if (!nextQuestion) return;
+
+    questionRoute.go({ id: nextQuestion.id });
+  });
 
   return (
     <section className={randomQuestionClassName}>

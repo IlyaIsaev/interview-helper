@@ -1,10 +1,6 @@
-export {
-  initQuestion,
-  openedQuestionId,
-  openQuestion,
-  question,
-  type OpenedQuestion,
-} from "./model/question";
+export { openedQuestionId, type OpenedQuestion } from "./model/question";
+
+export { question } from "./model/opened-question";
 
 export { openListedQuestion } from "./model/show-answer";
 
@@ -16,14 +12,14 @@ export {
 } from "./model/parse-question-markdown";
 
 export {
+  activeQuestionsQuery,
   addToQuestions,
-  initQuestions,
+  questionSearch,
   questions,
-  questionsQuery,
-  refetchQuestions,
   removeFromQuestions,
   resetQuestions,
   restoreToQuestions,
+  theoryQuestionSearch,
   updateInQuestions,
   type Question,
 } from "./model/questions";

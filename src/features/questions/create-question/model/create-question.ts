@@ -1,16 +1,16 @@
-import { action, reatomBoolean, reatomForm, withCallHook, wrap } from "@reatom/core";
+import { action, isAbort, reatomBoolean, reatomForm, wrap } from "@reatom/core";
 
+import { openQuestion } from "@/app/routes";
 import {
+  activeQuestionsQuery,
   addToQuestions,
-  openQuestion,
   parseQuestionMarkdown,
   questionFieldsSchema,
-  questionsQuery,
-  refetchQuestions,
+  questions,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
 import { isSignedIn } from "@/shared/auth";
-import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
+import { markdownPlainText, toast } from "@/shared/ui";
 
 export const isCreateQuestionDialogOpen = reatomBoolean(false, "isCreateQuestionDialogOpen");
 
@@ -52,51 +52,53 @@ export const createQuestionForm = reatomForm(
   },
   {
     name: "createQuestionForm",
-    validateOnBlur: false,
-    validateOnChange: true,
+    validateOnBlur: true,
+    validateOnChange: false,
     schema: questionFieldsSchema,
     onSubmit: async ({ question, answer }) => {
       if (!isSignedIn()) return;
 
+      const previousQuestions = questions.data();
+      const isSearchEmpty = activeQuestionsQuery().length === 0;
+
       try {
-        return await wrap(clientApi.createQuestion({ question, answer }));
-      } catch {
+        const createdQuestion = await wrap(clientApi.createQuestion({ question, answer }));
+
+        if (isSearchEmpty) {
+          addToQuestions({
+            id: createdQuestion.id,
+            question: createdQuestion.question,
+          });
+        }
+
+        closeCreateQuestionDialog();
+
+        openQuestion(createdQuestion.id);
+
+        toast.success("Question created.", {
+          description: markdownPlainText(createdQuestion.question),
+        });
+
+        try {
+          await wrap(questions.retry());
+        } catch (error) {
+          if (isAbort(error)) return createdQuestion;
+        }
+
+        return createdQuestion;
+      } catch (error) {
+        if (isAbort(error)) return;
+
+        questions.data.set(previousQuestions);
+
         toast.error("Could not create the question. Try again later.", {
           description: markdownPlainText(question),
         });
+
+        throw error instanceof Error
+          ? error
+          : new Error("Could not create the question. Try again later.");
       }
     },
   },
-);
-
-registerFormSchemaValidation(createQuestionForm, [
-  createQuestionForm.fields.question,
-  createQuestionForm.fields.answer,
-]);
-
-const syncCreatedQuestion = action(async (createdQuestion: { id: string; question: string }) => {
-  if (questionsQuery().length === 0) {
-    addToQuestions({
-      id: createdQuestion.id,
-      question: createdQuestion.question,
-    });
-  }
-
-  await wrap(refetchQuestions());
-}, "syncCreatedQuestion");
-
-createQuestionForm.submit.onFulfill.extend(
-  withCallHook(({ payload: createdQuestion }) => {
-    if (!createdQuestion) return;
-
-    closeCreateQuestionDialog();
-
-    openQuestion(createdQuestion.id);
-
-    syncCreatedQuestion(createdQuestion);
-
-    toast.success("Question created.", {
-      description: markdownPlainText(createdQuestion.question),
-    });
-  }),
 );

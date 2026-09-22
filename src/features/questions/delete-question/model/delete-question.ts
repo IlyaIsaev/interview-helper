@@ -1,19 +1,17 @@
-import { action, atom, reatomBoolean, urlAtom, withAsync, wrap } from "@reatom/core";
+import { action, atom, isAbort, reatomBoolean, urlAtom, withAsync, wrap } from "@reatom/core";
 import { findIndex, pipe } from "es-toolkit/fp";
 
+import { questionsRoute, theoryOpenedRoute } from "@/app/routes";
 import {
-  initQuestion,
+  activeQuestionsQuery,
   openedQuestionId,
   questions,
-  questionsQuery,
-  refetchQuestions,
   removeFromQuestions,
-  restoreToQuestions,
   type Question,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
 import { isSignedIn } from "@/shared/auth";
-import { QUESTIONS_PATH, questionPath, THEORY_PATH } from "@/shared/config";
+import { THEORY_PATH } from "@/shared/config";
 import { markdownPlainText, toast } from "@/shared/ui";
 
 export const deletedQuestionId = atom<string | null>(null, "deletedQuestionId");
@@ -44,11 +42,12 @@ export const deleteQuestion = action(async () => {
 
   if (!questionId) return;
 
-  const questionIndex = pipe(questions() ?? [], findIndex(hasQuestionId(questionId)));
-  const question = (questions() ?? [])[questionIndex];
+  const questionIndex = pipe(questions.data() ?? [], findIndex(hasQuestionId(questionId)));
+  const question = (questions.data() ?? [])[questionIndex];
   const questionDescription =
     question === undefined ? undefined : markdownPlainText(question.question);
-  const isSearchEmpty = questionsQuery().length === 0;
+  const isSearchEmpty = activeQuestionsQuery().length === 0;
+  const previousQuestions = questions.data();
 
   closeDeleteQuestionDialog();
 
@@ -56,14 +55,18 @@ export const deleteQuestion = action(async () => {
 
   try {
     await wrap(clientApi.deleteQuestion(questionId));
-  } catch {
-    if (isSearchEmpty && question !== undefined) restoreToQuestions(question, questionIndex);
+  } catch (error) {
+    if (isAbort(error)) return;
+
+    questions.data.set(previousQuestions);
 
     toast.error("Could not delete the question. Try again later.", {
       description: questionDescription,
     });
 
-    return;
+    throw error instanceof Error
+      ? error
+      : new Error("Could not delete the question. Try again later.");
   }
 
   toast.success("Question deleted.", {
@@ -71,16 +74,14 @@ export const deleteQuestion = action(async () => {
   });
 
   if (urlAtom().pathname === THEORY_PATH) {
-    if (openedQuestionId() === questionId) {
-      openedQuestionId.set("");
-
-      initQuestion(null);
-    }
-  } else if (urlAtom().pathname === questionPath(questionId)) {
-    initQuestion(null);
-
-    urlAtom.go(QUESTIONS_PATH);
+    if (openedQuestionId() === questionId) theoryOpenedRoute.go({});
+  } else if (openedQuestionId() === questionId) {
+    questionsRoute.go(undefined, true);
   }
 
-  await wrap(refetchQuestions());
+  try {
+    await wrap(questions.retry());
+  } catch (error) {
+    if (isAbort(error)) return;
+  }
 }, "deleteQuestion").extend(withAsync());

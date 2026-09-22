@@ -2,12 +2,12 @@ import { reatomComponent } from "@reatom/react";
 import type { DeepReadonly } from "es-toolkit/types";
 import { House } from "lucide-react";
 
+import { questionsRoute } from "@/app/routes";
 import { PublishQuestionsButton } from "@/features/questions/publish-questions";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { ChangePasswordForm } from "@/features/user/change-password";
 import { DeleteUser, DeleteUserButton } from "@/features/user/delete-user";
 import { UserMenu } from "@/features/user/user-menu";
-import { HOME_PATH } from "@/shared/config";
 import { Button } from "@/shared/ui";
 
 type ProfilePageProps = {
@@ -22,11 +22,14 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
     <>
       <header className="flex h-12 items-center gap-3 border-b border-border px-3">
         <Button asChild className="size-7" size="icon" variant="ghost">
-          <a aria-label="Home" href={HOME_PATH}>
+          <a aria-label="Home" href={questionsRoute.path()}>
             <House />
           </a>
         </Button>
-        <a className="text-lg uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+        <a
+          className="text-lg uppercase tracking-[2px] text-muted-foreground"
+          href={questionsRoute.path()}
+        >
           Interview helper
         </a>
         <div className="ml-auto flex items-center gap-3">

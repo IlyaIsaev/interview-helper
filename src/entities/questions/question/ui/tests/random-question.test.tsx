@@ -1,9 +1,10 @@
 import { urlAtom } from "@reatom/core";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
-import { initQuestion, initQuestions } from "@/entities/questions/question";
+import { questionRoute } from "@/app/routes";
+import { questions } from "@/entities/questions/question";
 import { questionPath } from "@/shared/config";
 
 import { isAnswerVisible } from "../../model/show-answer";
@@ -12,22 +13,35 @@ import { RandomQuestion } from "../random-question";
 const currentQuestionId = "11111111-1111-1111-1111-111111111111";
 const otherQuestionId = "22222222-2222-2222-2222-222222222222";
 
-const openRandomQuestion = (questionCount: "one" | "two") => {
+const fixtures = vi.hoisted(() => ({
+  questions: [] as Array<{ id: string; question: string }>,
+  question: null as null | { id: string; question: string; answer: string },
+}));
+
+vi.mock("@/shared/api", () => ({
+  clientApi: {
+    loadQuestions: async () => ({ questions: fixtures.questions }),
+    loadQuestion: async () => fixtures.question,
+  },
+}));
+
+const openRandomQuestion = (questionCount: "one" | "two", answer = "hidden answer") => {
   isAnswerVisible.setFalse();
-  urlAtom.go(questionPath(currentQuestionId));
-  initQuestion({
+  fixtures.question = {
     id: currentQuestionId,
     question: "# Hello",
-    answer: "hidden answer",
-  });
-  initQuestions(
+    answer,
+  };
+  fixtures.questions =
     questionCount === "two"
       ? [
           { id: currentQuestionId, question: "# Hello" },
           { id: otherQuestionId, question: "Other" },
         ]
-      : [{ id: currentQuestionId, question: "# Hello" }],
-  );
+      : [{ id: currentQuestionId, question: "# Hello" }];
+  questions.data.set(fixtures.questions);
+  urlAtom.go(questionPath(currentQuestionId));
+  questionRoute.loader.data.set(fixtures.question);
 };
 
 test("should render markdown when the question opens", async () => {
@@ -55,14 +69,7 @@ test("should reveal the answer when enter is pressed on the focused button", asy
 });
 
 test("should render markdown when the answer is revealed", async () => {
-  isAnswerVisible.setFalse();
-  urlAtom.go(questionPath(currentQuestionId));
-  initQuestion({
-    id: currentQuestionId,
-    question: "# Hello",
-    answer: "**bold**",
-  });
-  initQuestions([{ id: currentQuestionId, question: "# Hello" }]);
+  openRandomQuestion("one", "**bold**");
 
   const screen = await render(<RandomQuestion />);
   const showAnswer = screen.getByRole("button", { name: "Show answer" });

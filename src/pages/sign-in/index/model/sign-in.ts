@@ -2,7 +2,7 @@ import { computed, reatomForm, wrap } from "@reatom/core";
 import * as v from "valibot";
 
 import { authClient, session } from "@/shared/auth";
-import { registerFormSchemaValidation, toast } from "@/shared/ui";
+import { toast } from "@/shared/ui";
 
 const signInSchema = v.object({
   email: v.pipe(v.string(), v.nonEmpty("Enter an email"), v.email("Enter a valid email")),
@@ -20,7 +20,7 @@ export const signInForm = reatomForm(
   },
   {
     name: "signInForm",
-    validateOnBlur: false,
+    validateOnBlur: true,
     validateOnChange: false,
     schema: signInSchema,
     onSubmit: async ({ email, password }) => {
@@ -34,15 +34,13 @@ export const signInForm = reatomForm(
       if (error) {
         toast.error("This user doesn't exist anymore.");
 
-        return;
+        throw new Error("This user doesn't exist anymore.");
       }
 
       await wrap(session.retry());
     },
   },
 );
-
-registerFormSchemaValidation(signInForm, [signInForm.fields.email, signInForm.fields.password]);
 
 export const isSignInValid = computed(() => {
   const parsedSignIn = v.safeParse(signInSchema, {

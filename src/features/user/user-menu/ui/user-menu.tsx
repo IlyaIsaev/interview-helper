@@ -1,8 +1,7 @@
 import { wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 
-import { signOut } from "@/shared/auth";
-import { PROFILE_PATH, QUESTIONS_PATH, SIGN_IN_PATH, THEORY_PATH } from "@/shared/config";
+import { profileRoute, questionsRoute, signInRoute, theoryRoute } from "@/app/routes";
 import {
   Avatar,
   AvatarFallback,
@@ -13,7 +12,7 @@ import {
   DropdownMenuTrigger,
 } from "@/shared/ui";
 
-import { user } from "../model/user";
+import { signOutToSignIn, user } from "../model/user";
 
 export const UserMenu = reatomComponent(() => {
   const { name, initials } = user() ?? { name: "", initials: "" };
@@ -21,12 +20,12 @@ export const UserMenu = reatomComponent(() => {
   if (!name) {
     return (
       <Button asChild variant="ghost">
-        <a href={SIGN_IN_PATH}>Sign in</a>
+        <a href={signInRoute.path()}>Sign in</a>
       </Button>
     );
   }
 
-  const handleLogOut = wrap(signOut);
+  const handleLogOut = wrap(signOutToSignIn);
 
   return (
     <DropdownMenu>
@@ -38,15 +37,15 @@ export const UserMenu = reatomComponent(() => {
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         <DropdownMenuItem asChild>
-          <a href={QUESTIONS_PATH}>Questions</a>
+          <a href={questionsRoute.path()}>Questions</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={THEORY_PATH}>Theory</a>
+          <a href={theoryRoute.path()}>Theory</a>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
-          <a href={PROFILE_PATH}>Profile</a>
+          <a href={profileRoute.path()}>Profile</a>
         </DropdownMenuItem>
-        <DropdownMenuItem disabled={!signOut.ready()} onClick={handleLogOut}>
+        <DropdownMenuItem disabled={!signOutToSignIn.ready()} onClick={handleLogOut}>
           Log Out
         </DropdownMenuItem>
       </DropdownMenuContent>

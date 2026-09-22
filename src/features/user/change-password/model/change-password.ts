@@ -1,8 +1,8 @@
-import { reatomField, reatomForm, wrap } from "@reatom/core";
+import { isAbort, reatomField, reatomForm, wrap } from "@reatom/core";
 import * as v from "valibot";
 
 import { clientApi } from "@/shared/api";
-import { registerFormSchemaValidation, toast } from "@/shared/ui";
+import { toast } from "@/shared/ui";
 
 const changePasswordSchema = v.object({
   password: v.pipe(
@@ -27,16 +27,20 @@ export const changePasswordForm = reatomForm(
   },
   {
     name: "changePasswordForm",
-    validateOnBlur: false,
+    validateOnBlur: true,
     validateOnChange: false,
     schema: changePasswordSchema,
     onSubmit: async ({ password }) => {
       try {
         await wrap(clientApi.changePassword({ password }));
-      } catch {
+      } catch (error) {
+        if (isAbort(error)) return;
+
         toast.error("Could not change the password. Try again later.");
 
-        return;
+        throw error instanceof Error
+          ? error
+          : new Error("Could not change the password. Try again later.");
       }
 
       changePasswordForm.reset();
@@ -45,8 +49,3 @@ export const changePasswordForm = reatomForm(
     },
   },
 );
-
-registerFormSchemaValidation(changePasswordForm, [
-  changePasswordForm.fields.password,
-  changePasswordForm.fields.passwordConfirmation,
-]);

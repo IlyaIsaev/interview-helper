@@ -1,18 +1,9 @@
-import { action, atom, effect, peek, reatomRoute, urlAtom, wrap } from "@reatom/core";
+import { action, atom, reatomRoute, urlAtom, wrap } from "@reatom/core";
 import { pipe, sample } from "es-toolkit/fp";
 import { lazy, Suspense } from "react";
+import * as v from "valibot";
 
-import {
-  initQuestion,
-  initQuestions,
-  openedQuestionId,
-  questions,
-  questionsQuery,
-  resetQuestions,
-} from "@/entities/questions/question";
-import { questionSearch } from "@/features/questions/search-questions";
-import { loadOpenedQuestion } from "@/pages/theory/index/model/load-opened-question";
-import { theoryQuestionSearch } from "@/pages/theory/index/model/question-search";
+import { questions, resetQuestions } from "@/entities/questions/question/model/questions";
 import { clientApi } from "@/shared/api";
 import { session } from "@/shared/auth";
 import {
@@ -23,7 +14,7 @@ import {
   SIGN_UP_PATH,
   THEORY_PATH,
 } from "@/shared/config";
-import { PageFallback } from "@/shared/ui";
+import { PageFallback, RouteLoadError } from "@/shared/ui";
 
 const QuestionsLayout = lazy(() => import("@/pages/questions/layout/ui/layout"));
 
@@ -41,23 +32,43 @@ const TheoryPage = lazy(() => import("@/pages/theory/index/ui/theory-page"));
 
 const QUESTION_PAGE_PATH = new RegExp(`^${QUESTIONS_PATH}/[^/]+$`);
 
+const questionParamsSchema = v.object({
+  id: v.pipe(v.string(), v.minLength(1)),
+});
+
+const theoryOpenedSearchSchema = v.object({
+  id: v.optional(v.string()),
+});
+
 const lastQuestionsUserId = atom<string | null | undefined>(undefined, "lastQuestionsUserId");
 
 const openSignedInDestination = action(() => {
-  if (questions() === null) return;
+  const listedQuestions = questions.data();
+
+  if (listedQuestions === null) return;
 
   const { pathname } = urlAtom();
 
   if (QUESTION_PAGE_PATH.test(pathname)) return;
 
-  if (questions()?.length === 0) return;
+  if (listedQuestions.length === 0) return;
 
-  const question = pipe(questions() ?? [], sample());
+  const nextQuestion = pipe(listedQuestions, sample());
 
-  if (!question) return;
+  if (!nextQuestion) return;
 
-  questionRoute.go({ id: question.id }, true);
+  questionRoute.go({ id: nextQuestion.id }, true);
 }, "openSignedInDestination");
+
+export const openQuestion = action((questionId: string) => {
+  if (urlAtom().pathname === THEORY_PATH) {
+    theoryOpenedRoute.go({ id: questionId });
+
+    return;
+  }
+
+  questionRoute.go({ id: questionId });
+}, "openQuestion");
 
 export const rootRoute = reatomRoute(
   {
@@ -84,14 +95,14 @@ export const protectedRoute = rootRoute.reatomRoute(
       const userId = user?.id ?? null;
 
       if (lastQuestionsUserId() !== userId) {
+        const previousUserId = lastQuestionsUserId();
+
         lastQuestionsUserId.set(userId);
 
-        if (questions() !== null) {
+        if (previousUserId !== undefined && questions.data() !== null) {
           resetQuestions();
 
-          questionSearch.reset();
-
-          theoryQuestionSearch.reset();
+          if (pathname === THEORY_PATH) theoryOpenedRoute.go({}, true);
         }
       }
 
@@ -119,27 +130,27 @@ export const questionsRoute = protectedRoute.reatomRoute(
     layout: true,
     path: QUESTIONS_PATH.slice(1),
     params() {
-      openSignedInDestination();
+      const { pathname } = urlAtom();
+
+      if (pathname === QUESTIONS_PATH || QUESTION_PAGE_PATH.test(pathname)) {
+        openSignedInDestination();
+      }
 
       return {};
     },
     async loader() {
       if (!session.ready()) return;
 
-      const query = peek(questionSearch).trim();
-
-      questionsQuery.set(query);
-
-      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
-
-      initQuestions(nextQuestions);
+      await wrap(questions());
 
       openSignedInDestination();
     },
     render(self) {
-      self.loader.ready();
+      const loadError = questions.error();
 
-      if (questions() === null) return <PageFallback />;
+      if (loadError) return <RouteLoadError onRetry={wrap(() => questions.retry())} />;
+
+      if (!questions.ready() || questions.data() === null) return <PageFallback />;
 
       const child = self.outlet();
 
@@ -158,18 +169,28 @@ export const questionsRoute = protectedRoute.reatomRoute(
 export const questionRoute = questionsRoute.reatomRoute(
   {
     path: ":id",
-    params({ id }) {
+    params: questionParamsSchema,
+    async loader({ id }) {
       if (!session.ready()) return null;
 
-      return { id };
-    },
-    async loader({ id }) {
-      const question = await wrap(clientApi.loadQuestion(id));
+      const loadedQuestion = await wrap(clientApi.loadQuestion(id));
 
-      initQuestion(question);
+      if (!loadedQuestion) {
+        questionsRoute.go(undefined, true);
+
+        return null;
+      }
+
+      return loadedQuestion;
     },
     render(self) {
-      if (!self.loader.ready()) return <PageFallback />;
+      const loadError = self.loader.error();
+
+      if (loadError) {
+        return <RouteLoadError onRetry={wrap(() => self.loader.retry())} />;
+      }
+
+      if (!self.loader.data()) return <PageFallback />;
 
       return <QuestionPage />;
     },
@@ -179,37 +200,41 @@ export const questionRoute = questionsRoute.reatomRoute(
 
 export const theoryRoute = protectedRoute.reatomRoute(
   {
+    layout: true,
     path: THEORY_PATH.slice(1),
     async loader() {
       if (!session.ready()) return;
 
-      const idFromUrl = peek(urlAtom).searchParams.get("id") ?? "";
-
-      if (peek(openedQuestionId) !== idFromUrl) {
-        openedQuestionId.set(idFromUrl);
-      }
-
-      const query = peek(theoryQuestionSearch).trim();
-
-      questionsQuery.set(query);
-
-      const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
-
-      initQuestions(nextQuestions);
-
-      effect(() => {
-        loadOpenedQuestion(openedQuestionId());
-      });
+      await wrap(questions());
     },
     render(self) {
-      self.loader.ready();
+      const loadError = questions.error();
 
-      if (questions() === null) return <PageFallback />;
+      if (loadError) return <RouteLoadError onRetry={wrap(() => questions.retry())} />;
 
-      return <TheoryPage />;
+      if (!questions.ready() || questions.data() === null) return <PageFallback />;
+
+      return <>{self.outlet()}</>;
     },
   },
   "theoryRoute",
+);
+
+export const theoryOpenedRoute = theoryRoute.reatomRoute(
+  {
+    search: theoryOpenedSearchSchema,
+    async loader({ id }) {
+      if (!id) return null;
+
+      if (!session.ready()) return null;
+
+      return await wrap(clientApi.loadQuestion(id));
+    },
+    render() {
+      return <TheoryPage />;
+    },
+  },
+  "theoryOpenedRoute",
 );
 
 export const profileRoute = protectedRoute.reatomRoute(
@@ -237,6 +262,10 @@ export const profileRoute = protectedRoute.reatomRoute(
       };
     },
     render(self) {
+      const loadError = self.loader.error();
+
+      if (loadError) return <RouteLoadError onRetry={wrap(() => self.loader.retry())} />;
+
       if (!self.loader.ready()) return <PageFallback />;
 
       const user = self.loader.data();
@@ -289,6 +318,7 @@ export const appRoutes = {
   questions: questionsRoute,
   question: questionRoute,
   theory: theoryRoute,
+  theoryOpened: theoryOpenedRoute,
   profile: profileRoute,
   signIn: signInRoute,
   signUp: signUpRoute,

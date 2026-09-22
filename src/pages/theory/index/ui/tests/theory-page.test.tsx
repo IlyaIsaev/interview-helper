@@ -1,9 +1,10 @@
 import { urlAtom } from "@reatom/core";
-import { expect, test } from "vitest";
+import { expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 
-import { initQuestion, initQuestions, openedQuestionId } from "@/entities/questions/question";
+import { theoryOpenedRoute } from "@/app/routes";
+import { questions } from "@/entities/questions/question";
 import { THEORY_PATH } from "@/shared/config";
 
 import TheoryPage from "../theory-page";
@@ -11,15 +12,27 @@ import TheoryPage from "../theory-page";
 const firstQuestionId = "11111111-1111-1111-1111-111111111111";
 const secondQuestionId = "22222222-2222-2222-2222-222222222222";
 
-const openTheoryPage = () => {
-  urlAtom.go(THEORY_PATH);
-  openedQuestionId.set("");
-  initQuestion(null);
+const fixtures = vi.hoisted(() => ({
+  questions: [] as Array<{ id: string; question: string }>,
+  question: null as null | { id: string; question: string; answer: string },
+}));
+
+vi.mock("@/shared/api", () => ({
+  clientApi: {
+    loadQuestions: async () => ({ questions: fixtures.questions }),
+    loadQuestion: async () => fixtures.question,
+  },
+}));
+
+const openTheoryPage = (search = "") => {
+  fixtures.question = null;
+  urlAtom.go(search.length === 0 ? THEORY_PATH : `${THEORY_PATH}?${search}`);
 };
 
 test("should show create question when the questions list is empty", async () => {
   openTheoryPage();
-  initQuestions([]);
+  fixtures.questions = [];
+  questions.data.set([]);
 
   const screen = await render(<TheoryPage />);
 
@@ -30,10 +43,11 @@ test("should show create question when the questions list is empty", async () =>
 
 test("should show question triggers without answers", async () => {
   openTheoryPage();
-  initQuestions([
+  fixtures.questions = [
     { id: firstQuestionId, question: "First question" },
     { id: secondQuestionId, question: "Second question" },
-  ]);
+  ];
+  questions.data.set(fixtures.questions);
 
   const screen = await render(<TheoryPage />);
 
@@ -45,26 +59,27 @@ test("should show question triggers without answers", async () => {
 
 test("should add the question id search param when a trigger opens", async () => {
   openTheoryPage();
-  initQuestions([{ id: firstQuestionId, question: "First question" }]);
+  fixtures.questions = [{ id: firstQuestionId, question: "First question" }];
+  questions.data.set(fixtures.questions);
 
   const screen = await render(<TheoryPage />);
 
   await userEvent.click(screen.getByRole("button", { name: "First question" }));
 
-  expect(openedQuestionId()).toBe(firstQuestionId);
   expect(urlAtom().pathname).toBe(THEORY_PATH);
   expect(urlAtom().searchParams.get("id")).toBe(firstQuestionId);
 });
 
 test("should show the answer after the opened question loads", async () => {
-  openTheoryPage();
-  initQuestions([{ id: firstQuestionId, question: "First question" }]);
-  openedQuestionId.set(firstQuestionId);
-  initQuestion({
+  fixtures.questions = [{ id: firstQuestionId, question: "First question" }];
+  fixtures.question = {
     id: firstQuestionId,
     question: "First question",
     answer: "First answer",
-  });
+  };
+  questions.data.set(fixtures.questions);
+  urlAtom.go(`${THEORY_PATH}?id=${firstQuestionId}`);
+  await theoryOpenedRoute.loader.retry();
 
   const screen = await render(<TheoryPage />);
 
@@ -73,10 +88,10 @@ test("should show the answer after the opened question loads", async () => {
 });
 
 test("should show question not found when the opened id is missing", async () => {
-  openTheoryPage();
-  openedQuestionId.set("abc");
-  initQuestions([]);
-  initQuestion(null);
+  fixtures.questions = [];
+  fixtures.question = null;
+  questions.data.set([]);
+  urlAtom.go(`${THEORY_PATH}?id=abc`);
 
   const screen = await render(<TheoryPage />);
 
@@ -87,7 +102,8 @@ test("should show question not found when the opened id is missing", async () =>
 
 test("should include hover-revealed update and delete actions on an accordion item", async () => {
   openTheoryPage();
-  initQuestions([{ id: firstQuestionId, question: "First question" }]);
+  fixtures.questions = [{ id: firstQuestionId, question: "First question" }];
+  questions.data.set(fixtures.questions);
 
   const screen = await render(<TheoryPage />);
   const updateQuestion = screen.getByRole("button", { name: "Update question" });
@@ -114,20 +130,19 @@ test("should include hover-revealed update and delete actions on an accordion it
 });
 
 test("should clear the question id search param when the open trigger collapses", async () => {
-  openTheoryPage();
-  initQuestions([{ id: firstQuestionId, question: "First question" }]);
-  openedQuestionId.set(firstQuestionId);
-  initQuestion({
+  fixtures.questions = [{ id: firstQuestionId, question: "First question" }];
+  fixtures.question = {
     id: firstQuestionId,
     question: "First question",
     answer: "First answer",
-  });
+  };
+  questions.data.set(fixtures.questions);
+  urlAtom.go(`${THEORY_PATH}?id=${firstQuestionId}`);
 
   const screen = await render(<TheoryPage />);
 
   await userEvent.click(screen.getByRole("button", { name: "First question" }));
 
-  expect(openedQuestionId()).toBe("");
   expect(urlAtom().pathname).toBe(THEORY_PATH);
   expect(urlAtom().searchParams.get("id")).toBeNull();
 });

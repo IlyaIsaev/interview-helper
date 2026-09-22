@@ -1,8 +1,9 @@
-import { computed } from "@reatom/core";
+import { action, computed, withAsync, wrap } from "@reatom/core";
 import { compact, join, map, pipe, take } from "es-toolkit/fp";
 import type { DeepReadonly } from "es-toolkit/types";
 
-import { session } from "@/shared/auth";
+import { signInRoute } from "@/app/routes";
+import { session, signOut } from "@/shared/auth";
 
 export type User = DeepReadonly<{
   name: string;
@@ -27,6 +28,12 @@ const buildUserInitials = (name: string): string => {
 
   return initials;
 };
+
+export const signOutToSignIn = action(async () => {
+  await wrap(signOut());
+
+  signInRoute.go();
+}, "signOutToSignIn").extend(withAsync());
 
 export const user = computed((): User | null => {
   const name = session.data()?.user?.name;

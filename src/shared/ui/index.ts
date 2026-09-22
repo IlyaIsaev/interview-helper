@@ -16,8 +16,6 @@ export {
 
 export { bindFormControl } from "./bind-form-control";
 
-export { registerFormSchemaValidation } from "./form-schema-validation";
-
 export {
   DropdownMenu,
   DropdownMenuContent,
@@ -45,6 +43,9 @@ export { Skeleton } from "./skeleton";
 export { Spinner } from "./spinner";
 
 export { PageFallback } from "./page-fallback";
+
+export { RouteLoadError } from "./route-load-error";
+export type { RouteLoadErrorProps } from "./route-load-error";
 
 export { Toaster } from "./sonner";
 export { toast } from "sonner";

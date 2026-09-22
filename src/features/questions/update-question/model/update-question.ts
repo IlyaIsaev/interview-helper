@@ -1,34 +1,30 @@
 import {
   action,
   atom,
+  isAbort,
   reatomBoolean,
   reatomForm,
-  urlAtom,
   withAbort,
   withAsync,
-  withCallHook,
   wrap,
 } from "@reatom/core";
 import { find, pipe } from "es-toolkit/fp";
 
+import { openQuestion, questionRoute, theoryOpenedRoute } from "@/app/routes";
 import {
-  initQuestion,
+  activeQuestionsQuery,
   openedQuestionId,
-  openQuestion,
   parseQuestionMarkdown,
   question as openedQuestion,
   questionFieldsSchema,
   questions,
-  questionsQuery,
-  refetchQuestions,
   updateInQuestions,
   type OpenedQuestion,
   type Question,
 } from "@/entities/questions/question";
 import { clientApi } from "@/shared/api";
 import { isSignedIn } from "@/shared/auth";
-import { questionPath } from "@/shared/config";
-import { markdownPlainText, registerFormSchemaValidation, toast } from "@/shared/ui";
+import { markdownPlainText, toast } from "@/shared/ui";
 
 export const updatedQuestionId = atom<string | null>(null, "updatedQuestionId");
 
@@ -49,6 +45,14 @@ export const closeUpdateQuestionDialog = action(() => {
   updateQuestionForm.reset();
 }, "closeUpdateQuestionDialog");
 
+const patchOpenedQuestion = (questionId: string, nextOpenedQuestion: OpenedQuestion | null) => {
+  if (questionRoute()?.id === questionId) questionRoute.loader.data.set(nextOpenedQuestion);
+
+  if (theoryOpenedRoute()?.id === questionId) {
+    theoryOpenedRoute.loader.data.set(nextOpenedQuestion);
+  }
+};
+
 export const updateQuestionForm = reatomForm(
   {
     question: "",
@@ -56,8 +60,8 @@ export const updateQuestionForm = reatomForm(
   },
   {
     name: "updateQuestionForm",
-    validateOnBlur: false,
-    validateOnChange: true,
+    validateOnBlur: true,
+    validateOnChange: false,
     schema: questionFieldsSchema,
     onSubmit: async ({ question: nextQuestion, answer: nextAnswer }) => {
       if (!isSignedIn()) return;
@@ -66,22 +70,23 @@ export const updateQuestionForm = reatomForm(
 
       if (!questionId) return;
 
-      const question = pipe(questions() ?? [], find(hasQuestionId(questionId)));
-      const isQuestionOpened =
-        openedQuestionId() === questionId || urlAtom().pathname === questionPath(questionId);
+      const question = pipe(questions.data() ?? [], find(hasQuestionId(questionId)));
+      const isQuestionOpened = openedQuestionId() === questionId;
       const questionOnPage = isQuestionOpened ? openedQuestion() : undefined;
       const questionText = question?.question ?? questionOnPage?.question;
       const questionDescription =
         questionText === undefined ? undefined : markdownPlainText(questionText);
-      const isSearchEmpty = questionsQuery().length === 0;
+      const isSearchEmpty = activeQuestionsQuery().length === 0;
+      const previousQuestions = questions.data();
 
       const syncQuestion = (
-        question: Question | undefined,
+        nextListedQuestion: Question | undefined,
         nextOpenedQuestion: OpenedQuestion | null,
       ) => {
-        if (isSearchEmpty && question !== undefined) updateInQuestions(question);
+        if (isSearchEmpty && nextListedQuestion !== undefined)
+          updateInQuestions(nextListedQuestion);
 
-        if (isQuestionOpened) initQuestion(nextOpenedQuestion);
+        if (isQuestionOpened) patchOpenedQuestion(questionId, nextOpenedQuestion);
       };
 
       closeUpdateQuestionDialog();
@@ -111,28 +116,37 @@ export const updateQuestionForm = reatomForm(
           },
         );
 
+        openQuestion(updatedQuestion.id);
+
         toast.success("Question updated.", {
           description: questionDescription,
         });
 
-        await wrap(refetchQuestions());
+        try {
+          await wrap(questions.retry());
+        } catch (error) {
+          if (isAbort(error)) return updatedQuestion;
+        }
 
         return updatedQuestion;
-      } catch {
-        syncQuestion(question, questionOnPage ?? null);
+      } catch (error) {
+        if (isAbort(error)) return;
+
+        questions.data.set(previousQuestions);
+
+        if (isQuestionOpened) patchOpenedQuestion(questionId, questionOnPage ?? null);
 
         toast.error("Could not update the question. Try again later.", {
           description: questionDescription,
         });
+
+        throw error instanceof Error
+          ? error
+          : new Error("Could not update the question. Try again later.");
       }
     },
   },
 );
-
-registerFormSchemaValidation(updateQuestionForm, [
-  updateQuestionForm.fields.question,
-  updateQuestionForm.fields.answer,
-]);
 
 const markdownImportInvalidMessage = "The file must start with a heading.";
 
@@ -175,11 +189,3 @@ export const openUpdateQuestion = action(async (questionId: string) => {
     answer: nextQuestion.answer,
   });
 }, "openUpdateQuestion").extend(withAsync(), withAbort());
-
-updateQuestionForm.submit.onFulfill.extend(
-  withCallHook(({ payload: updatedQuestion }) => {
-    if (!updatedQuestion) return;
-
-    openQuestion(updatedQuestion.id);
-  }),
-);

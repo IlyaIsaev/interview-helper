@@ -1,10 +1,12 @@
-import { reatomBoolean, urlAtom, wrap } from "@reatom/core";
+import { reatomBoolean, wrap } from "@reatom/core";
 import { reatomComponent } from "@reatom/react";
 import { find, pipe } from "es-toolkit/fp";
 import type { ReactNode } from "react";
 
+import { questionRoute, questionsRoute } from "@/app/routes";
 import {
   openListedQuestion,
+  questionSearch,
   QuestionList,
   questions,
   type Question,
@@ -12,11 +14,10 @@ import {
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
 import { PublishQuestionsButton } from "@/features/questions/publish-questions";
-import { questionSearch, SearchQuestions } from "@/features/questions/search-questions";
+import { SearchQuestions } from "@/features/questions/search-questions";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
-import { HOME_PATH, questionPath } from "@/shared/config";
 import { Button } from "@/shared/ui";
 
 const isQuestionsDialogOpen = reatomBoolean(false, "isQuestionsDialogOpen");
@@ -31,9 +32,9 @@ type LayoutProps = {
 
 const Layout = reatomComponent(({ children }: LayoutProps) => {
   const search = questionSearch();
-  const listedQuestions = questions();
-  const currentPath = urlAtom().pathname;
-  const isOpenedQuestion = (question: Question) => questionPath(question.id) === currentPath;
+  const listedQuestions = questions.data();
+  const openedQuestionRouteId = questionRoute()?.id ?? null;
+  const isOpenedQuestion = (question: Question) => question.id === openedQuestionRouteId;
   const openedQuestionId =
     listedQuestions === null ? null : (pipe(listedQuestions, find(isOpenedQuestion))?.id ?? null);
 
@@ -49,6 +50,8 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
 
   const handleQuestionClick = wrap((questionId: string) => {
     openListedQuestion(questionId);
+
+    if (questionRoute()?.id !== questionId) questionRoute.go({ id: questionId });
 
     closeQuestionsDialog();
   });
@@ -98,7 +101,10 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
       <UpdateQuestion />
       <DeleteQuestion />
       <header className="flex h-12 shrink-0 items-center gap-3 border-b border-border px-3">
-        <a className="text-lg uppercase tracking-[2px] text-muted-foreground" href={HOME_PATH}>
+        <a
+          className="text-lg uppercase tracking-[2px] text-muted-foreground"
+          href={questionsRoute.path()}
+        >
           Interview helper
         </a>
         <Button type="button" variant="ghost" onClick={openQuestionsDialog}>

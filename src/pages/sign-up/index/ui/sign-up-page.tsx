@@ -1,6 +1,6 @@
 import { reatomComponent } from "@reatom/react";
 
-import { SIGN_IN_PATH } from "@/shared/config";
+import { signInRoute } from "@/app/routes";
 import {
   bindFormControl,
   Button,
@@ -64,7 +64,7 @@ const SignUpPage = reatomComponent(() => {
       </Form>
       <p className="text-ui text-muted-foreground">
         Already have an account?{" "}
-        <a className="text-primary underline-offset-4 hover:underline" href={SIGN_IN_PATH}>
+        <a className="text-primary underline-offset-4 hover:underline" href={signInRoute.path()}>
           Sign in
         </a>
       </p>

@@ -1,67 +1,79 @@
-import { action, atom, reatomString, withAbort, wrap } from "@reatom/core";
+import { action, computed, reatomString, sleep, urlAtom, withAsyncData, wrap } from "@reatom/core";
 import { filter, flatten, map, pick, pipe, sortBy } from "es-toolkit/fp";
 import type { DeepReadonly } from "es-toolkit/types";
 
 import { clientApi } from "@/shared/api";
+import { session } from "@/shared/auth";
+import { THEORY_PATH } from "@/shared/config";
 import { markdownPlainText } from "@/shared/lib";
-
-import { initQuestion, openedQuestionId } from "./question";
 
 export type Question = DeepReadonly<{
   id: string;
   question: string;
 }>;
 
-export const questions = atom<ReadonlyArray<Question> | null>(null, "questions");
+export const questionSearch = reatomString("", "questionSearch");
 
-export const questionsQuery = reatomString("", "questionsQuery");
+export const theoryQuestionSearch = reatomString("", "theoryQuestionSearch");
 
 const questionSortKey = (question: Question) => markdownPlainText(question.question).toLowerCase();
 
 const sortedQuestions = (nextQuestions: ReadonlyArray<Question>): ReadonlyArray<Question> =>
   pipe(nextQuestions, map(pick(["id", "question"])), sortBy([questionSortKey]));
 
-export const initQuestions = action((nextQuestions: ReadonlyArray<Question>) => {
-  questions.set(sortedQuestions(nextQuestions));
-}, "initQuestions");
+export const activeQuestionsQuery = computed(() => {
+  const search = urlAtom().pathname === THEORY_PATH ? theoryQuestionSearch() : questionSearch();
+
+  return search.trim();
+}, "activeQuestionsQuery");
+
+const waitUntilSessionSettles = async () => {
+  if (session.ready()) return;
+
+  await wrap(new Promise<never>(() => {}));
+};
+
+export const questions = computed(async () => {
+  const signedInUserId = session.data()?.user?.id ?? null;
+
+  await waitUntilSessionSettles();
+
+  const query = activeQuestionsQuery();
+
+  if (query.length > 0) await wrap(sleep(300));
+
+  if ((session.data()?.user?.id ?? null) !== signedInUserId) return null;
+
+  const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
+
+  return sortedQuestions(nextQuestions);
+}, "questions").extend(withAsyncData({ initState: null as ReadonlyArray<Question> | null }));
 
 export const resetQuestions = action(() => {
-  questions.set(null);
+  questionSearch.reset();
 
-  questionsQuery.set("");
+  theoryQuestionSearch.reset();
 
-  openedQuestionId.set("");
-
-  initQuestion(null);
+  questions.data.set(null);
 }, "resetQuestions");
 
 export const addToQuestions = action((question: Question) => {
-  questions.set(sortedQuestions(pipe([questions() ?? [], [question]], flatten())));
+  questions.data.set(sortedQuestions(pipe([questions.data() ?? [], [question]], flatten())));
 }, "addToQuestions");
 
 export const updateInQuestions = action((nextQuestion: Question) => {
   const replaceQuestion = (question: Question) =>
     question.id === nextQuestion.id ? nextQuestion : question;
 
-  questions.set(sortedQuestions(pipe(questions() ?? [], map(replaceQuestion))));
+  questions.data.set(sortedQuestions(pipe(questions.data() ?? [], map(replaceQuestion))));
 }, "updateInQuestions");
 
 export const removeFromQuestions = action((questionId: string) => {
   const isOtherQuestion = (question: Question) => question.id !== questionId;
 
-  questions.set(pipe(questions() ?? [], filter(isOtherQuestion)));
+  questions.data.set(pipe(questions.data() ?? [], filter(isOtherQuestion)));
 }, "removeFromQuestions");
 
 export const restoreToQuestions = action((question: Question, atIndex: number) => {
-  questions.set(sortedQuestions((questions() ?? []).toSpliced(atIndex, 0, question)));
+  questions.data.set(sortedQuestions((questions.data() ?? []).toSpliced(atIndex, 0, question)));
 }, "restoreToQuestions");
-
-export const refetchQuestions = action(async () => {
-  try {
-    const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(questionsQuery()));
-
-    initQuestions(nextQuestions);
-  } catch {
-    return;
-  }
-}, "refetchQuestions").extend(withAbort());
