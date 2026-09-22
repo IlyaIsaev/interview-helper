@@ -18,7 +18,7 @@ import {
   CreateQuestionEmptyButton,
 } from "@/features/questions/create-question";
 import { DeleteQuestion, openDeleteQuestion } from "@/features/questions/delete-question";
-import { PublishQuestionsButton } from "@/features/questions/publish-questions";
+import { PublishQuestionButton } from "@/features/questions/publish-questions";
 import { openUpdateQuestion, UpdateQuestion } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
@@ -98,6 +98,7 @@ const QuestionAccordionItem = reatomComponent(
           className="py-3 hover:no-underline"
           trailing={
             <div className="flex shrink-0 items-center gap-1 py-2 pr-1 transition-opacity md:opacity-0 md:group-hover/accordion-item:opacity-100 md:group-focus-within/accordion-item:opacity-100">
+              <PublishQuestionButton questionId={listedQuestion.id} />
               <Button
                 type="button"
                 variant="ghost"
@@ -274,7 +275,6 @@ const TheoryPage = reatomComponent(() => {
         </a>
         <CreateQuestionButton />
         <div className="flex items-center gap-3">
-          <PublishQuestionsButton />
           <UserMenu />
           <ThemeSwitcher />
         </div>

@@ -1,31 +1,23 @@
-import { action, reatomBoolean, withAsync, wrap } from "@reatom/core";
+import { action, atom, withAsync, wrap } from "@reatom/core";
 
 import { clientApi } from "@/shared/api";
 import { isSignedIn } from "@/shared/auth";
 import { toast } from "@/shared/ui";
 
-export const isPublishQuestionsDialogOpen = reatomBoolean(false, "isPublishQuestionsDialogOpen");
+export const publishingQuestionId = atom<string | null>(null, "publishingQuestionId");
 
-export const closePublishQuestionsDialog = action(() => {
-  isPublishQuestionsDialogOpen.setFalse();
-}, "closePublishQuestionsDialog");
-
-export const openPublishQuestions = action(() => {
-  isPublishQuestionsDialogOpen.setTrue();
-}, "openPublishQuestions");
-
-export const publishQuestions = action(async () => {
+export const publishQuestion = action(async (questionId: string) => {
   if (!isSignedIn()) return;
 
-  closePublishQuestionsDialog();
+  publishingQuestionId.set(questionId);
 
   try {
-    await wrap(clientApi.publishQuestions());
+    await wrap(clientApi.publishQuestion(questionId));
+
+    toast.success("Published.");
   } catch {
     toast.error("Could not publish the questions. Try again later.");
-
-    return;
+  } finally {
+    publishingQuestionId.set(null);
   }
-
-  toast.success("Published.");
-}, "publishQuestions").extend(withAsync());
+}, "publishQuestion").extend(withAsync());

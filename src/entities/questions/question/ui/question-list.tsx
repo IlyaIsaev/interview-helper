@@ -28,6 +28,7 @@ type QuestionListProps = {
   activeQuestionId: string | null;
   activeAriaCurrent: true | "page";
   onQuestionClick: (questionId: string) => void;
+  publishQuestion: (question: Question) => ReactNode;
   updateQuestion: (question: Question) => ReactNode;
   deleteQuestion: (question: Question) => ReactNode;
 };
@@ -42,6 +43,7 @@ export function QuestionList({
   activeQuestionId,
   activeAriaCurrent,
   onQuestionClick,
+  publishQuestion,
   updateQuestion,
   deleteQuestion,
 }: QuestionListProps) {
@@ -87,6 +89,7 @@ export function QuestionList({
           <Markdown plain>{question.question}</Markdown>
         </Button>
         <div className="flex shrink-0 items-center transition-opacity md:opacity-0 md:group-hover/question-item:opacity-100 md:group-focus-within/question-item:opacity-100">
+          {publishQuestion(question)}
           {updateQuestion(question)}
           {deleteQuestion(question)}
         </div>

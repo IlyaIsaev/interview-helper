@@ -117,24 +117,6 @@ const loadPublishedQuestion = async (
   return foundQuestion ?? null;
 };
 
-const replacePublishedQuestions = async (
-  database: ReturnType<typeof createDatabase>,
-  nextQuestions: ReadonlyArray<Question>,
-): Promise<void> => {
-  const [firstQuestion, ...otherQuestions] = nextQuestions;
-
-  if (!firstQuestion) {
-    await database.delete(publishedQuestion);
-
-    return;
-  }
-
-  await database.batch([
-    database.delete(publishedQuestion),
-    database.insert(publishedQuestion).values([firstQuestion, ...otherQuestions]),
-  ]);
-};
-
 export const questions = new Hono<QuestionsContext>()
   .use(
     csrf({
@@ -160,19 +142,6 @@ export const questions = new Hono<QuestionsContext>()
       .from(publishedQuestion);
 
     return context.json({ questions: questionsMatchingSearch(loadedQuestions, q) }, 200);
-  })
-  .post("/publish", requireSession, async (context) => {
-    const database = createDatabase(context.env.DB);
-    const userId = context.get("userId");
-
-    const ownedQuestions = await database
-      .select(questionRow)
-      .from(question)
-      .where(eq(question.userId, userId));
-
-    await replacePublishedQuestions(database, ownedQuestions);
-
-    return context.body(null, 204);
   })
   .get("/:id", vValidator("param", questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid("param");
@@ -236,6 +205,31 @@ export const questions = new Hono<QuestionsContext>()
       return context.json(updatedQuestion, 200);
     },
   )
+  .post(
+    "/:id/publish",
+    requireSession,
+    vValidator("param", questionIdSchema),
+    async (context) => {
+      const { id: questionId } = context.req.valid("param");
+      const database = createDatabase(context.env.DB);
+      const ownedQuestionRow = await loadQuestion(database, questionId, context.get("userId"));
+
+      if (!ownedQuestionRow) return context.json({ message: "Question not found" }, 404);
+
+      await database
+        .insert(publishedQuestion)
+        .values(ownedQuestionRow)
+        .onConflictDoUpdate({
+          target: publishedQuestion.id,
+          set: {
+            question: ownedQuestionRow.question,
+            answer: ownedQuestionRow.answer,
+          },
+        });
+
+      return context.body(null, 204);
+    },
+  )
   .delete("/:id", requireSession, vValidator("param", questionIdSchema), async (context) => {
     const { id: questionId } = context.req.valid("param");
     const database = createDatabase(context.env.DB);
@@ -246,6 +240,8 @@ export const questions = new Hono<QuestionsContext>()
       .returning(questionRow);
 
     if (!deletedQuestion) return context.json({ message: "Question not found" }, 404);
+
+    await database.delete(publishedQuestion).where(eq(publishedQuestion.id, questionId));
 
     return context.body(null, 204);
   });

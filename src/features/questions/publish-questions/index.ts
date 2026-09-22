@@ -1,1 +1,1 @@
-export { PublishQuestionsButton } from "./ui/publish-questions-button";
+export { PublishQuestionButton } from "./ui/publish-questions-button";

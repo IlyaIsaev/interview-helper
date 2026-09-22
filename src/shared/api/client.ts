@@ -136,12 +136,16 @@ export const clientApi = {
     if (!response.ok) throw new Error(`DELETE /api/questions/:id failed: ${response.status}`);
   },
 
-  async publishQuestions(): Promise<void> {
-    const response = await wrap(api.api.questions.publish.$post());
+  async publishQuestion(id: string): Promise<void> {
+    const response = await wrap(
+      api.api.questions[":id"].publish.$post({
+        param: { id },
+      }),
+    );
 
     await retrySessionIfUnauthorized(response);
 
-    if (!response.ok) throw new Error(`POST /api/questions/publish failed: ${response.status}`);
+    if (!response.ok) throw new Error(`POST /api/questions/:id/publish failed: ${response.status}`);
   },
 
   async deleteUser(): Promise<void> {

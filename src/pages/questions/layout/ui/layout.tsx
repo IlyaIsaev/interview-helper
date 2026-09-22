@@ -13,7 +13,7 @@ import {
 } from "@/entities/questions/question";
 import { CreateQuestion, CreateQuestionButton } from "@/features/questions/create-question";
 import { DeleteQuestion, DeleteQuestionButton } from "@/features/questions/delete-question";
-import { PublishQuestionsButton } from "@/features/questions/publish-questions";
+import { PublishQuestionButton } from "@/features/questions/publish-questions";
 import { SearchQuestions } from "@/features/questions/search-questions";
 import { UpdateQuestion, UpdateQuestionButton } from "@/features/questions/update-question";
 import { ThemeSwitcher } from "@/features/theme-switcher";
@@ -66,6 +66,10 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
     );
   }
 
+  function renderPublishQuestion(question: Question) {
+    return <PublishQuestionButton questionId={question.id} />;
+  }
+
   function renderUpdateQuestion(question: Question) {
     return (
       <div className="contents" onClick={handleQuestionFormOpen}>
@@ -94,6 +98,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         activeQuestionId={openedQuestionId}
         activeAriaCurrent="page"
         onQuestionClick={handleQuestionClick}
+        publishQuestion={renderPublishQuestion}
         updateQuestion={renderUpdateQuestion}
         deleteQuestion={renderDeleteQuestion}
       />
@@ -111,7 +116,6 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
           Questions
         </Button>
         <div className="ml-auto flex items-center gap-3">
-          <PublishQuestionsButton />
           <UserMenu />
           <ThemeSwitcher />
         </div>

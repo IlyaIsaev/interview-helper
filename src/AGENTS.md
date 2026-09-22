@@ -49,7 +49,7 @@ pages/sign-up/
   index/             ← empty custom sign-up form
 features/questions/create-question/ ← dialog form to create a question + answer
 features/questions/delete-question/ ← confirm dialog to delete a question
-features/questions/publish-questions/ ← header button to snapshot questions for guests
+features/questions/publish-questions/ ← row button to publish one question for guests
 features/questions/search-questions/ ← search field in the questions dialog
 features/questions/update-question/ ← dialog form to update a question + answer
 features/theme-switcher/ ← icon toggle for light/dark theme
@@ -305,7 +305,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
   - `/theory` loads the same questions list and does not follow question landing. An open accordion item is `?id=`.
   - `/profile` is signed-in only; it does not load questions or follow question landing.
 - Header `UserMenu` is the avatar menu when signed in. Guests see a Sign in link in that slot (no Theory header item).
-- Header `Publish` is signed-in only. It opens a confirmation dialog, then while the snapshot is saving it shows a spinner and `Publishing...`. `POST /api/questions/publish` deletes every `published_question` row and inserts the signed-in user's current questions (an empty list clears the catalog). Last publisher wins. Later edits stay private until Publish is confirmed again.
+- `Publish question` is signed-in only, on each question in the questions dialog and on each theory accordion item. It publishes that question immediately. While `POST /api/questions/:id/publish` saves, that button shows a spinner and is disabled. The shared-catalog row is replaced completely with the current question and answer; other published questions stay. Later edits stay private until that question is published again. Deleting a question also removes it from the shared catalog.
 - Create, update, and delete question submits are disabled for guests, with a hover tooltip. The worker still requires a session for POST/PUT/DELETE.
 - Sign-out returns to `/sign-in` with an empty form (`signInRoute.go()` after `session.retry()`).
 - Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.

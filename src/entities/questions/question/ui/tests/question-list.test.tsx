@@ -24,6 +24,10 @@ async function renderQuestionList({
   onQuestionClick = () => {},
   questions = [firstQuestion, secondQuestion],
 }: RenderQuestionListOptions = {}) {
+  function renderPublishQuestion(question: Question) {
+    return <span>{`publish ${question.id}`}</span>;
+  }
+
   function renderUpdateQuestion(question: Question) {
     return <span>{`update ${question.id}`}</span>;
   }
@@ -43,13 +47,14 @@ async function renderQuestionList({
       activeQuestionId={questions[0]?.id ?? null}
       activeAriaCurrent="page"
       onQuestionClick={onQuestionClick}
+      publishQuestion={renderPublishQuestion}
       updateQuestion={renderUpdateQuestion}
       deleteQuestion={renderDeleteQuestion}
     />,
   );
 }
 
-test("should include hover-revealed update and delete slots on a question item", async () => {
+test("should include hover-revealed publish, update, and delete slots on a question item", async () => {
   const screen = await renderQuestionList();
   const updateQuestion = screen.getByText(`update ${firstQuestion.id}`);
   const questionActions = updateQuestion.element().parentElement;
@@ -57,6 +62,7 @@ test("should include hover-revealed update and delete slots on a question item",
   await expect.element(screen.getByRole("dialog", { name: "Questions" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "First question" })).toBeVisible();
   await expect.element(screen.getByRole("button", { name: "Second question" })).toBeVisible();
+  await expect.element(screen.getByText(`publish ${firstQuestion.id}`)).toBeInTheDocument();
   await expect.element(updateQuestion).toBeInTheDocument();
   await expect.element(screen.getByText(`delete ${firstQuestion.id}`)).toBeInTheDocument();
 

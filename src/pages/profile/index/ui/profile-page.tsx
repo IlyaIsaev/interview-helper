@@ -3,7 +3,6 @@ import type { DeepReadonly } from "es-toolkit/types";
 import { House } from "lucide-react";
 
 import { questionsRoute } from "@/app/routes";
-import { PublishQuestionsButton } from "@/features/questions/publish-questions";
 import { ThemeSwitcher } from "@/features/theme-switcher";
 import { ChangePasswordForm } from "@/features/user/change-password";
 import { DeleteUser, DeleteUserButton } from "@/features/user/delete-user";
@@ -33,7 +32,6 @@ const ProfilePage = reatomComponent(({ user }: ProfilePageProps) => {
           Interview helper
         </a>
         <div className="ml-auto flex items-center gap-3">
-          <PublishQuestionsButton />
           <UserMenu />
           <ThemeSwitcher />
         </div>

@@ -158,20 +158,20 @@ const holdCreateQuestion = async (page: Page) => {
   };
 };
 
-const isPublishQuestionsPost = (request: Request) => {
+const isPublishQuestionPost = (request: Request) => {
   if (request.method() !== "POST") return false;
 
-  return new URL(request.url()).pathname === "/api/questions/publish";
+  return /^\/api\/questions\/[^/]+\/publish$/.test(new URL(request.url()).pathname);
 };
 
-const holdPublishQuestions = async (page: Page) => {
+const holdPublishQuestion = async (page: Page) => {
   let releasePublish = () => {};
   const publishHeld = new Promise<void>((resolve) => {
     releasePublish = resolve;
   });
 
-  await page.route("**/api/questions/publish", async (route) => {
-    if (!isPublishQuestionsPost(route.request())) {
+  await page.route("**/api/questions/*/publish", async (route) => {
+    if (!isPublishQuestionPost(route.request())) {
       await route.continue();
 
       return;
@@ -184,15 +184,6 @@ const holdPublishQuestions = async (page: Page) => {
   return () => {
     releasePublish();
   };
-};
-
-const publishQuestionsDialog = (page: Page) =>
-  page.getByRole("dialog", { name: "Publish questions" });
-
-const confirmPublish = async (page: Page) => {
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(publishQuestionsDialog(page)).toBeVisible();
-  await publishQuestionsDialog(page).getByRole("button", { name: "Publish", exact: true }).click();
 };
 
 const isLoadQuestions = (request: Request) => {
@@ -257,6 +248,18 @@ const createSubmit = (page: Page) =>
   page.getByRole("dialog").getByRole("button", { name: "Create", exact: true });
 
 const notifications = (page: Page) => page.getByRole("region", { name: /Notifications/i });
+
+const publishQuestionFromDialog = async (page: Page, questionText: string) => {
+  const question = await openDialogQuestionItem(page, questionText);
+  const published = page.waitForResponse(
+    (response) => isPublishQuestionPost(response.request()) && response.ok(),
+  );
+
+  await question.hover();
+  await question.getByRole("button", { name: "Publish question" }).click();
+  await published;
+  await expect(notifications(page).getByText("Published.").first()).toBeVisible();
+};
 
 test("guests can open questions routes", async ({ page }) => {
   await page.goto("/questions");
@@ -1338,7 +1341,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
   await expect(sidebarQuestion(page, gammaVisible)).toBeVisible();
 });
 
-test("publishing snapshots questions for guests until the next publish", async ({ page }) => {
+test("publishing one question snapshots it for guests until it is deleted", async ({ page }) => {
   const questionText = `Publish ${Date.now()}`;
   const updatedQuestionText = `Published update ${Date.now()}`;
   const keptQuestionText = `Publish kept ${Date.now()}`;
@@ -1347,44 +1350,42 @@ test("publishing snapshots questions for guests until the next publish", async (
 
   await expect(page).toHaveURL(signedInPath);
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Publish question" })).toHaveCount(0);
 
   const account = await signIn(page);
-
-  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeVisible();
 
   await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, questionText, "Original published answer");
+  await page.getByRole("textbox", { name: "answer" }).blur();
+  await expect(createSubmit(page)).toBeEnabled();
   await createSubmit(page).click();
 
   await expect(page).toHaveURL(/\/questions\/[0-9a-f-]+$/, { timeout: 15_000 });
   await expect(openedQuestion(page, questionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(publishQuestionsDialog(page)).toBeVisible();
-  await publishQuestionsDialog(page).getByRole("button", { name: "Cancel" }).click();
-  await expect(publishQuestionsDialog(page)).toHaveCount(0);
+  const releasePublish = await holdPublishQuestion(page);
+  const question = await openDialogQuestionItem(page, questionText);
 
-  const releasePublish = await holdPublishQuestions(page);
+  await question.hover();
 
-  await page.getByRole("button", { name: "Publish", exact: true }).click();
-  await expect(publishQuestionsDialog(page)).toBeVisible();
-  await publishQuestionsDialog(page).getByRole("button", { name: "Publish", exact: true }).click();
+  const publishingButton = question.getByRole("button", { name: "Publish question" });
 
-  const publishingButton = page.getByRole("button", { name: "Loading Publishing..." });
-
+  await publishingButton.click();
   await expect(publishingButton).toBeVisible();
   await expect(publishingButton).toBeDisabled();
   await expect(publishingButton.getByRole("status", { name: "Loading" })).toBeVisible();
-  await expect(publishQuestionsDialog(page)).toHaveCount(0);
+  await expect(page.getByRole("dialog", { name: "Publish questions" })).toHaveCount(0);
+  await expect(questionsDialog(page)).toBeVisible();
 
   releasePublish();
 
-  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+  await expect(publishingButton).toBeEnabled();
   await expect(notifications(page).getByText("Published.")).toBeVisible();
+  await expect(questionsDialog(page)).toBeVisible();
 
+  await closeQuestionsDialog(page);
   await openUserMenu(page);
   await page.getByRole("menuitem", { name: "Log Out" }).click();
 
@@ -1394,17 +1395,19 @@ test("publishing snapshots questions for guests until the next publish", async (
 
   await expect(page).toHaveURL(signedInPath);
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByRole("button", { name: "Publish" })).toHaveCount(0);
   await expectQuestionInDialog(page, questionText);
+  await expect(
+    questionsDialog(page).getByRole("button", { name: "Publish question" }),
+  ).toHaveCount(0);
 
   await closeQuestionsDialog(page);
   await page.getByRole("link", { name: "Sign in" }).click();
   await signInWithCredentials(page, account);
 
-  const question = await openDialogQuestionItem(page, questionText);
+  const editedQuestion = await openDialogQuestionItem(page, questionText);
 
-  await question.hover();
-  await question.getByRole("button", { name: "Update question" }).click();
+  await editedQuestion.hover();
+  await editedQuestion.getByRole("button", { name: "Update question" }).click();
 
   await expect(page.getByRole("heading", { name: "Update question" })).toBeVisible();
   await page.getByRole("textbox", { name: "question" }).fill(updatedQuestionText);
@@ -1429,10 +1432,8 @@ test("publishing snapshots questions for guests until the next publish", async (
   await page.getByRole("link", { name: "Sign in" }).click();
   await signInWithCredentials(page, account);
 
-  await confirmPublish(page);
-  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
-  await expect(notifications(page).getByText("Published.")).toBeVisible();
-
+  await publishQuestionFromDialog(page, updatedQuestionText);
+  await closeQuestionsDialog(page);
   await openUserMenu(page);
   await page.getByRole("menuitem", { name: "Log Out" }).click();
 
@@ -1451,13 +1452,44 @@ test("publishing snapshots questions for guests until the next publish", async (
   await createQuestionFromDialog(page);
   await expect(page.getByRole("dialog")).toBeVisible();
   await fillCreateQuestion(page, keptQuestionText, "Kept published answer");
+  await page.getByRole("textbox", { name: "answer" }).blur();
+  await expect(createSubmit(page)).toBeEnabled();
   await createSubmit(page).click();
 
   await expect(openedQuestion(page, keptQuestionText)).toBeVisible();
   await expect(page.getByRole("dialog")).toHaveCount(0);
 
-  await confirmPublish(page);
-  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expectQuestionInDialog(page, updatedQuestionText);
+  await expectQuestionAbsentFromDialog(page, keptQuestionText);
+
+  await closeQuestionsDialog(page);
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await signInWithCredentials(page, account);
+
+  await publishQuestionFromDialog(page, keptQuestionText);
+  await closeQuestionsDialog(page);
+  await openUserMenu(page);
+  await page.getByRole("menuitem", { name: "Log Out" }).click();
+
+  await expect(page).toHaveURL(/\/sign-in$/);
+
+  await page.goto("/questions");
+
+  await expect(page).toHaveURL(signedInPath);
+  await expectQuestionInDialog(page, updatedQuestionText);
+  await expectQuestionInDialog(page, keptQuestionText);
+
+  await closeQuestionsDialog(page);
+  await page.getByRole("link", { name: "Sign in" }).click();
+  await signInWithCredentials(page, account);
 
   const dropped = await openDialogQuestionItem(page, updatedQuestionText);
 
@@ -1467,9 +1499,6 @@ test("publishing snapshots questions for guests until the next publish", async (
   await expect(page.getByRole("heading", { name: "Delete question" })).toBeVisible();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   await expect(page.getByRole("dialog")).toHaveCount(0);
-
-  await confirmPublish(page);
-  await expect(page.getByRole("button", { name: "Publish", exact: true })).toBeEnabled();
 
   await openUserMenu(page);
   await page.getByRole("menuitem", { name: "Log Out" }).click();
