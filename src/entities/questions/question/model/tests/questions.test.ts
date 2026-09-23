@@ -14,7 +14,7 @@ const seedQuestions = (nextQuestions: ReadonlyArray<Question>) => {
   notify();
 };
 
-test("should sort questions alphabetically by visible text when one is added", () => {
+test("should append a question without reordering the list", () => {
   seedQuestions([
     { id: "2", question: "Zebra" },
     { id: "1", question: "Apple" },
@@ -24,25 +24,25 @@ test("should sort questions alphabetically by visible text when one is added", (
   notify();
 
   expect(questions.data()).toEqual([
+    { id: "2", question: "Zebra" },
     { id: "1", question: "Apple" },
     { id: "3", question: "# Banana" },
-    { id: "2", question: "Zebra" },
   ]);
 });
 
-test("should keep alphabetical order when a question is added", () => {
+test("should keep the existing order when a question is added", () => {
   seedQuestions([{ id: "2", question: "Zebra" }]);
 
   addToQuestions({ id: "1", question: "Apple" });
   notify();
 
   expect(questions.data()).toEqual([
-    { id: "1", question: "Apple" },
     { id: "2", question: "Zebra" },
+    { id: "1", question: "Apple" },
   ]);
 });
 
-test("should re-sort when a question title changes", () => {
+test("should replace a question in place when its title changes", () => {
   seedQuestions([
     { id: "1", question: "Zebra" },
     { id: "2", question: "Apple" },
@@ -57,10 +57,10 @@ test("should re-sort when a question title changes", () => {
   ]);
 });
 
-test("should re-sort when a deleted question is restored", () => {
+test("should insert a restored question at the given index", () => {
   seedQuestions([{ id: "2", question: "Zebra" }]);
 
-  restoreToQuestions({ id: "1", question: "Apple" }, 1);
+  restoreToQuestions({ id: "1", question: "Apple" }, 0);
   notify();
 
   expect(questions.data()).toEqual([

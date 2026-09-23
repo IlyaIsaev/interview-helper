@@ -82,7 +82,7 @@ Define routes in `src/app/routes.tsx`. Path strings for route `path` options liv
 
 Route reads are one async computed. Do not copy the same payload into a second atom with `init*`.
 
-The questions list is `computed(async () => …).extend(withAsyncData())` in the question entity. It waits until `session.ready()`, debounces a non-empty search inside that computed, and sorts the payload. `questionsRoute` and `theoryRoute` loaders `await wrap(questions())`. They do not call `clientApi.loadQuestions`. UI reads `questions.data()`, `questions.ready()`, and `questions.error()`, and retries with `questions.retry()`. Optimistic edits write `questions.data`, then retry.
+The questions list is `computed(async () => …).extend(withAsyncData())` in the question entity. It waits until `session.ready()` and debounces a non-empty search inside that computed. List order comes from `GET /api/questions`; the computed does not sort the payload. `questionsRoute` and `theoryRoute` loaders `await wrap(questions())`. They do not call `clientApi.loadQuestions`. UI reads `questions.data()`, `questions.ready()`, and `questions.error()`, and retries with `questions.retry()`. Optimistic edits write `questions.data`, then retry.
 
 `questionRoute` validates `:id` with Valibot and loads that question. `theoryOpenedRoute` is a search-only child of `theoryRoute` with optional `id`. Its loader loads the open theory item. Changing `?id=` does not refetch the list. `opened-question.ts` reads whichever of those loaders is active. Routes do not import that file.
 
@@ -102,7 +102,7 @@ export const questions = computed(async () => {
 
   const { questions: nextQuestions } = await wrap(clientApi.loadQuestions(query));
 
-  return sortedQuestions(nextQuestions);
+  return nextQuestions;
 }, 'questions').extend(withAsyncData({ initState: null }));
 
 async loader() {
