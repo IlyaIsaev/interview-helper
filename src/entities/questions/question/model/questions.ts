@@ -29,10 +29,9 @@ const waitUntilSessionSettles = async () => {
 
 export const questions = computed(async () => {
   const signedInUserId = session.data()?.user?.id ?? null;
+  const query = activeQuestionsQuery();
 
   await waitUntilSessionSettles();
-
-  const query = activeQuestionsQuery();
 
   if (query.length > 0) await wrap(sleep(300));
 
