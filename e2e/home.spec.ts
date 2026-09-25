@@ -3,6 +3,7 @@ import { expect, test, type Page } from "@playwright/test";
 import {
   createAccount,
   e2eUserName,
+  emptyStorageState,
   openUserMenu,
   signedInPath,
   signInWithCredentials,
@@ -13,22 +14,26 @@ const isQuestionsPath = (url: string) => new URL(url).pathname === "/questions";
 
 const notifications = (page: Page) => page.getByRole("region", { name: /Notifications/i });
 
-test("opening the app lands guests on questions", async ({ page }) => {
-  const signUpRequests: Array<string> = [];
+test.describe("opening the app lands guests on questions", () => {
+  test.use({ storageState: emptyStorageState });
 
-  page.on("request", (request) => {
-    if (request.url().includes("/api/auth/sign-up/email")) {
-      signUpRequests.push(request.url());
-    }
+  test("opening the app lands guests on questions", async ({ page }) => {
+    const signUpRequests: Array<string> = [];
+
+    page.on("request", (request) => {
+      if (request.url().includes("/api/auth/sign-up/email")) {
+        signUpRequests.push(request.url());
+      }
+    });
+
+    await page.goto("/");
+
+    await expect(page).toHaveURL(signedInPath);
+    await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
+    await expect(page.getByRole("button", { name: e2eUserName })).toHaveCount(0);
+    await expect(page.getByRole("heading", { name: "We use cookies" })).toBeVisible();
+    expect(signUpRequests).toEqual([]);
   });
-
-  await page.goto("/");
-
-  await expect(page).toHaveURL(signedInPath);
-  await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
-  await expect(page.getByRole("button", { name: e2eUserName })).toHaveCount(0);
-  await expect(page.getByRole("heading", { name: "We use cookies" })).toHaveCount(0);
-  expect(signUpRequests).toEqual([]);
 });
 
 test("guests cannot create a question", async ({ page }) => {

@@ -11,6 +11,7 @@ export const cookieConsent = atom(false, "cookieConsent").extend(
     key: COOKIE_CONSENT_KEY,
     path: COOKIE_PATH,
     expires: COOKIE_CONSENT_EXPIRES_AT,
+    sameSite: "lax",
     // document.cookie cannot subscribe; CookieAttributes types this as `never`.
     // @ts-expect-error persist subscribe is a separate option from cookie attrs
     subscribe: false,

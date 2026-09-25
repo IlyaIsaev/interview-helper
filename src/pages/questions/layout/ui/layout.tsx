@@ -20,6 +20,8 @@ import { ThemeSwitcher } from "@/features/theme-switcher";
 import { UserMenu } from "@/features/user/user-menu";
 import { Button } from "@/shared/ui";
 
+import { CookieConsent } from "./cookie-consent";
+
 const isQuestionsDialogOpen = reatomBoolean(false, "isQuestionsDialogOpen");
 
 const closeQuestionsDialog = () => {
@@ -121,6 +123,7 @@ const Layout = reatomComponent(({ children }: LayoutProps) => {
         </div>
       </header>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">{children}</main>
+      <CookieConsent />
     </div>
   );
 }, "Layout");

@@ -33,7 +33,7 @@ Authentication is [Better Auth](https://better-auth.com) with email and password
 - Server: `createAuth(env)` in `auth/` — create per request, never as a Worker singleton.
 - Handler: dedicated Hono `auth` app in `auth/`, mounted at `/api/auth`. `GET`/`POST` `/api/auth/*`. Email sign-up (`POST /api/auth/sign-up/email`) is limited to `ALLOWED_SIGN_UP_EMAILS` in `auth/allowed-sign-up-emails.ts` (currently `CATALOG_OWNER_EMAIL` / `iaisaev@pm.me`). A local `BETTER_AUTH_URL` also allows `*@example.com` for e2e. Other addresses get 403 `{ message: 'This email is not allowed to register.' }`. Do not set Better Auth `emailAndPassword.disableSignUp`. Better Auth's default 3/10s cap on sign-up and sign-in is turned off (`rateLimit.customRules` `false` for both `/sign-up/email` and `/api/auth/sign-up/email`, same for sign-in); those POSTs are limited by `AUTH_RATE_LIMITER` instead.
 - `POST /api/user/password` changes the signed-in user's password (session required; 8–128 characters). `DELETE /api/user` deletes the signed-in user (any email). Questions cascade. It expires Better Auth session cookies. POST `/api/user` (including `/password`) and POST `/api/auth/*` are rate-limited with a Workers rate-limit binding keyed by path and `CF-Connecting-IP`.
-- Cookie consent is only on `/sign-in`: Accept sets the `cookieConsent=true` cookie; Decline redirects to `https://www.google.com` (do not delete the user).
+- Cookie consent is only on `/questions` and `/questions/:id`: Accept sets the `cookieConsent=true` cookie; Decline redirects to `https://www.google.com` (do not delete the user).
 - Copy `.dev.vars.example` to `.dev.vars`. Production: `wrangler secret put BETTER_AUTH_SECRET`.
 
 Client session, forms, and redirects are in `src/AGENTS.md`.

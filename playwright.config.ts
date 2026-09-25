@@ -1,5 +1,7 @@
 import { defineConfig, devices } from "@playwright/test";
 
+import { acceptedCookieConsentStorageState } from "./e2e/auth";
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -8,6 +10,7 @@ export default defineConfig({
   workers: 2,
   use: {
     baseURL: "http://127.0.0.1:5173",
+    storageState: acceptedCookieConsentStorageState,
     trace: "on-first-retry",
   },
   projects: [

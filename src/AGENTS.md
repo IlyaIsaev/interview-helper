@@ -35,7 +35,7 @@ Group `features/` and `entities/` slices by **business domain**, not by technica
 app/                 ← entrypoint, Reatom logger, routes, composition
                          protectedRoute: app shell (guests + signed-in; no page folder)
 pages/questions/     ← questions route group (under protectedRoute)
-  layout/            ← questionsRoute chrome + list loader (header + questions dialog)
+  layout/            ← questionsRoute chrome + list loader (header + questions dialog + cookie consent)
   index/             ← questions list / empty state (/questions)
   question/
     index/           ← question detail; composes RandomQuestion (/questions/:id)
@@ -44,7 +44,7 @@ pages/theory/
 pages/profile/
   index/             ← signed-in profile (no sidebar; user from route loader)
 pages/sign-in/
-  index/             ← login + cookie consent
+  index/             ← login
 pages/sign-up/
   index/             ← empty custom sign-up form
 features/questions/create-question/ ← dialog form to create a question + answer
@@ -310,7 +310,7 @@ This project uses [SMUI](https://smui.statico.io) (shadcn/ui, duskbox-day / dusk
 - Sign-out returns to `/sign-in` with an empty form (`signInRoute.go()` after `session.retry()`).
 - Change password on `/profile` is new password + confirmation (no current password). Submit is on the right; Delete account is passed into the form as a `deleteUser` slot on the left. Success toasts, resets the form, and stays on `/profile`.
 - Delete account on `/profile` removes the signed-in user and their questions, then `/sign-in` with an empty form.
-- Cookie-consent UI lives in `pages/sign-in` and is only on `/sign-in`.
+- Cookie-consent UI lives in `pages/questions/layout` and is only on `/questions` and `/questions/:id`.
 - Server auth and account APIs are in `worker/AGENTS.md`.
 
 ## Unit tests

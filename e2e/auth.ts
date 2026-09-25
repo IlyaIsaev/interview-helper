@@ -4,6 +4,24 @@ export const signedInPath = /\/questions(\/[0-9a-f-]+)?$/;
 
 export const e2eUserName = "Ada";
 
+export const emptyStorageState = { cookies: [], origins: [] };
+
+export const acceptedCookieConsentStorageState = {
+  cookies: [
+    {
+      name: "cookieConsent",
+      value: "true",
+      domain: "127.0.0.1",
+      path: "/",
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: "Lax" as const,
+    },
+  ],
+  origins: [],
+};
+
 const SIGN_UP_EMAIL_PATH = "/api/auth/sign-up/email";
 
 export type CreatedAccount = {

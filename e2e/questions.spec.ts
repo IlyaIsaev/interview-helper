@@ -1,6 +1,62 @@
 import { expect, test, type Page, type Request } from "@playwright/test";
 
-import { createAccount, e2eUserName, openUserMenu, signInWithCredentials } from "./auth";
+import {
+  createAccount,
+  e2eUserName,
+  emptyStorageState,
+  openUserMenu,
+  signInWithCredentials,
+} from "./auth";
+
+test("accepted cookie consent hides the banner", async ({ page }) => {
+  await page.goto("/questions");
+
+  await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "We use cookies" })).toHaveCount(0);
+});
+
+test.describe("cookie consent", () => {
+  test.use({ storageState: emptyStorageState });
+
+  test("questions page shows cookie consent", async ({ page }) => {
+    await page.goto("/questions");
+
+    await expect(page.getByRole("heading", { name: "We use cookies" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Accept" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Decline" })).toBeVisible();
+  });
+
+  test("accepting cookies hides the consent banner", async ({ page }) => {
+    await page.goto("/questions");
+
+    await page.getByRole("button", { name: "Accept" }).click();
+
+    await expect(page.getByRole("heading", { name: "We use cookies" })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
+    await expect(page.evaluate(() => document.cookie)).resolves.toContain("cookieConsent=true");
+
+    await page.reload();
+
+    await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "We use cookies" })).toHaveCount(0);
+  });
+
+  test("declining cookies leaves for Google without deleting a user", async ({ page }) => {
+    const deleteRequests: Array<string> = [];
+
+    page.on("request", (request) => {
+      if (request.url().includes("/api/user") && request.method() === "DELETE") {
+        deleteRequests.push(request.url());
+      }
+    });
+
+    await page.goto("/questions");
+    await page.getByRole("button", { name: "Decline" }).click();
+
+    await expect(page).toHaveURL(/google\.com/);
+    expect(deleteRequests).toEqual([]);
+  });
+});
 
 const signedInPath = /\/questions(\/[0-9a-f-]+)?$/;
 
@@ -1396,9 +1452,9 @@ test("publishing one question snapshots it for guests until it is deleted", asyn
   await expect(page).toHaveURL(signedInPath);
   await expect(page.getByRole("link", { name: "Sign in" })).toBeVisible();
   await expectQuestionInDialog(page, questionText);
-  await expect(
-    questionsDialog(page).getByRole("button", { name: "Publish question" }),
-  ).toHaveCount(0);
+  await expect(questionsDialog(page).getByRole("button", { name: "Publish question" })).toHaveCount(
+    0,
+  );
 
   await closeQuestionsDialog(page);
   await page.getByRole("link", { name: "Sign in" }).click();
