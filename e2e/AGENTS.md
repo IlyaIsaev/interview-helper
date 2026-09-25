@@ -8,6 +8,4 @@ Playwright specs for the app. TypeScript conventions come from the parent `AGENT
 - Do not put e2e specs in `src/`.
 - Do not add Cypress.
 
-In-session agent verification of the running app uses Playwright MCP or Chrome DevTools MCP.
-
 Debugging a failing Chromium spec with `playwright test --debug=cli` uses `.agents/skills/playwright-cli/SKILL.md` (`attach tw-*` only).
