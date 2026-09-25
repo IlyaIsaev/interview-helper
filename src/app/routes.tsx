@@ -150,7 +150,7 @@ export const questionsRoute = protectedRoute.reatomRoute(
 
       if (loadError) return <RouteLoadError onRetry={wrap(() => questions.retry())} />;
 
-      if (!questions.ready() || questions.data() === null) return <PageFallback />;
+      if (questions.data() === null) return <PageFallback />;
 
       const child = self.outlet();
 
@@ -212,7 +212,7 @@ export const theoryRoute = protectedRoute.reatomRoute(
 
       if (loadError) return <RouteLoadError onRetry={wrap(() => questions.retry())} />;
 
-      if (!questions.ready() || questions.data() === null) return <PageFallback />;
+      if (questions.data() === null) return <PageFallback />;
 
       return <>{self.outlet()}</>;
     },

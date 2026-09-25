@@ -1361,6 +1361,7 @@ test("sidebar search filters questions by visible text", async ({ page }) => {
   await page.keyboard.type("alpha");
   await expect(questionSearch).toHaveValue("alpha");
   await expect(questionSearch).toBeFocused();
+  await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
   await expect(sidebarQuestion(page, firstQuestion)).toBeVisible();
   await expect(sidebarQuestion(page, secondQuestion)).toHaveCount(0);
 

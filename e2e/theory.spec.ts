@@ -345,6 +345,8 @@ test("search filters questions by visible text", async ({ page }) => {
   await questionSearch.click();
   await page.keyboard.type("alpha");
   await expect(questionSearch).toHaveValue("alpha");
+  await expect(questionSearch).toBeFocused();
+  await expect(page.getByRole("link", { name: "Interview helper" })).toBeVisible();
   await expect(listQuestion(page, firstQuestion)).toBeVisible();
   await expect(listQuestion(page, secondQuestion)).toHaveCount(0);
 
