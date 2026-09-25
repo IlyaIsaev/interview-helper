@@ -1,6 +1,20 @@
 import { defineConfig, devices } from "@playwright/test";
 
-import { acceptedCookieConsentStorageState } from "./e2e/auth";
+const acceptedCookieConsentStorageState = {
+  cookies: [
+    {
+      name: "cookieConsent",
+      value: "true",
+      domain: "127.0.0.1",
+      path: "/",
+      expires: -1,
+      httpOnly: false,
+      secure: false,
+      sameSite: "Lax" as const,
+    },
+  ],
+  origins: [],
+};
 
 export default defineConfig({
   testDir: "./e2e",
